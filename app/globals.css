@@ -12,7 +12,7 @@
 }
 
 * { box-sizing: border-box; }
-html, body { margin: 0; padding: 0; min-height: 100%; }
+html, body { margin: 0; padding: 0; min-height: 100%; overflow-x: hidden; }
 body {
   font-family: "Noto Sans JP", sans-serif;
   color: var(--text);
@@ -25,7 +25,7 @@ button, input, select {
   font: inherit;
 }
 
-.app-shell { width: min(1200px, calc(100% - 24px)); margin: 0 auto; padding: 24px 0 40px; }
+.app-shell { width: min(1200px, calc(100% - 16px)); margin: 0 auto; padding: 16px 0 32px; }
 .hero { padding: 12px 4px 20px; display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; }
 .eyebrow { margin: 0 0 8px; font-size: .8rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--green); }
 .hero h1 { margin: 0; font-size: clamp(2rem, 5vw, 3.3rem); line-height: 1.05; }
@@ -74,6 +74,7 @@ input,select { width: 100%; padding: 12px 14px; border: 1px solid var(--line); b
 .log-head,.player-item,.result-head,.result-score { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .event-log,.player-list { display: grid; gap: 10px; padding: 0; margin: 14px 0 0; list-style: none; }
 .event-log li,.player-item { padding: 14px; border-radius: 18px; border: 1px solid var(--line); background: rgba(255,255,255,.08); }
+.event-item { display: grid; gap: 10px; }
 .player-item { background: var(--surface-strong); }
 .text-button { padding: 0; background: transparent; color: inherit; text-decoration: underline; }
 .action-row { display: flex; gap: 10px; align-items: center; }
@@ -103,4 +104,54 @@ button:active { transform: translateY(0); }
   .panel-grid { grid-template-columns: 1.05fr 1.2fr .95fr; align-items: start; }
   .form-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
   .results-toolbar,.summary-grid,.pk-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+}
+
+@media (max-width: 899px) {
+  .hero {
+    flex-direction: column;
+  }
+
+  .auth-box {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .scoreboard {
+    grid-template-columns: 1fr;
+  }
+
+  .score-separator {
+    grid-template-columns: auto auto;
+    align-items: center;
+  }
+
+  .timer-actions,
+  .action-row {
+    flex-wrap: wrap;
+  }
+
+  .table-wrap {
+    overflow-x: hidden;
+  }
+
+  .results-table {
+    min-width: 0;
+    table-layout: fixed;
+  }
+
+  .results-table th,
+  .results-table td {
+    padding: 8px 6px;
+    font-size: 0.72rem;
+    word-break: break-word;
+  }
+
+  .badge {
+    padding: 4px 8px;
+    font-size: 0.7rem;
+  }
+
+  .badge-row {
+    gap: 4px;
+  }
 }

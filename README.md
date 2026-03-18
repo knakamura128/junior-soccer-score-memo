@@ -26,6 +26,7 @@ Vercel デプロイ前提の Next.js + Prisma + LINE LIFF 構成です。
 - Vercel では Postgres 系の Marketplace 連携を使う想定です
 - 環境変数は Vercel Project Settings に設定してください
 - LIFF の Endpoint URL には Vercel の本番URLを設定してください
+- 詳細手順は `DEPLOYMENT.md` を参照してください
 
 ## 参考モック
 

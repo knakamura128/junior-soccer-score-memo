@@ -234,6 +234,35 @@ export function Dashboard({ initialData }: DashboardProps) {
     }
   }
 
+  async function deletePlayer(id: string) {
+    const player = players.find((entry) => entry.id === id);
+    const confirmed = window.confirm(
+      `${player ? `${player.number} ${player.name}` : "この選手"}を削除します。元に戻せません。`
+    );
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      const idToken = await requireIdToken();
+      const response = await fetch(`/api/players/${id}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ idToken })
+      });
+      if (!response.ok) {
+        throw new Error("選手削除に失敗しました。");
+      }
+      setPlayers((current) => current.filter((entry) => entry.id !== id));
+      if (goalPlayer && player && goalPlayer === `${player.number} ${player.name}`) {
+        setGoalPlayer("");
+      }
+      setFeedback("選手を削除しました。");
+    } catch (error) {
+      setFeedback(error instanceof Error ? error.message : "選手削除に失敗しました。");
+    }
+  }
+
   function addGoal(side: "home" | "away") {
     setMatch((current) => ({
       ...current,
@@ -249,6 +278,25 @@ export function Dashboard({ initialData }: DashboardProps) {
         }
       ]
     }));
+  }
+
+  function updateEventPlayer(index: number, player: string) {
+    setMatch((current) => ({
+      ...current,
+      events: current.events.map((event, eventIndex) => (eventIndex === index ? { ...event, player } : event))
+    }));
+  }
+
+  function removeEvent(index: number) {
+    setMatch((current) => {
+      const nextEvents = current.events.filter((_, eventIndex) => eventIndex !== index);
+      return {
+        ...current,
+        events: nextEvents,
+        homeScore: nextEvents.filter((event) => event.side === "home").length,
+        awayScore: nextEvents.filter((event) => event.side === "away").length
+      };
+    });
   }
 
   async function saveMatch() {
@@ -504,7 +552,32 @@ export function Dashboard({ initialData }: DashboardProps) {
             <div className="event-log-wrap">
               <div className="log-head"><h3>ゴールログ</h3><button className="text-button" type="button" onClick={resetDraft}>この試合を初期化</button></div>
               <ul className="event-log">
-                {match.events.length === 0 ? <li className="empty-state">まだゴールは登録されていません。</li> : match.events.slice().reverse().map((event, index) => <li key={`${event.time}-${index}`}>{event.time} {event.period} {event.side === "home" ? "自チーム得点" : "相手チーム得点"}{event.player ? ` / ${event.player}` : ""}</li>)}
+                {match.events.length === 0 ? (
+                  <li className="empty-state">まだゴールは登録されていません。</li>
+                ) : (
+                  match.events.map((event, index) => (
+                    <li key={`${event.time}-${index}`} className="event-item">
+                      <div>
+                        <strong>{event.time} {event.period} {event.side === "home" ? "自チーム得点" : "相手チーム得点"}</strong>
+                      </div>
+                      {event.side === "home" ? (
+                        <select value={event.player} onChange={(e) => updateEventPlayer(index, e.target.value)}>
+                          <option value="">未選択</option>
+                          {players.map((player) => (
+                            <option key={player.id} value={`${player.number} ${player.name}`}>
+                              {player.number} {player.name}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <div className="muted">得点選手なし</div>
+                      )}
+                      <button className="text-button danger" type="button" onClick={() => removeEvent(index)}>
+                        得点を取り消す
+                      </button>
+                    </li>
+                  ))
+                )}
               </ul>
             </div>
             <button className="primary save-button" type="button" onClick={() => void saveMatch()}>{editingId ? "試合結果を更新" : "試合結果を保存"}</button>
@@ -522,6 +595,7 @@ export function Dashboard({ initialData }: DashboardProps) {
               {players.length === 0 ? <li className="empty-state">選手を登録すると、得点時に選択できます。</li> : players.map((player) => (
                 <li key={player.id} className="player-item">
                   <div><strong>{player.number} {player.name}</strong><p className="player-meta">タグ: {player.tags.join(", ")}</p></div>
+                  <button className="text-button danger" type="button" onClick={() => void deletePlayer(player.id)}>削除</button>
                 </li>
               ))}
             </ul>
