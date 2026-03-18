@@ -89,8 +89,7 @@ export function Dashboard({ initialData }: DashboardProps) {
   const [goalPlayer, setGoalPlayer] = useState("");
   const [playerForm, setPlayerForm] = useState({ number: "", name: "", tags: [] as string[] });
   const [filterTag, setFilterTag] = useState("すべて");
-  const [filterDateFrom, setFilterDateFrom] = useState("");
-  const [filterDateTo, setFilterDateTo] = useState("");
+  const [filterMonth, setFilterMonth] = useState("");
   const [sortValue, setSortValue] = useState("date-desc");
   const [auth, setAuth] = useState<AuthState>({ status: "loading", idToken: "", displayName: "" });
   const [feedback, setFeedback] = useState<string>("");
@@ -131,6 +130,20 @@ export function Dashboard({ initialData }: DashboardProps) {
     setMatch((current) => ({ ...current, duration: formatClock(timerSeconds) }));
   }, [timerSeconds]);
 
+  const filteredPlayers = players.filter((player) =>
+    match.tags.length === 0 ? true : player.tags.some((tag) => match.tags.includes(tag))
+  );
+
+  useEffect(() => {
+    if (!goalPlayer) {
+      return;
+    }
+    const stillVisible = filteredPlayers.some((player) => `${player.number} ${player.name}` === goalPlayer);
+    if (!stillVisible) {
+      setGoalPlayer("");
+    }
+  }, [goalPlayer, filteredPlayers]);
+
   useEffect(() => {
     let cancelled = false;
     async function initLiff() {
@@ -170,8 +183,7 @@ export function Dashboard({ initialData }: DashboardProps) {
 
   const visibleMatches = matches
     .filter((entry) => (filterTag === "すべて" ? true : entry.tags.includes(filterTag)))
-    .filter((entry) => (filterDateFrom ? entry.matchDate >= filterDateFrom : true))
-    .filter((entry) => (filterDateTo ? entry.matchDate <= filterDateTo : true))
+    .filter((entry) => (filterMonth ? entry.matchDate.startsWith(filterMonth) : true))
     .sort((left, right) => {
       switch (sortValue) {
         case "date-asc":
@@ -202,6 +214,16 @@ export function Dashboard({ initialData }: DashboardProps) {
     }, new Map<string, { win: number; draw: number; loss: number }>())
   ).sort((a, b) => a[0].localeCompare(b[0], "ja"));
 
+  const totals = visibleMatches.reduce(
+    (acc, entry) => {
+      if (entry.outcome === "勝ち") acc.win += 1;
+      else if (entry.outcome === "負け") acc.loss += 1;
+      else acc.draw += 1;
+      return acc;
+    },
+    { win: 0, draw: 0, loss: 0 }
+  );
+
   async function requireIdToken() {
     if (!auth.idToken) {
       throw new Error("保存にはLINEログインが必要です。");
@@ -231,6 +253,39 @@ export function Dashboard({ initialData }: DashboardProps) {
       setFeedback("選手を保存しました。");
     } catch (error) {
       setFeedback(error instanceof Error ? error.message : "選手保存に失敗しました。");
+    }
+  }
+
+  async function registerPlayersFromMatches() {
+    const candidates = extractPlayersFromMatches(matches).filter(
+      (candidate) => !players.some((player) => player.name === candidate.name)
+    );
+    if (candidates.length === 0) {
+      setFeedback("試合結果から追加できる選手はありません。");
+      return;
+    }
+
+    try {
+      const idToken = await requireIdToken();
+      const savedPlayers: Player[] = [];
+      for (const candidate of candidates) {
+        const response = await fetch("/api/players", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            idToken,
+            player: candidate
+          })
+        });
+        if (!response.ok) {
+          throw new Error("試合結果からの選手登録に失敗しました。");
+        }
+        savedPlayers.push((await response.json()) as Player);
+      }
+      setPlayers((current) => [...current, ...savedPlayers]);
+      setFeedback(`${savedPlayers.length}人の選手を試合結果から登録しました。`);
+    } catch (error) {
+      setFeedback(error instanceof Error ? error.message : "試合結果からの選手登録に失敗しました。");
     }
   }
 
@@ -540,7 +595,7 @@ export function Dashboard({ initialData }: DashboardProps) {
               <div className="score-separator"><p className="period-indicator">{match.periodMode === "halves" ? match.currentPeriod : "試合中"}</p><span>vs</span></div>
               <div className="team-panel"><p className="team-label">相手チーム</p><p className="score">{match.awayScore}</p><button className="score-btn away" type="button" onClick={() => addGoal("away")}>失点を追加</button></div>
             </div>
-            <label>得点選手<select value={goalPlayer} onChange={(event) => setGoalPlayer(event.target.value)}><option value="">未選択</option>{players.map((player) => <option key={player.id} value={`${player.number} ${player.name}`}>{player.number} {player.name}</option>)}</select></label>
+            <label>得点選手<select value={goalPlayer} onChange={(event) => setGoalPlayer(event.target.value)}><option value="">未選択</option>{filteredPlayers.map((player) => <option key={player.id} value={`${player.number} ${player.name}`}>{player.number} {player.name}</option>)}</select></label>
             <div className="timer-block">
               <div className="timer-display">{formatClock(timerSeconds)}</div>
               <div className="timer-actions">
@@ -590,15 +645,19 @@ export function Dashboard({ initialData }: DashboardProps) {
               <label>名前<input value={playerForm.name} onChange={(event) => setPlayerForm({ ...playerForm, name: event.target.value })} /></label>
               <label>グループ<TagSelector compact value={playerForm.tags} onChange={(tags) => setPlayerForm({ ...playerForm, tags })} /></label>
               <button className="primary" type="button" onClick={() => void savePlayer()}>選手を追加</button>
+              <button className="ghost dark-ghost" type="button" onClick={() => void registerPlayersFromMatches()}>試合結果から登録</button>
             </div>
-            <ul className="player-list">
-              {players.length === 0 ? <li className="empty-state">選手を登録すると、得点時に選択できます。</li> : players.map((player) => (
-                <li key={player.id} className="player-item">
-                  <div><strong>{player.number} {player.name}</strong><p className="player-meta">タグ: {player.tags.join(", ")}</p></div>
-                  <button className="text-button danger" type="button" onClick={() => void deletePlayer(player.id)}>削除</button>
-                </li>
-              ))}
-            </ul>
+            <details className="expandable" open={players.length <= 8}>
+              <summary>登録選手一覧 {players.length}人</summary>
+              <ul className="player-list">
+                {players.length === 0 ? <li className="empty-state">選手を登録すると、得点時に選択できます。</li> : players.map((player) => (
+                  <li key={player.id} className="player-item">
+                    <div><strong>{player.number} {player.name}</strong><p className="player-meta">タグ: {player.tags.join(", ")}</p></div>
+                    <button className="text-button danger" type="button" onClick={() => void deletePlayer(player.id)}>削除</button>
+                  </li>
+                ))}
+              </ul>
+            </details>
           </section>
         </div>
       </section>
@@ -608,8 +667,7 @@ export function Dashboard({ initialData }: DashboardProps) {
           <div className="section-title"><h2>試合結果一覧</h2><span>保存者/更新者つき</span></div>
           <div className="results-toolbar">
             <label>タグで絞り込み<select value={filterTag} onChange={(event) => setFilterTag(event.target.value)}><option value="すべて">すべて</option>{CATEGORY_OPTIONS.map((option) => <option key={option} value={option}>{option}</option>)}</select></label>
-            <label>日付開始<input type="date" value={filterDateFrom} onChange={(event) => setFilterDateFrom(event.target.value)} /></label>
-            <label>日付終了<input type="date" value={filterDateTo} onChange={(event) => setFilterDateTo(event.target.value)} /></label>
+            <label>表示年月<input type="month" value={filterMonth} onChange={(event) => setFilterMonth(event.target.value)} /></label>
             <label>並び順<select value={sortValue} onChange={(event) => setSortValue(event.target.value)}><option value="date-desc">日付が新しい順</option><option value="date-asc">日付が古い順</option><option value="goals-desc">総得点が多い順</option><option value="opponent-asc">対戦相手順</option></select></label>
           </div>
           <div className="results-toolbar results-actions">
@@ -618,12 +676,20 @@ export function Dashboard({ initialData }: DashboardProps) {
           </div>
           <div className="summary-grid">
             <section className="summary-card">
+              <h3>通算結果</h3>
+              <div className="totals-row">
+                <span className="total-pill win-pill">勝ち {totals.win}</span>
+                <span className="total-pill draw-pill">引分 {totals.draw}</span>
+                <span className="total-pill loss-pill">負け {totals.loss}</span>
+              </div>
+            </section>
+            <section className="summary-card">
               <h3>最多得点者ランキング</h3>
               {topScorers.length === 0 ? <div className="empty-state">得点データがまだありません。</div> : <ol className="summary-list">{topScorers.slice(0, 10).map(([name, goals]) => <li key={name}>{name} {goals}得点</li>)}</ol>}
             </section>
             <section className="summary-card">
               <h3>対戦相手別勝敗表</h3>
-              {opponentRecords.length === 0 ? <div className="empty-state">対戦結果データがまだありません。</div> : <div className="record-table">{opponentRecords.map(([name, record]) => <div key={name} className="record-row"><strong>{name}</strong><span>{record.win}勝 {record.draw}分 {record.loss}敗</span></div>)}</div>}
+              {opponentRecords.length === 0 ? <div className="empty-state">対戦結果データがまだありません。</div> : <details className="expandable" open={opponentRecords.length <= 8}><summary>対戦相手 {opponentRecords.length}件</summary><div className="record-table">{opponentRecords.map(([name, record]) => <div key={name} className="record-row"><strong>{name}</strong><span>{record.win}勝 {record.draw}分 {record.loss}敗</span></div>)}</div></details>}
             </section>
           </div>
           <div className="table-wrap">
@@ -741,4 +807,27 @@ function outcomeToMark(value: string) {
   if (value === "勝ち") return "〇";
   if (value === "負け") return "●";
   return "△";
+}
+
+function extractPlayersFromMatches(matches: MatchRow[]) {
+  const map = new Map<string, { number: string; name: string; tags: Set<string> }>();
+  matches.forEach((match) => {
+    match.goals
+      .filter((goal) => goal.side === "home" && goal.player)
+      .forEach((goal) => {
+        const rawName = String(goal.player || "").trim();
+        if (!rawName) {
+          return;
+        }
+        const name = rawName.replace(/^\S+\s+/, "");
+        const entry = map.get(name) || { number: "-", name, tags: new Set<string>() };
+        match.tags.forEach((tag) => entry.tags.add(tag));
+        map.set(name, entry);
+      });
+  });
+  return [...map.values()].map((entry) => ({
+    number: entry.number,
+    name: entry.name,
+    tags: [...entry.tags]
+  }));
 }
