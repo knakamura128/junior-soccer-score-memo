@@ -1,0 +1,63 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String      @id @default(cuid())
+  lineUserId  String      @unique
+  displayName String
+  pictureUrl  String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  created     Match[]     @relation("MatchCreatedBy")
+  updated     Match[]     @relation("MatchUpdatedBy")
+}
+
+model Player {
+  id        String   @id @default(cuid())
+  number    String
+  name      String
+  tags      String[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Match {
+  id            String       @id @default(cuid())
+  tournament    String
+  title         String
+  opponent      String
+  matchDate     DateTime
+  tags          String[]
+  periodMode    String
+  pkMode        String
+  homeScore     Int
+  awayScore     Int
+  homePkScore   Int          @default(0)
+  awayPkScore   Int          @default(0)
+  duration      String
+  outcome       String
+  createdById   String
+  updatedById   String
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  createdBy     User         @relation("MatchCreatedBy", fields: [createdById], references: [id])
+  updatedBy     User         @relation("MatchUpdatedBy", fields: [updatedById], references: [id])
+  goals         GoalEvent[]
+}
+
+model GoalEvent {
+  id        String   @id @default(cuid())
+  matchId    String
+  side      String
+  player    String?
+  period    String
+  time      String
+  createdAt DateTime @default(now())
+  match     Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+}

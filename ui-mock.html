@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UI Mock | Soccer Score Mini App</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="ui-mock.css">
+</head>
+<body>
+  <div class="mock-shell">
+    <header class="mock-hero">
+      <p class="mock-kicker">UI Mock</p>
+      <h1>LINEミニアプリ UIモック</h1>
+      <p>試合中のスコア入力画面と、試合結果一覧画面のレイアウト確認用モックです。</p>
+    </header>
+
+    <section class="mock-section">
+      <div class="section-head">
+        <div>
+          <h2>想定画面</h2>
+          <p>スマホ前提で2画面を横並びに確認できる構成です。</p>
+        </div>
+        <a class="mock-link" href="./index.html">動作プロトタイプを見る</a>
+      </div>
+
+      <div class="phone-grid">
+        <article class="phone-frame">
+          <div class="phone-topbar">
+            <span class="signal"></span>
+            <strong>スコア付け</strong>
+            <span class="battery"></span>
+          </div>
+          <div class="phone-body">
+            <section class="hero-card">
+              <p class="hero-label">試合中</p>
+              <h3>春季リーグ / 第2節</h3>
+              <p>2026/03/18 ・ 高学年 ・ vs 青葉FC</p>
+            </section>
+
+            <section class="score-card">
+              <div class="score-meta">
+                <span class="pill active">前半</span>
+                <span class="pill">PKあり</span>
+              </div>
+              <div class="score-line">
+                <div>
+                  <p>自チーム</p>
+                  <strong>2</strong>
+                </div>
+                <div class="timer-chip">12:34</div>
+                <div>
+                  <p>相手</p>
+                  <strong>1</strong>
+                </div>
+              </div>
+              <div class="score-actions">
+                <button class="solid">得点 +1</button>
+                <button class="warm">失点 +1</button>
+              </div>
+              <div class="mini-row">
+                <div class="input-chip">得点者: 10 田中 太郎</div>
+                <div class="input-chip">PK: 4 - 3</div>
+              </div>
+            </section>
+
+            <section class="stack-card">
+              <div class="card-head">
+                <h4>試合設定</h4>
+                <span>入力項目</span>
+              </div>
+              <div class="field-grid">
+                <div class="field">大会名</div>
+                <div class="field">試合タイトル</div>
+                <div class="field">相手チーム</div>
+                <div class="field">年代</div>
+                <div class="field">日付</div>
+                <div class="field">前後半 / 後半選択</div>
+              </div>
+            </section>
+
+            <section class="stack-card">
+              <div class="card-head">
+                <h4>ゴールログ</h4>
+                <span>時系列</span>
+              </div>
+              <ul class="timeline">
+                <li><span>04:15</span><strong>自チーム得点</strong><em>10 田中 太郎</em></li>
+                <li><span>08:42</span><strong>相手チーム得点</strong><em>前半</em></li>
+                <li><span>11:53</span><strong>自チーム得点</strong><em>7 佐藤 陽斗</em></li>
+              </ul>
+            </section>
+
+            <section class="stack-card">
+              <div class="card-head">
+                <h4>選手登録</h4>
+                <span>グルーピング対応</span>
+              </div>
+              <div class="player-tags">
+                <span>高学年 / 10 田中</span>
+                <span>高学年 / 7 佐藤</span>
+                <span>5年 / 14 山本</span>
+                <span>中学年 / 8 伊藤</span>
+              </div>
+            </section>
+
+            <button class="footer-action">試合結果を保存</button>
+          </div>
+        </article>
+
+        <article class="phone-frame light">
+          <div class="phone-topbar">
+            <span class="signal"></span>
+            <strong>試合結果一覧</strong>
+            <span class="battery"></span>
+          </div>
+          <div class="phone-body">
+            <section class="filter-card">
+              <div class="card-head">
+                <h4>フィルタ / ソート</h4>
+                <span>管理用</span>
+              </div>
+              <div class="filter-row">
+                <span class="input-chip">学年: 高学年</span>
+                <span class="input-chip">期間: 3/1 - 3/31</span>
+              </div>
+              <div class="filter-row">
+                <span class="input-chip">並び順: 新しい順</span>
+              </div>
+            </section>
+
+            <section class="summary-pair">
+              <div class="summary-box">
+                <p>最多得点者</p>
+                <strong>田中 太郎</strong>
+                <span>8得点</span>
+              </div>
+              <div class="summary-box">
+                <p>対青葉FC</p>
+                <strong>2勝1敗</strong>
+                <span>勝率 66%</span>
+              </div>
+            </section>
+
+            <section class="result-list">
+              <article class="result-item">
+                <div class="result-top">
+                  <div>
+                    <strong>春季リーグ / 第2節</strong>
+                    <p>2026/03/18 ・ 高学年 ・ vs 青葉FC</p>
+                  </div>
+                  <span class="result-badge win">勝ち</span>
+                </div>
+                <div class="result-scoreline">
+                  <span>2 - 1</span>
+                  <small>PK 4 - 3</small>
+                </div>
+                <p class="scorers">得点者: 田中 太郎, 佐藤 陽斗</p>
+                <a href="#">修正する</a>
+              </article>
+
+              <article class="result-item">
+                <div class="result-top">
+                  <div>
+                    <strong>交流戦 / 第1試合</strong>
+                    <p>2026/03/12 ・ 5年 ・ vs 緑SC</p>
+                  </div>
+                  <span class="result-badge draw">引分</span>
+                </div>
+                <div class="result-scoreline">
+                  <span>1 - 1</span>
+                  <small>前後半なし</small>
+                </div>
+                <p class="scorers">得点者: 山本 悠真</p>
+                <a href="#">修正する</a>
+              </article>
+
+              <article class="result-item">
+                <div class="result-top">
+                  <div>
+                    <strong>区大会 / 準決勝</strong>
+                    <p>2026/03/05 ・ 高学年 ・ vs 東FC</p>
+                  </div>
+                  <span class="result-badge loss">負け</span>
+                </div>
+                <div class="result-scoreline">
+                  <span>0 - 2</span>
+                  <small>前後半あり</small>
+                </div>
+                <p class="scorers">得点者: なし</p>
+                <a href="#">修正する</a>
+              </article>
+            </section>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="mock-section notes">
+      <div class="section-head">
+        <div>
+          <h2>モックで示している点</h2>
+          <p>実装前の認識合わせに必要な情報を短く整理しています。</p>
+        </div>
+      </div>
+      <div class="note-grid">
+        <article>
+          <h3>試合中画面</h3>
+          <p>スコア、タイマー、前後半、PK、得点者選択を1画面で完結させる想定です。</p>
+        </article>
+        <article>
+          <h3>結果一覧</h3>
+          <p>試合カード単位で、勝敗、スコア、得点者、修正導線まで見える構成です。</p>
+        </article>
+        <article>
+          <h3>集計エリア</h3>
+          <p>最多得点者と対戦相手別勝敗を一覧上部に配置し、振り返りをしやすくしています。</p>
+        </article>
+      </div>
+    </section>
+  </div>
+</body>
+</html>

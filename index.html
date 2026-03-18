@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Soccer Score Mini App</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="hero">
+      <p class="eyebrow">LINE Mini App Prototype</p>
+      <h1>少年サッカー スコア管理</h1>
+      <p class="hero-copy">試合中のスコア付けと、記録した試合結果の一覧をスマホで扱える画面です。</p>
+    </header>
+
+    <nav class="tab-bar" aria-label="ページ切り替え">
+      <button class="tab is-active" data-tab-target="scoring">スコア付け</button>
+      <button class="tab" data-tab-target="results">試合結果一覧</button>
+    </nav>
+
+    <main>
+      <section class="tab-panel is-active" id="scoring">
+        <div class="panel-grid">
+          <section class="card">
+            <div class="section-title">
+              <h2>試合情報</h2>
+              <span>基本設定</span>
+            </div>
+            <div class="form-grid">
+              <label>
+                大会名
+                <input id="tournamentName" type="text" placeholder="例: 春季リーグ">
+              </label>
+              <label>
+                試合タイトル
+                <input id="matchTitle" type="text" placeholder="例: TRM 第1試合">
+              </label>
+              <label>
+                相手チーム
+                <input id="opponentName" type="text" placeholder="例: 青葉FC">
+              </label>
+              <label>
+                年代タグ
+                <div id="matchCategoryTags" class="tag-selector"></div>
+              </label>
+              <label>
+                日付
+                <input id="matchDate" type="date">
+              </label>
+              <label>
+                前後半
+                <select id="periodMode">
+                  <option value="halves">前後半あり</option>
+                  <option value="single">前後半なし</option>
+                </select>
+              </label>
+              <label id="periodSelectWrap">
+                現在の区分
+                <select id="currentPeriod">
+                  <option value="前半">前半</option>
+                  <option value="後半">後半</option>
+                </select>
+              </label>
+              <label>
+                PK戦
+                <select id="pkMode">
+                  <option value="off">なし</option>
+                  <option value="on">あり</option>
+                </select>
+              </label>
+            </div>
+            <div class="pk-grid" id="pkScoreWrap">
+              <label>
+                PK 自チーム
+                <input id="homePkScore" type="number" min="0" value="0">
+              </label>
+              <label>
+                PK 相手チーム
+                <input id="awayPkScore" type="number" min="0" value="0">
+              </label>
+            </div>
+          </section>
+
+          <section class="card score-card">
+            <div class="section-title">
+              <h2>スコア</h2>
+              <span>試合中操作</span>
+            </div>
+            <div class="scoreboard">
+              <div class="team-panel">
+                <p class="team-label">自チーム</p>
+                <p class="score" id="homeScore">0</p>
+                <button class="score-btn home" id="homeGoalButton">ゴールを追加</button>
+              </div>
+              <div class="score-separator">
+                <p class="period-indicator" id="periodBadge">前半</p>
+                <span>vs</span>
+              </div>
+              <div class="team-panel">
+                <p class="team-label">相手チーム</p>
+                <p class="score" id="awayScore">0</p>
+                <button class="score-btn away" id="awayGoalButton">失点を追加</button>
+              </div>
+            </div>
+            <label>
+              得点選手
+              <select id="goalPlayer">
+                <option value="">未選択</option>
+              </select>
+            </label>
+            <div class="timer-block">
+              <div class="timer-display" id="timerDisplay">00:00</div>
+              <div class="timer-actions">
+                <button id="startTimer">スタート</button>
+                <button id="stopTimer" class="ghost">ストップ</button>
+                <button id="resetTimer" class="ghost">リセット</button>
+              </div>
+            </div>
+            <div class="event-log-wrap">
+              <div class="log-head">
+                <h3>ゴールログ</h3>
+                <button id="clearCurrentMatch" class="text-button">この試合を初期化</button>
+              </div>
+              <ul class="event-log" id="eventLog"></ul>
+            </div>
+            <button id="saveMatch" class="primary save-button">試合結果を保存</button>
+          </section>
+
+          <section class="card">
+            <div class="section-title">
+              <h2>選手登録</h2>
+              <span>得点選手に利用</span>
+            </div>
+            <div class="player-form">
+              <label>
+                背番号
+                <input id="playerNumber" type="number" min="0" placeholder="10">
+              </label>
+              <label>
+                名前
+                <input id="playerName" type="text" placeholder="田中 太郎">
+              </label>
+              <label>
+                グループ
+                <div id="playerGroupTags" class="tag-selector compact"></div>
+              </label>
+              <button id="addPlayer" class="primary">選手を追加</button>
+            </div>
+            <ul class="player-list" id="playerList"></ul>
+          </section>
+        </div>
+      </section>
+
+      <section class="tab-panel" id="results">
+        <section class="card">
+          <div class="section-title">
+            <h2>試合結果一覧</h2>
+            <span>保存済みデータ</span>
+          </div>
+          <div class="results-toolbar">
+            <label>
+              タグで絞り込み
+              <select id="resultFilter"></select>
+            </label>
+            <label>
+              日付開始
+              <input id="filterDateFrom" type="date">
+            </label>
+            <label>
+              日付終了
+              <input id="filterDateTo" type="date">
+            </label>
+            <label>
+              並び順
+              <select id="resultSort">
+                <option value="date-desc">日付が新しい順</option>
+                <option value="date-asc">日付が古い順</option>
+                <option value="goals-desc">総得点が多い順</option>
+                <option value="opponent-asc">対戦相手順</option>
+              </select>
+            </label>
+          </div>
+          <div class="results-toolbar results-actions">
+            <button id="exportCsv" class="primary" type="button">CSVを書き出す</button>
+            <label class="file-input">
+              CSVを取り込む
+              <input id="importCsv" type="file" accept=".csv,text/csv">
+            </label>
+          </div>
+          <div class="summary-grid">
+            <section class="summary-card">
+              <h3>最多得点者ランキング</h3>
+              <div id="topScorers"></div>
+            </section>
+            <section class="summary-card">
+              <h3>対戦相手別勝敗表</h3>
+              <div id="opponentRecords"></div>
+            </section>
+          </div>
+          <div class="table-wrap">
+            <table class="results-table">
+              <thead>
+                <tr>
+                  <th>日時</th>
+                  <th>大会・試合名</th>
+                  <th>タグ</th>
+                  <th>対戦相手</th>
+                  <th>スコア</th>
+                  <th>勝敗</th>
+                  <th>得点者</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody id="resultsTableBody"></tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <template id="playerItemTemplate">
+    <li class="player-item">
+      <div>
+        <strong class="player-summary"></strong>
+        <p class="player-meta"></p>
+      </div>
+      <button class="text-button player-remove">削除</button>
+    </li>
+  </template>
+
+  <script src="app.js"></script>
+</body>
+</html>
