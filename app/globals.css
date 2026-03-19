@@ -149,12 +149,23 @@ button:active { transform: translateY(0); }
   }
 
   .scoreboard {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    gap: 8px;
   }
 
   .score-separator {
-    grid-template-columns: auto auto;
-    align-items: center;
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .team-panel .score {
+    font-size: clamp(2rem, 9vw, 2.8rem);
+  }
+
+  .score-btn {
+    width: 100%;
+    padding: 12px 8px;
+    font-size: 0.84rem;
   }
 
   .timer-actions,
