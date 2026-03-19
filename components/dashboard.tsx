@@ -502,8 +502,13 @@ export function Dashboard({ initialData }: DashboardProps) {
       <header className="hero">
         <div>
           <p className="eyebrow">LINE Mini App Prototype</p>
-          <h1>少年サッカー スコア管理</h1>
-          <p className="hero-copy">Vercel + DB + LINEログイン前提の保存/更新対応版です。</p>
+          <div className="brand-lockup">
+            <img src="/fc-kumano-logo.svg" alt="FC KUMANO logo" className="brand-logo" />
+            <div>
+              <h1>FC KUMANO スコア管理</h1>
+              <p className="hero-copy">Vercel + DB + LINEログイン前提の保存/更新対応版です。</p>
+            </div>
+          </div>
         </div>
         <aside className="auth-box">
           {auth.pictureUrl ? (
