@@ -47,6 +47,7 @@ button, input, select {
 .section-title h2,.log-head h3 { margin: 0; font-size: 1.1rem; }
 .section-title span,.player-meta,.results-meta,.empty-state,.team-label,.auth-meta { color: var(--muted); }
 .form-grid,.player-form,.results-toolbar { display: grid; gap: 12px; }
+.form-grid { align-items: start; }
 .tag-selector { display: flex; flex-wrap: wrap; gap: 8px; }
 .tag-option { position: relative; }
 .tag-option input { position: absolute; inset: 0; opacity: 0; }
