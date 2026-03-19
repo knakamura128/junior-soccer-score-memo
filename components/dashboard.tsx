@@ -1,14 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { escapeCsvCell, parseCsv } from "@/lib/csv";
+import { buildMatchesCsv, parseReferenceMatchesCsv } from "@/lib/match-csv";
 import {
-  calculateOutcome,
   CATEGORY_OPTIONS,
-  expandScorers,
-  gradeToTags,
-  parseScoreText,
-  splitTournamentAndTitle,
   type MatchPayload
 } from "@/lib/match-format";
 
@@ -450,36 +445,8 @@ export function Dashboard({ initialData }: DashboardProps) {
     try {
       const idToken = await requireIdToken();
       const text = await file.text();
-      const [header, ...rows] = parseCsv(text);
-      if (!header) return;
-      const columns = header.map((value) => value.replace(/^\uFEFF/, "").trim());
-      for (const row of rows) {
-        if (!row.some((cell) => cell.trim() !== "")) continue;
-        const data = Object.fromEntries(columns.map((name, index) => [name, row[index] || ""]));
-        const score = parseScoreText(data["スコア"] || "");
-        const names = expandScorers(data["得点者"] || "");
-        const parts = splitTournamentAndTitle(data["大会・試合名"] || "");
-        const payload: MatchPayload = {
-          tournament: parts.tournament,
-          title: parts.title,
-          opponent: data["対戦相手"] || "",
-          tags: gradeToTags(data["学年"] || ""),
-          matchDate: normalizeImportedDate(data["日付"] || "", inferYearFromFileName(file.name)),
-          periodMode: "halves",
-          currentPeriod: "前半",
-          pkMode: score.pkMode,
-          homePkScore: score.homePkScore,
-          awayPkScore: score.awayPkScore,
-          homeScore: score.homeScore,
-          awayScore: score.awayScore,
-          duration: "00:00",
-          events: names.map((player, index) => ({
-            side: "home",
-            player,
-            period: "試合中",
-            time: `${String(index).padStart(2, "0")}:00`
-          }))
-        };
+      const payloads = parseReferenceMatchesCsv(text, file.name);
+      for (const payload of payloads) {
         const response = await fetch("/api/matches", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -496,19 +463,7 @@ export function Dashboard({ initialData }: DashboardProps) {
   }
 
   function exportCsv() {
-    const rows = [
-      ["日付", "大会・試合名", "学年", "対戦相手", "スコア", "勝敗", "得点者"],
-      ...visibleMatches.map((entry) => [
-        exportDateForCsv(entry.matchDate),
-        joinTournamentAndTitle(entry),
-        entry.tags.join("・"),
-        entry.opponent,
-        formatScore(entry),
-        outcomeToMark(entry.outcome),
-        entry.goals.filter((goal) => goal.side === "home" && goal.player).map((goal) => goal.player).join("、")
-      ])
-    ];
-    const csv = rows.map((row) => row.map((cell) => escapeCsvCell(String(cell ?? ""))).join(",")).join("\n");
+    const csv = buildMatchesCsv(visibleMatches);
     const blob = new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
@@ -665,12 +620,10 @@ export function Dashboard({ initialData }: DashboardProps) {
       <section className={`tab-panel ${activeTab === "results" ? "is-active" : ""}`}>
         <section className="card">
           <div className="section-title"><h2>試合結果一覧</h2><span>保存者/更新者つき</span></div>
-          <div className="results-toolbar">
+          <div className="results-toolbar compact-toolbar">
             <label>タグで絞り込み<select value={filterTag} onChange={(event) => setFilterTag(event.target.value)}><option value="すべて">すべて</option>{CATEGORY_OPTIONS.map((option) => <option key={option} value={option}>{option}</option>)}</select></label>
             <label>表示年月<input type="month" value={filterMonth} onChange={(event) => setFilterMonth(event.target.value)} /></label>
             <label>並び順<select value={sortValue} onChange={(event) => setSortValue(event.target.value)}><option value="date-desc">日付が新しい順</option><option value="date-asc">日付が古い順</option><option value="goals-desc">総得点が多い順</option><option value="opponent-asc">対戦相手順</option></select></label>
-          </div>
-          <div className="results-toolbar results-actions">
             <button className="primary" type="button" onClick={exportCsv}>CSVを書き出す</button>
             <label className="file-input">CSVを取り込む<input type="file" accept=".csv,text/csv" onChange={(event) => { const file = event.target.files?.[0]; if (file) void importReferenceCsv(file); event.currentTarget.value = ""; }} /></label>
           </div>
@@ -704,10 +657,10 @@ export function Dashboard({ initialData }: DashboardProps) {
                   <tr key={entry.id}>
                     <td>{entry.matchDate}</td>
                     <td>{joinTournamentAndTitle(entry)}</td>
-                    <td><div className="badge-row">{entry.tags.map((tag) => <span key={tag} className="badge">{tag}</span>)}</div></td>
+                    <td><div className="badge-row">{entry.tags.map((tag) => <span key={tag} className={`badge ${getTagBadgeClass(tag)}`}>{tag}</span>)}</div></td>
                     <td>{entry.opponent}</td>
                     <td>{formatScore(entry)}</td>
-                    <td><span className="badge">{entry.outcome}</span></td>
+                    <td><span className={`badge ${getOutcomeBadgeClass(entry.outcome)}`}>{entry.outcome}</span></td>
                     <td>{entry.goals.filter((goal) => goal.side === "home" && goal.player).map((goal) => goal.player).join(", ") || "なし"}</td>
                     <td><div>{entry.createdBy?.displayName || "不明"} / {entry.updatedBy?.displayName || "不明"}</div></td>
                     <td>
@@ -779,34 +732,10 @@ function formatScore(entry: { homeScore: number; awayScore: number; pkMode: stri
   return entry.pkMode === "on" ? `${base}(PK${entry.homePkScore}-${entry.awayPkScore})` : base;
 }
 
-function exportDateForCsv(value: string) {
-  const [year, month, day] = value.split("-");
-  if (!year || !month || !day) return value;
-  return `${Number(month)}/${Number(day)}`;
-}
-
-function inferYearFromFileName(fileName: string) {
-  const match = fileName.match(/(20\d{2})/);
-  return match ? Number(match[1]) : new Date().getFullYear();
-}
-
-function normalizeImportedDate(value: string, year: number) {
-  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
-  const match = value.match(/^(\d{1,2})\/(\d{1,2})$/);
-  if (!match) return new Date().toISOString().slice(0, 10);
-  return `${year}-${String(Number(match[1])).padStart(2, "0")}-${String(Number(match[2])).padStart(2, "0")}`;
-}
-
 function joinTournamentAndTitle(entry: { tournament: string; title: string }) {
   if (!entry.title || entry.title === "無題の試合") return entry.tournament;
   if (!entry.tournament || entry.tournament === "未設定") return entry.title;
   return `${entry.tournament} / ${entry.title}`;
-}
-
-function outcomeToMark(value: string) {
-  if (value === "勝ち") return "〇";
-  if (value === "負け") return "●";
-  return "△";
 }
 
 function extractPlayersFromMatches(matches: MatchRow[]) {
@@ -830,4 +759,27 @@ function extractPlayersFromMatches(matches: MatchRow[]) {
     name: entry.name,
     tags: [...entry.tags]
   }));
+}
+
+function getTagBadgeClass(tag: string) {
+  if (tag === "低学年" || tag === "1年" || tag === "2年") {
+    return "tag-low";
+  }
+  if (tag === "中学年" || tag === "3年" || tag === "4年") {
+    return "tag-mid";
+  }
+  if (tag === "高学年" || tag === "5年" || tag === "6年") {
+    return "tag-high";
+  }
+  return "";
+}
+
+function getOutcomeBadgeClass(outcome: string) {
+  if (outcome === "勝ち") {
+    return "result-win";
+  }
+  if (outcome === "負け") {
+    return "result-loss";
+  }
+  return "result-draw";
 }
