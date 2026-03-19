@@ -86,6 +86,7 @@ export function Dashboard({ initialData }: DashboardProps) {
   const [filterTag, setFilterTag] = useState("すべて");
   const [filterMonth, setFilterMonth] = useState("");
   const [sortValue, setSortValue] = useState("date-desc");
+  const [showAudit, setShowAudit] = useState(true);
   const [auth, setAuth] = useState<AuthState>({ status: "loading", idToken: "", displayName: "" });
   const [feedback, setFeedback] = useState<string>("");
 
@@ -124,6 +125,13 @@ export function Dashboard({ initialData }: DashboardProps) {
   useEffect(() => {
     setMatch((current) => ({ ...current, duration: formatClock(timerSeconds) }));
   }, [timerSeconds]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+    setShowAudit(!window.matchMedia("(max-width: 899px)").matches);
+  }, []);
 
   const filteredPlayers = players.filter((player) =>
     match.tags.length === 0 ? true : player.tags.some((tag) => match.tags.includes(tag))
@@ -412,6 +420,12 @@ export function Dashboard({ initialData }: DashboardProps) {
     window.localStorage.removeItem(DRAFT_STORAGE_KEY);
   }
 
+  function cancelEditing() {
+    resetDraft();
+    setActiveTab("results");
+    setFeedback("試合修正を取り消しました。");
+  }
+
   function editMatch(entry: MatchRow) {
     setEditingId(entry.id);
     setTimerRunning(false);
@@ -590,7 +604,10 @@ export function Dashboard({ initialData }: DashboardProps) {
                 )}
               </ul>
             </div>
-            <button className="primary save-button" type="button" onClick={() => void saveMatch()}>{editingId ? "試合結果を更新" : "試合結果を保存"}</button>
+            <div className="stack-actions">
+              {editingId ? <button className="ghost dark-ghost" type="button" onClick={cancelEditing}>修正を取り消す</button> : null}
+              <button className="primary save-button" type="button" onClick={() => void saveMatch()}>{editingId ? "試合結果を更新" : "試合結果を保存"}</button>
+            </div>
           </section>
 
           <section className="card">
@@ -624,8 +641,9 @@ export function Dashboard({ initialData }: DashboardProps) {
             <label>タグで絞り込み<select value={filterTag} onChange={(event) => setFilterTag(event.target.value)}><option value="すべて">すべて</option>{CATEGORY_OPTIONS.map((option) => <option key={option} value={option}>{option}</option>)}</select></label>
             <label>表示年月<input type="month" value={filterMonth} onChange={(event) => setFilterMonth(event.target.value)} /></label>
             <label>並び順<select value={sortValue} onChange={(event) => setSortValue(event.target.value)}><option value="date-desc">日付が新しい順</option><option value="date-asc">日付が古い順</option><option value="goals-desc">総得点が多い順</option><option value="opponent-asc">対戦相手順</option></select></label>
-            <button className="primary" type="button" onClick={exportCsv}>CSVを書き出す</button>
-            <label className="file-input">CSVを取り込む<input type="file" accept=".csv,text/csv" onChange={(event) => { const file = event.target.files?.[0]; if (file) void importReferenceCsv(file); event.currentTarget.value = ""; }} /></label>
+            <button className="ghost dark-ghost" type="button" onClick={() => setShowAudit((current) => !current)}>{showAudit ? "保存者を隠す" : "保存者を表示"}</button>
+            <button className="primary csv-export" type="button" onClick={exportCsv}>CSVを書き出す</button>
+            <label className="file-input csv-import">CSVを取り込む<input type="file" accept=".csv,text/csv" onChange={(event) => { const file = event.target.files?.[0]; if (file) void importReferenceCsv(file); event.currentTarget.value = ""; }} /></label>
           </div>
           <div className="summary-grid">
             <section className="summary-card">
@@ -649,11 +667,11 @@ export function Dashboard({ initialData }: DashboardProps) {
             <table className="results-table">
               <thead>
                 <tr>
-                  <th>日時</th><th>大会・試合名</th><th>タグ</th><th>対戦相手</th><th>スコア</th><th>勝敗</th><th>得点者</th><th>保存者 / 更新者</th><th>操作</th>
+                  <th>日時</th><th>大会・試合名</th><th>タグ</th><th>対戦相手</th><th>スコア</th><th>勝敗</th><th>得点者</th>{showAudit ? <th>保存者 / 更新者</th> : null}<th>操作</th>
                 </tr>
               </thead>
               <tbody>
-                {visibleMatches.length === 0 ? <tr><td colSpan={9} className="empty-state">保存された試合結果はまだありません。</td></tr> : visibleMatches.map((entry) => (
+                {visibleMatches.length === 0 ? <tr><td colSpan={showAudit ? 9 : 8} className="empty-state">保存された試合結果はまだありません。</td></tr> : visibleMatches.map((entry) => (
                   <tr key={entry.id}>
                     <td>{entry.matchDate}</td>
                     <td>{joinTournamentAndTitle(entry)}</td>
@@ -662,7 +680,7 @@ export function Dashboard({ initialData }: DashboardProps) {
                     <td>{formatScore(entry)}</td>
                     <td><span className={`badge ${getOutcomeBadgeClass(entry.outcome)}`}>{entry.outcome}</span></td>
                     <td>{entry.goals.filter((goal) => goal.side === "home" && goal.player).map((goal) => goal.player).join(", ") || "なし"}</td>
-                    <td><div>{entry.createdBy?.displayName || "不明"} / {entry.updatedBy?.displayName || "不明"}</div></td>
+                    {showAudit ? <td><div>{entry.createdBy?.displayName || "不明"} / {entry.updatedBy?.displayName || "不明"}</div></td> : null}
                     <td>
                       <div className="action-row">
                         <button className="text-button" type="button" onClick={() => editMatch(entry)}>修正</button>

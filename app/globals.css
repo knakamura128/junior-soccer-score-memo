@@ -70,6 +70,7 @@ input,select { width: 100%; padding: 12px 14px; border: 1px solid var(--line); b
 .timer-actions { display: flex; gap: 10px; margin-top: 12px; }
 .timer-actions button,.ghost { padding: 12px 14px; background: rgba(255,255,255,.14); color: #fff; }
 .dark-ghost { background: rgba(17,72,47,.08); color: var(--green-dark); }
+.stack-actions { display: grid; gap: 10px; margin-top: 16px; }
 .save-button { width: 100%; margin-top: 16px; }
 .event-log-wrap { margin-top: 18px; }
 .log-head,.player-item,.result-head,.result-score { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
@@ -91,10 +92,13 @@ input,select { width: 100%; padding: 12px 14px; border: 1px solid var(--line); b
 .compact-toolbar select,
 .compact-toolbar input,
 .compact-toolbar .primary,
-.compact-toolbar .file-input {
+.compact-toolbar .file-input,
+.compact-toolbar .ghost {
   min-height: 42px;
   padding: 10px 12px;
 }
+.csv-export { background: #d96d2f; color: #fff; }
+.csv-import { background: #e6f4ea; border-color: rgba(27,107,69,.24); color: var(--green-dark); }
 .file-input { position: relative; min-height: 48px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface-strong); cursor: pointer; }
 .file-input input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
 .summary-card { padding: 14px; border-radius: 20px; border: 1px solid var(--line); background: var(--surface-strong); }
@@ -179,6 +183,10 @@ button:active { transform: translateY(0); }
 
   .compact-toolbar {
     grid-template-columns: 1fr;
+  }
+
+  .compact-toolbar > * {
+    width: 100%;
   }
 
   .table-wrap {
