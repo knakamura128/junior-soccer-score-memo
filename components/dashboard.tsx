@@ -503,7 +503,7 @@ export function Dashboard({ initialData }: DashboardProps) {
         <div>
           <p className="eyebrow">LINE Mini App Prototype</p>
           <div className="brand-lockup">
-            <img src="/fc-kumano-logo.svg" alt="FC KUMANO logo" className="brand-logo" />
+            <img src="/fc-kumano-logo.png" alt="FC KUMANO logo" className="brand-logo" />
             <div>
               <h1>FC KUMANO スコア管理</h1>
               <p className="hero-copy">Vercel + DB + LINEログイン前提の保存/更新対応版です。</p>
