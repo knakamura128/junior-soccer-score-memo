@@ -61,25 +61,54 @@ export function contentToMatchTitle(content: string) {
 }
 
 export function normalizeScheduleTags(value: string) {
-  return value
-    .split(/[、,/／\s]+/)
-    .map((item) => item.trim())
-    .filter(Boolean)
-    .flatMap((item) => {
-      if (SCHEDULE_TAG_OPTIONS.includes(item as (typeof SCHEDULE_TAG_OPTIONS)[number])) {
-        return [item];
-      }
-      if (item === "1-2年") return ["低学年", "1年", "2年"];
-      if (item === "3-4年") return ["中学年", "3年", "4年"];
-      if (item === "4-5-6年") return ["高学年", "4年", "5年", "6年"];
-      if (item === "5-6年") return ["高学年", "5年", "6年"];
-      if (/^[1-6]年$/.test(item)) return [item];
-      if (item.includes("低")) return ["低学年"];
-      if (item.includes("中")) return ["中学年"];
-      if (item.includes("高")) return ["高学年"];
-      return [];
-    })
-    .filter((tag, index, array) => array.indexOf(tag) === index);
+  const source = String(value).trim();
+  const tags = new Set<string>();
+
+  if (!source) {
+    return [];
+  }
+
+  if (source.includes("キッズ")) {
+    tags.add("キッズ");
+  }
+  if (source.includes("低")) {
+    tags.add("低学年");
+  }
+  if (source.includes("中")) {
+    tags.add("中学年");
+  }
+  if (source.includes("高")) {
+    tags.add("高学年");
+  }
+
+  for (const option of SCHEDULE_TAG_OPTIONS) {
+    if (source.includes(option)) {
+      tags.add(option);
+    }
+  }
+
+  const rangeMatches = Array.from(source.matchAll(/([1-6])\s*[〜~\-]\s*([1-6])年/g));
+  for (const match of rangeMatches) {
+    addGradeRange(tags, Number(match[1]), Number(match[2]));
+  }
+
+  const dotMatches = Array.from(source.matchAll(/([1-6](?:\s*・\s*[1-6])+)(?:年)?/g));
+  for (const match of dotMatches) {
+    const grades = match[1]
+      .split("・")
+      .map((item) => Number(item.trim()))
+      .filter((grade) => grade >= 1 && grade <= 6);
+    for (const grade of grades) {
+      addGrade(tags, grade);
+    }
+  }
+
+  const singleGradeMatches = Array.from(source.matchAll(/([1-6])年/g));
+  for (const match of singleGradeMatches) {
+    addGrade(tags, Number(match[1]));
+  }
+
+  return [...tags];
 }
 
 export function parseScheduleCsv(text: string) {
@@ -147,4 +176,24 @@ function normalizeImportedDate(value: string) {
     return `${fullSlashMatch[1]}-${fullSlashMatch[2].padStart(2, "0")}-${fullSlashMatch[3].padStart(2, "0")}`;
   }
   return value;
+}
+
+function addGradeRange(tags: Set<string>, from: number, to: number) {
+  const start = Math.min(from, to);
+  const end = Math.max(from, to);
+  for (let grade = start; grade <= end; grade += 1) {
+    addGrade(tags, grade);
+  }
+}
+
+function addGrade(tags: Set<string>, grade: number) {
+  const label = `${grade}年`;
+  tags.add(label);
+  if (grade <= 2) {
+    tags.add("低学年");
+  } else if (grade <= 4) {
+    tags.add("中学年");
+  } else {
+    tags.add("高学年");
+  }
 }

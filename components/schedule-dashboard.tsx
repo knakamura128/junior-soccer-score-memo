@@ -342,14 +342,21 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
       }
       const idToken = await requireIdToken();
       const savedRows: ScheduleRow[] = [];
-      for (const schedule of parsed) {
+      for (const [index, schedule] of parsed.entries()) {
+        if (schedule.tags.length === 0) {
+          throw new Error(`CSV ${index + 2}行目の学年タグを解釈できませんでした。`);
+        }
+        if (!schedule.location) {
+          throw new Error(`CSV ${index + 2}行目の場所が空です。`);
+        }
         const response = await fetch("/api/schedules", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ idToken, schedule })
         });
         if (!response.ok) {
-          throw new Error("一括取り込みに失敗しました。");
+          const detail = await response.text();
+          throw new Error(`CSV ${index + 2}行目の取り込みに失敗しました。${detail}`);
         }
         savedRows.push((await response.json()) as ScheduleRow);
       }
