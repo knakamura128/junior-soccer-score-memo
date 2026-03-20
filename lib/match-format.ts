@@ -1,4 +1,4 @@
-export const CATEGORY_OPTIONS = ["低学年", "中学年", "高学年", "1年", "2年", "3年", "4年", "5年", "6年"] as const;
+export const CATEGORY_OPTIONS = ["キッズ", "低学年", "中学年", "高学年", "1年", "2年", "3年", "4年", "5年", "6年"] as const;
 
 export type MatchPayload = {
   id?: string;
