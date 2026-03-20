@@ -498,7 +498,7 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
                   const assignedName = entry.dutyAssignment?.assignedUser?.displayName || entry.dutyLabel || "未定";
                   return (
                     <tr key={entry.id} className={entry.isMatch ? "schedule-is-match" : ""}>
-                      <td>{formatDateCell(entry.eventDate)}</td>
+                      <td>{renderScheduleDate(entry.eventDate)}</td>
                       <td>
                         <div className="badge-row">
                           {sortTagsForDisplay(entry.tags).map((tag) => (
@@ -914,6 +914,19 @@ function renderScheduleTime(startTime: string, endTime: string) {
       <span className="schedule-time-part">{startTime}</span>
       <span className="schedule-time-dash">-</span>
       <span className="schedule-time-part">{endTime}</span>
+    </span>
+  );
+}
+
+function renderScheduleDate(value: string) {
+  const date = new Date(`${value}T00:00:00+09:00`);
+  const monthDay = new Intl.DateTimeFormat("ja-JP", { month: "numeric", day: "numeric" }).format(date);
+  const weekday = new Intl.DateTimeFormat("ja-JP", { weekday: "short" }).format(date);
+
+  return (
+    <span className="schedule-date">
+      <span className="schedule-date-main">{monthDay}</span>
+      <span className="schedule-date-week">({weekday})</span>
     </span>
   );
 }
