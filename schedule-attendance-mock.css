@@ -70,6 +70,14 @@ h1, h2, p {
   font-weight: 700;
 }
 
+.close-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  white-space: nowrap;
+}
+
 .close-btn,
 .ghost {
   background: rgba(18, 65, 44, 0.08);
@@ -218,6 +226,10 @@ h1, h2, p {
   .modal-head,
   .action-row {
     grid-template-columns: 1fr;
+  }
+
+  .close-btn {
+    justify-self: start;
   }
 
   .summary-row {
