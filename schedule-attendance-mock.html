@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>出欠一覧 UIモック</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="schedule-attendance-mock.css">
+</head>
+<body>
+  <div class="attendance-shell">
+    <header class="hero">
+      <div>
+        <p class="eyebrow">Popup Mock</p>
+        <h1>出欠一覧</h1>
+        <p class="hero-copy">スケジュールからポップアップで開く、出欠一覧のUIモックです。</p>
+      </div>
+      <button class="close-btn">閉じる</button>
+    </header>
+
+    <section class="modal-card">
+      <div class="modal-head">
+        <div>
+          <h2>3/14(土) 4-5-6年 練習試合</h2>
+          <p>場所: 目白台多目的 / 内容: vs 光和イレブン / 修正者: 田中コーチ</p>
+        </div>
+        <div class="head-tags">
+          <span class="tag high">高学年</span>
+          <span class="tag match">試合</span>
+        </div>
+      </div>
+
+      <div class="summary-row">
+        <article class="summary ok">
+          <strong>18</strong>
+          <span>参加</span>
+        </article>
+        <article class="summary no">
+          <strong>3</strong>
+          <span>欠席</span>
+        </article>
+        <article class="summary pending">
+          <strong>1</strong>
+          <span>未定</span>
+        </article>
+      </div>
+
+      <div class="toolbar">
+        <span class="chip active">全員</span>
+        <span class="chip">参加</span>
+        <span class="chip">欠席</span>
+        <span class="chip">未定</span>
+        <span class="chip">学年別</span>
+      </div>
+
+      <div class="table-wrap">
+        <table class="attendance-table">
+          <thead>
+            <tr>
+              <th>選手</th>
+              <th>学年</th>
+              <th>出欠</th>
+              <th>入力者</th>
+              <th>更新日時</th>
+              <th>備考</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>10 田中 太郎</td>
+              <td><span class="tag high">6年</span></td>
+              <td><span class="status ok">参加</span></td>
+              <td>田中 太郎</td>
+              <td>3/12 20:14</td>
+              <td>現地集合</td>
+            </tr>
+            <tr>
+              <td>7 佐藤 陽斗</td>
+              <td><span class="tag high">5年</span></td>
+              <td><span class="status ok">参加</span></td>
+              <td>佐藤 陽斗</td>
+              <td>3/12 20:17</td>
+              <td>-</td>
+            </tr>
+            <tr>
+              <td>14 山本 悠真</td>
+              <td><span class="tag high">4年</span></td>
+              <td><span class="status no">欠席</span></td>
+              <td>山本 悠真</td>
+              <td>3/13 07:42</td>
+              <td>家庭都合</td>
+            </tr>
+            <tr>
+              <td>8 伊藤 蒼</td>
+              <td><span class="tag high">4年</span></td>
+              <td><span class="status pending">未定</span></td>
+              <td>伊藤 蒼</td>
+              <td>3/13 08:03</td>
+              <td>午前中に確定予定</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="action-row">
+        <button class="ghost">出欠入力を開く</button>
+        <button class="primary">当番管理へ</button>
+      </div>
+    </section>
+  </div>
+</body>
+</html>

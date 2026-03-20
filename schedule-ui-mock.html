@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FC KUMANO スケジュール管理 UIモック</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="schedule-ui-mock.css">
+</head>
+<body>
+  <div class="schedule-shell">
+    <header class="hero">
+      <div class="hero-brand">
+        <img src="public/fc-kumano-logo.png" alt="FC KUMANO logo" class="hero-logo">
+        <div>
+          <p class="eyebrow">Schedule Mock</p>
+          <h1>FC KUMANO スケジュール管理</h1>
+          <p class="hero-copy">トップページをスケジュール管理に切り替えた前提のUIモックです。月間一覧、出欠、当番、アップロード、スコア管理遷移を1画面で整理しています。</p>
+        </div>
+      </div>
+      <div class="hero-actions">
+        <button class="primary">予定表をアップロード</button>
+        <button class="ghost">スコア管理へ</button>
+      </div>
+    </header>
+
+    <main class="dashboard">
+      <section class="panel monthly-panel">
+        <div class="panel-head">
+          <div>
+            <h2>月間スケジュール</h2>
+            <p>2026年3月 / 修正者: 熊野コーチ</p>
+          </div>
+          <div class="toolbar">
+            <span class="chip active">3月</span>
+            <span class="chip">4月</span>
+            <span class="chip">5月</span>
+            <span class="chip">低学年</span>
+            <span class="chip">中学年</span>
+            <span class="chip">高学年</span>
+          </div>
+          <div class="head-meta">
+            <span class="meta-pill">当番調整あり 14件</span>
+            <span class="meta-pill">最新更新 3/12</span>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table class="schedule-table">
+            <thead>
+              <tr>
+                <th>日付</th>
+                <th>学年</th>
+                <th>時間</th>
+                <th>場所</th>
+                <th>内容</th>
+                <th>登板</th>
+                <th>出欠</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="match-row">
+                <td>3/14(土)</td>
+                <td><span class="tag high">4-5-6年</span></td>
+                <td>9:00 - 11:30</td>
+                <td>目白台多目的</td>
+                <td>練習試合 / vs 光和イレブン</td>
+                <td><span class="duty-chip assigned">三浦さん</span></td>
+                <td><span class="attendance ok">18 / 22</span></td>
+                <td><button class="link-btn">スコア管理へ</button></td>
+              </tr>
+              <tr class="match-row">
+                <td>3/14(土)</td>
+                <td><span class="tag high">3年</span></td>
+                <td>10:00 - 12:00</td>
+                <td>目白台多目的</td>
+                <td>練習試合 / 相手未定</td>
+                <td><span class="duty-chip pending">未確定</span></td>
+                <td><span class="attendance warn">12 / 19</span></td>
+                <td><button class="link-btn">スコア管理へ</button></td>
+              </tr>
+              <tr>
+                <td>3/15(日)</td>
+                <td><span class="tag low">1-2年</span></td>
+                <td>11:00 - 12:20</td>
+                <td>板七小</td>
+                <td>練習 / キッズイベント</td>
+                <td><span class="duty-chip assigned">佐藤さん</span></td>
+                <td><span class="attendance ok">15 / 18</span></td>
+                <td><button class="link-btn">出欠</button></td>
+              </tr>
+              <tr>
+                <td>3/21(土)</td>
+                <td><span class="tag mid">2年</span></td>
+                <td>9:00 - 11:30</td>
+                <td>目白台多目的</td>
+                <td>練習</td>
+                <td><span class="duty-chip pending">候補3名</span></td>
+                <td><span class="attendance warn">8 / 17</span></td>
+                <td><button class="link-btn">当番</button></td>
+              </tr>
+              <tr>
+                <td>3/22(日)</td>
+                <td><span class="tag low">1年</span></td>
+                <td>11:00 - 13:00</td>
+                <td>平和台FS</td>
+                <td>都大会 / vs 深川SC</td>
+                <td><span class="duty-chip assigned">小林さん</span></td>
+                <td><span class="attendance ok">14 / 15</span></td>
+                <td><button class="link-btn">スコア管理へ</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <aside class="sidebar">
+        <section class="panel upload-panel">
+          <div class="panel-head small">
+            <div>
+              <h2>アップロード</h2>
+              <p>Excel / 画像から予定表を作成</p>
+            </div>
+          </div>
+          <div class="upload-box">
+            <div class="upload-actions">
+              <button class="primary">Excelを選択</button>
+              <button class="ghost">画像を選択</button>
+            </div>
+            <p>アップ後にOCR / 目視修正で日付、学年、時間、場所、内容、登板を生成</p>
+          </div>
+          <img src="schedule/timeline_20260313_061858.jpg" alt="元の予定表イメージ" class="reference-image">
+        </section>
+
+        <section class="panel modal-panel">
+          <div class="panel-head small">
+            <div>
+              <h2>ポップアップ想定</h2>
+              <p>出欠 / 一覧 / 当番管理</p>
+            </div>
+          </div>
+          <div class="mock-modal">
+            <div class="mock-modal-head">
+              <strong>3/14(土) 4-5-6年 練習試合</strong>
+              <span>修正者: 田中コーチ</span>
+            </div>
+            <div class="modal-tabs">
+              <span class="chip active">出欠入力</span>
+              <span class="chip">出欠一覧</span>
+              <span class="chip">当番管理</span>
+            </div>
+            <div class="modal-grid">
+              <div class="status-card">
+                <h3>出欠入力</h3>
+                <p>LINEログイン名で登録</p>
+                <div class="option-row">
+                  <button class="primary compact">参加</button>
+                  <button class="ghost compact">欠席</button>
+                  <button class="ghost compact">未定</button>
+                </div>
+                <small>一度入力後の修正も可能</small>
+              </div>
+              <div class="status-card">
+                <h3>当番管理</h3>
+                <p>参加可能者から選択</p>
+                <div class="assign-row">
+                  <span class="duty-chip pending">候補: 山田 / 小林 / 三浦</span>
+                  <span class="duty-chip assigned">確定: 三浦さん</span>
+                </div>
+                <small>決定者のLINEログイン名も表示</small>
+              </div>
+            </div>
+          </div>
+        </section>
+      </aside>
+    </main>
+
+    <section class="panel flow-panel">
+      <div class="panel-head">
+        <div>
+          <h2>画面遷移イメージ</h2>
+          <p>スケジュール中心にして、試合日だけスコア管理へ連携します。</p>
+        </div>
+      </div>
+      <div class="flow-grid">
+        <article>
+          <strong>1. 予定表アップロード</strong>
+          <p>Excel または画像を読み込み、月間スケジュールを作成。</p>
+        </article>
+        <article>
+          <strong>2. 出欠 / 当番をポップアップ管理</strong>
+          <p>各日付・各学年ごとに LINE ログインで登録、修正可能。</p>
+        </article>
+        <article>
+          <strong>3. 試合日はスコア管理へ遷移</strong>
+          <p>日付、学年、場所、内容などを初期値として引き継ぎ、相手チームは空欄でも開始可能。</p>
+        </article>
+      </div>
+    </section>
+  </div>
+</body>
+</html>

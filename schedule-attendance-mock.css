@@ -1,0 +1,264 @@
+:root {
+  --bg: #efe7da;
+  --panel: rgba(255, 250, 244, 0.94);
+  --line: rgba(31, 45, 35, 0.12);
+  --text: #1f2c23;
+  --muted: #687569;
+  --green: #1d6a46;
+  --green-deep: #12412c;
+  --red: #c91f28;
+  --shadow: 0 24px 60px rgba(31, 45, 35, 0.14);
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: "Noto Sans JP", sans-serif;
+  color: var(--text);
+  background:
+    radial-gradient(circle at top right, rgba(255,255,255,.75), transparent 22%),
+    linear-gradient(180deg, #dbe6d2 0%, #efe7da 42%, #ead6c0 100%);
+}
+
+.attendance-shell {
+  width: min(1180px, calc(100% - 24px));
+  margin: 0 auto;
+  padding: 24px 0 40px;
+}
+
+.hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  font-size: .8rem;
+  font-weight: 800;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--green);
+}
+
+h1, h2, p {
+  margin: 0;
+}
+
+.hero-copy,
+.modal-head p {
+  color: var(--muted);
+}
+
+.close-btn,
+.ghost,
+.primary,
+.chip,
+.tag,
+.status {
+  border: 0;
+  border-radius: 16px;
+  font: inherit;
+}
+
+.close-btn,
+.ghost,
+.primary {
+  padding: 12px 16px;
+  font-weight: 700;
+}
+
+.close-btn,
+.ghost {
+  background: rgba(18, 65, 44, 0.08);
+  color: var(--green-deep);
+  border: 1px solid rgba(18, 65, 44, 0.12);
+}
+
+.primary {
+  background: var(--green-deep);
+  color: #fff;
+}
+
+.modal-card {
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 28px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(12px);
+}
+
+.modal-head,
+.summary-row,
+.toolbar,
+.action-row {
+  display: grid;
+  gap: 12px;
+}
+
+.modal-head {
+  grid-template-columns: 1fr auto;
+  align-items: start;
+  margin-bottom: 14px;
+}
+
+.head-tags {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.summary-row {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-bottom: 12px;
+}
+
+.summary {
+  padding: 14px;
+  border-radius: 20px;
+  background: #fff;
+  border: 1px solid var(--line);
+}
+
+.summary strong {
+  display: block;
+  font-size: 1.3rem;
+}
+
+.summary span {
+  color: var(--muted);
+}
+
+.summary.ok { background: #eef8f1; }
+.summary.no { background: #fbe9e8; }
+.summary.pending { background: #fdf3d8; }
+
+.toolbar {
+  grid-template-columns: repeat(5, max-content);
+  margin-bottom: 12px;
+}
+
+.chip,
+.tag,
+.status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: .82rem;
+  font-weight: 700;
+}
+
+.chip {
+  background: #f4ede2;
+  color: var(--muted);
+}
+
+.chip.active {
+  background: var(--green-deep);
+  color: #fff;
+}
+
+.tag.high { background: #fde5d5; color: #9c4412; }
+.tag.match { background: #e4edf9; color: #234e78; }
+
+.status.ok { background: #dff1e6; color: #165b37; }
+.status.no { background: #f8ddda; color: #8b2e28; }
+.status.pending { background: #fdf0cf; color: #7d6118; }
+
+.table-wrap {
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: #fff;
+}
+
+.attendance-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 840px;
+}
+
+.attendance-table th,
+.attendance-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.attendance-table th {
+  color: var(--muted);
+  font-size: .85rem;
+  background: rgba(29, 106, 70, 0.06);
+}
+
+.attendance-table tr:last-child td {
+  border-bottom: 0;
+}
+
+.action-row {
+  grid-template-columns: repeat(2, max-content);
+  justify-content: end;
+  margin-top: 14px;
+}
+
+@media (max-width: 720px) {
+  .attendance-shell {
+    width: min(100% - 12px, 100%);
+    padding: 12px 0 24px;
+  }
+
+  .hero,
+  .modal-head,
+  .action-row {
+    grid-template-columns: 1fr;
+  }
+
+  .summary-row {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .toolbar {
+    grid-template-columns: repeat(5, max-content);
+    gap: 6px;
+    overflow-x: auto;
+  }
+
+  .modal-card {
+    padding: 12px;
+    border-radius: 20px;
+  }
+
+  .attendance-table {
+    min-width: 760px;
+  }
+
+  .attendance-table th,
+  .attendance-table td {
+    padding: 8px 10px;
+    font-size: 0.72rem;
+  }
+
+  .chip,
+  .tag,
+  .status {
+    min-height: 28px;
+    padding: 4px 8px;
+    font-size: 0.72rem;
+  }
+
+  .summary {
+    padding: 10px 8px;
+  }
+
+  .summary strong {
+    font-size: 1rem;
+  }
+}
