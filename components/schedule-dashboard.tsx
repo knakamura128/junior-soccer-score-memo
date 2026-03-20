@@ -13,6 +13,9 @@ import {
   type SchedulePayload
 } from "@/lib/schedule-format";
 
+const SCHEDULE_ROW_TAG_ORDER = ["キッズ", "1年", "2年", "3年", "4年", "5年", "6年"] as const;
+const SCHEDULE_BADGE_ORDER = ["低学年", "中学年", "高学年", "キッズ", "1年", "2年", "3年", "4年", "5年", "6年"] as const;
+
 type AuthState = {
   status: "loading" | "ready" | "error";
   idToken: string;
@@ -136,6 +139,8 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
         .sort((left, right) => {
           const dateCompare = left.eventDate.localeCompare(right.eventDate);
           if (dateCompare !== 0) return dateCompare;
+          const tagCompare = primaryTagRank(left.tags) - primaryTagRank(right.tags);
+          if (tagCompare !== 0) return tagCompare;
           return left.startTime.localeCompare(right.startTime);
         }),
     [filterTag, schedules, selectedMonth]
@@ -496,7 +501,7 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
                       <td>{formatDateCell(entry.eventDate)}</td>
                       <td>
                         <div className="badge-row">
-                          {entry.tags.map((tag) => (
+                          {sortTagsForDisplay(entry.tags).map((tag) => (
                             <span key={tag} className={`badge ${tagClassName(tag)}`}>
                               {tag}
                             </span>
@@ -511,9 +516,6 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
                       </td>
                       <td>
                         <div>{assignedName}</div>
-                        {entry.dutyAssignment?.decidedBy ? (
-                          <div className="muted">決定: {entry.dutyAssignment.decidedBy.displayName}</div>
-                        ) : null}
                       </td>
                       <td>
                         <div className="badge-row">
@@ -838,6 +840,35 @@ function tagClassName(tag: string) {
   if (tag === "中学年" || tag === "3年" || tag === "4年") return "tag-mid";
   if (tag === "高学年" || tag === "5年" || tag === "6年") return "tag-high";
   return "";
+}
+
+function primaryTagRank(tags: string[]) {
+  const sorted = [...tags].sort((left, right) => scheduleRowTagRank(left) - scheduleRowTagRank(right));
+  const first = sorted[0];
+  return scheduleRowTagRank(first || "");
+}
+
+function scheduleRowTagRank(tag: string) {
+  const index = SCHEDULE_ROW_TAG_ORDER.indexOf(tag as (typeof SCHEDULE_ROW_TAG_ORDER)[number]);
+  return index === -1 ? Number.MAX_SAFE_INTEGER : index;
+}
+
+function sortTagsForDisplay(tags: string[]) {
+  return [...tags].sort((left, right) => {
+    const leftIndex = SCHEDULE_BADGE_ORDER.indexOf(left as (typeof SCHEDULE_BADGE_ORDER)[number]);
+    const rightIndex = SCHEDULE_BADGE_ORDER.indexOf(right as (typeof SCHEDULE_BADGE_ORDER)[number]);
+
+    if (leftIndex === -1 && rightIndex === -1) {
+      return left.localeCompare(right, "ja");
+    }
+    if (leftIndex === -1) {
+      return 1;
+    }
+    if (rightIndex === -1) {
+      return -1;
+    }
+    return leftIndex - rightIndex;
+  });
 }
 
 function attendanceBadgeClass(status: string) {
