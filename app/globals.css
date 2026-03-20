@@ -25,6 +25,11 @@ button, input, select {
   font: inherit;
 }
 
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
 .app-shell { width: min(1200px, calc(100% - 16px)); margin: 0 auto; padding: 16px 0 32px; }
 .hero { padding: 12px 4px 20px; display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; }
 .eyebrow { margin: 0 0 8px; font-size: .8rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--green); }
@@ -98,6 +103,75 @@ input[type="month"] { min-width: 0; }
 .text-button { padding: 0; background: transparent; color: inherit; text-decoration: underline; }
 .action-row { display: flex; gap: 10px; align-items: center; }
 .danger { color: #b13d20; }
+.link-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #eef4ee;
+  color: var(--green-dark);
+  border: 1px solid rgba(17,72,47,.12);
+}
+.schedule-shell { padding-bottom: 48px; }
+.schedule-hero { padding-bottom: 14px; }
+.schedule-hero-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+.schedule-card { padding-top: 16px; }
+.schedule-title { align-items: center; }
+.schedule-toolbar { grid-template-columns: 1fr .9fr 1.1fr; }
+.schedule-toolbar .file-input { background: #e6f4ea; color: var(--green-dark); }
+.schedule-table-wrap { margin-top: 12px; }
+.schedule-results-table { min-width: 1120px; }
+.schedule-results-table td { line-height: 1.35; }
+.schedule-results-table th,
+.schedule-results-table td { white-space: nowrap; }
+.schedule-results-table td:nth-child(5),
+.schedule-results-table td:nth-child(6),
+.schedule-results-table td:nth-child(8) { white-space: normal; }
+.schedule-empty { text-align: center; padding: 20px 12px; }
+.schedule-actions { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
+.score-link-inline { color: var(--green-dark); }
+.schedule-is-match { background: rgba(27,107,69,.03); }
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(21, 34, 24, 0.34);
+  backdrop-filter: blur(6px);
+}
+.modal-card {
+  width: min(760px, 100%);
+  max-height: min(88vh, 980px);
+  overflow: auto;
+  padding: 18px;
+  border-radius: 28px;
+  border: 1px solid var(--line);
+  background: #fffaf2;
+  box-shadow: var(--shadow);
+}
+.schedule-modal { width: min(820px, 100%); }
+.editor-modal { width: min(760px, 100%); }
+.modal-close { color: var(--text); background: rgba(17,72,47,.08); }
+.schedule-modal-tabs { margin-top: 12px; }
+.schedule-modal-tabs .tab { min-width: 0; }
+.modal-section { display: grid; gap: 14px; margin-top: 16px; }
+.attendance-choice-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.status-toggle {
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface-strong);
+  padding: 14px 12px;
+  font-weight: 700;
+  color: var(--muted);
+}
+.status-toggle.is-active { background: var(--green-dark); color: #fff; border-color: var(--green-dark); }
+.schedule-summary-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.modal-results-table { min-width: 0; }
+.duty-meta { margin-top: -4px; }
+.schedule-form-grid { margin-top: 12px; }
+.checkbox-row { display: flex; align-items: center; gap: 10px; margin-top: 14px; }
+.checkbox-row input { width: auto; }
 .compact-toolbar {
   grid-template-columns: 1.05fr .95fr 1.1fr auto auto;
   align-items: end;
@@ -215,6 +289,10 @@ button:active { transform: translateY(0); }
     grid-template-columns: 1fr;
   }
 
+  .schedule-toolbar {
+    grid-template-columns: 1fr;
+  }
+
   .compact-toolbar > * {
     width: 100%;
   }
@@ -233,6 +311,43 @@ button:active { transform: translateY(0); }
     padding: 8px 6px;
     font-size: 0.72rem;
     word-break: break-word;
+  }
+
+  .schedule-results-table {
+    min-width: 0;
+  }
+
+  .schedule-results-table th,
+  .schedule-results-table td {
+    padding: 7px 5px;
+    font-size: 0.68rem;
+    white-space: normal;
+  }
+
+  .schedule-actions {
+    gap: 6px;
+  }
+
+  .modal-backdrop {
+    padding: 10px;
+  }
+
+  .modal-card {
+    padding: 14px;
+    border-radius: 22px;
+  }
+
+  .attendance-choice-row {
+    gap: 8px;
+  }
+
+  .status-toggle {
+    padding: 12px 8px;
+    font-size: 0.82rem;
+  }
+
+  .schedule-summary-grid {
+    gap: 8px;
   }
 
   .badge {

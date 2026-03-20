@@ -1,11 +1,13 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { buildMatchesCsv, parseReferenceMatchesCsv } from "@/lib/match-csv";
 import {
   CATEGORY_OPTIONS,
   type MatchPayload
 } from "@/lib/match-format";
+import { createEmptyMatch } from "@/lib/score-draft";
 
 type Player = {
   id: string;
@@ -41,6 +43,7 @@ type DashboardProps = {
     players: Player[];
     matches: MatchRow[];
   };
+  initialMatch?: MatchPayload;
 };
 
 type AuthState = {
@@ -54,30 +57,11 @@ type AuthState = {
 
 const DRAFT_STORAGE_KEY = "score-mini-app-next-draft";
 
-function createEmptyMatch(): MatchPayload {
-  return {
-    tournament: "",
-    title: "",
-    opponent: "",
-    tags: [],
-    matchDate: new Date().toISOString().slice(0, 10),
-    periodMode: "halves",
-    currentPeriod: "前半",
-    pkMode: "off",
-    homePkScore: 0,
-    awayPkScore: 0,
-    homeScore: 0,
-    awayScore: 0,
-    duration: "00:00",
-    events: []
-  };
-}
-
-export function Dashboard({ initialData }: DashboardProps) {
+export function Dashboard({ initialData, initialMatch }: DashboardProps) {
   const [activeTab, setActiveTab] = useState<"scoring" | "results">("scoring");
   const [players, setPlayers] = useState(initialData.players);
   const [matches, setMatches] = useState(initialData.matches);
-  const [match, setMatch] = useState<MatchPayload>(createEmptyMatch);
+  const [match, setMatch] = useState<MatchPayload>(() => initialMatch || createEmptyMatch());
   const [editingId, setEditingId] = useState<string | null>(null);
   const [timerSeconds, setTimerSeconds] = useState(0);
   const [timerRunning, setTimerRunning] = useState(false);
@@ -530,6 +514,11 @@ export function Dashboard({ initialData }: DashboardProps) {
               LINEでログイン
             </button>
           ) : null}
+          <div style={{ marginTop: 12 }}>
+            <Link href="/" className="ghost link-chip">
+              スケジュール管理へ
+            </Link>
+          </div>
         </aside>
       </header>
 

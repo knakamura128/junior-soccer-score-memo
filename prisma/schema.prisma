@@ -16,6 +16,11 @@ model User {
   updatedAt   DateTime    @updatedAt
   created     Match[]     @relation("MatchCreatedBy")
   updated     Match[]     @relation("MatchUpdatedBy")
+  schedulesCreated ScheduleEntry[] @relation("ScheduleCreatedBy")
+  schedulesUpdated ScheduleEntry[] @relation("ScheduleUpdatedBy")
+  attendances      Attendance[]
+  dutiesAssigned   DutyAssignment[] @relation("DutyAssignedTo")
+  dutiesDecided    DutyAssignment[] @relation("DutyDecidedBy")
 }
 
 model Player {
@@ -60,4 +65,53 @@ model GoalEvent {
   time      String
   createdAt DateTime @default(now())
   match     Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+}
+
+model ScheduleEntry {
+  id             String         @id @default(cuid())
+  eventDate      DateTime
+  tags           String[]
+  startTime      String
+  endTime        String
+  location       String
+  content        String
+  dutyLabel      String?
+  isMatch        Boolean        @default(false)
+  note           String?
+  createdById    String
+  updatedById    String
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  createdBy      User           @relation("ScheduleCreatedBy", fields: [createdById], references: [id])
+  updatedBy      User           @relation("ScheduleUpdatedBy", fields: [updatedById], references: [id])
+  attendances    Attendance[]
+  dutyAssignment DutyAssignment?
+}
+
+model Attendance {
+  id              String        @id @default(cuid())
+  scheduleEntryId String
+  userId          String
+  status          String
+  note            String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  scheduleEntry   ScheduleEntry @relation(fields: [scheduleEntryId], references: [id], onDelete: Cascade)
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([scheduleEntryId, userId])
+}
+
+model DutyAssignment {
+  id              String        @id @default(cuid())
+  scheduleEntryId String        @unique
+  assignedUserId  String?
+  decidedById     String?
+  note            String?
+  decidedAt       DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  scheduleEntry   ScheduleEntry @relation(fields: [scheduleEntryId], references: [id], onDelete: Cascade)
+  assignedUser    User?         @relation("DutyAssignedTo", fields: [assignedUserId], references: [id], onDelete: SetNull)
+  decidedBy       User?         @relation("DutyDecidedBy", fields: [decidedById], references: [id], onDelete: SetNull)
 }

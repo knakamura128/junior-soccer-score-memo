@@ -1,33 +1,51 @@
 import { prisma } from "@/lib/prisma";
-import { Dashboard } from "@/components/dashboard";
+import { ScheduleDashboard } from "@/components/schedule-dashboard";
 
 export const dynamic = "force-dynamic";
 
 async function getInitialData() {
-  const [players, matches] = await Promise.all([
-    prisma.player.findMany({ orderBy: [{ createdAt: "asc" }] }),
-    prisma.match.findMany({
-      include: {
-        goals: { orderBy: { createdAt: "asc" } },
-        createdBy: true,
-        updatedBy: true
+  const schedules = await prisma.scheduleEntry.findMany({
+    include: {
+      createdBy: true,
+      updatedBy: true,
+      attendances: {
+        include: { user: true },
+        orderBy: [{ updatedAt: "desc" }]
       },
-      orderBy: [{ matchDate: "desc" }, { createdAt: "desc" }]
-    })
-  ]);
+      dutyAssignment: {
+        include: {
+          assignedUser: true,
+          decidedBy: true
+        }
+      }
+    },
+    orderBy: [{ eventDate: "asc" }, { startTime: "asc" }, { createdAt: "asc" }]
+  });
 
   return {
-    players,
-    matches: matches.map((match) => ({
-      ...match,
-      matchDate: match.matchDate.toISOString().slice(0, 10),
-      createdAt: match.createdAt.toISOString(),
-      updatedAt: match.updatedAt.toISOString()
+    schedules: schedules.map((entry) => ({
+      ...entry,
+      eventDate: entry.eventDate.toISOString().slice(0, 10),
+      createdAt: entry.createdAt.toISOString(),
+      updatedAt: entry.updatedAt.toISOString(),
+      dutyAssignment: entry.dutyAssignment
+        ? {
+            ...entry.dutyAssignment,
+            decidedAt: entry.dutyAssignment.decidedAt?.toISOString() || null,
+            createdAt: entry.dutyAssignment.createdAt.toISOString(),
+            updatedAt: entry.dutyAssignment.updatedAt.toISOString()
+          }
+        : null,
+      attendances: entry.attendances.map((attendance) => ({
+        ...attendance,
+        createdAt: attendance.createdAt.toISOString(),
+        updatedAt: attendance.updatedAt.toISOString()
+      }))
     }))
   };
 }
 
 export default async function Page() {
   const initialData = await getInitialData();
-  return <Dashboard initialData={initialData} />;
+  return <ScheduleDashboard initialData={initialData} />;
 }
