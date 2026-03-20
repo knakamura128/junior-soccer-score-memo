@@ -127,6 +127,16 @@ input[type="month"] { min-width: 0; }
 .schedule-results-table td:nth-child(6),
 .schedule-results-table td:nth-child(8) { white-space: normal; }
 .schedule-empty { text-align: center; padding: 20px 12px; }
+.schedule-time {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 2px;
+}
+.schedule-time-part,
+.schedule-time-dash {
+  white-space: nowrap;
+}
 .schedule-actions { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
 .score-link-inline { color: var(--green-dark); }
 .schedule-is-match { background: rgba(27,107,69,.03); }
@@ -293,6 +303,12 @@ button:active { transform: translateY(0); }
     grid-template-columns: 1fr;
   }
 
+  .schedule-toolbar input[type="month"] {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+
   .compact-toolbar > * {
     width: 100%;
   }
@@ -326,6 +342,10 @@ button:active { transform: translateY(0); }
 
   .schedule-actions {
     gap: 6px;
+  }
+
+  .schedule-time {
+    row-gap: 2px;
   }
 
   .modal-backdrop {

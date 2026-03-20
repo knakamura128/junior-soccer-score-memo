@@ -508,7 +508,7 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
                           ))}
                         </div>
                       </td>
-                      <td>{formatTimeRange(entry.startTime, entry.endTime)}</td>
+                      <td>{renderScheduleTime(entry.startTime, entry.endTime)}</td>
                       <td>{entry.location}</td>
                       <td>
                         <div>{entry.content}</div>
@@ -901,4 +901,19 @@ function buildScoreHref(entry: ScheduleRow) {
     opponent: extractOpponentFromContent(entry.content)
   });
   return `/score?${params.toString()}`;
+}
+
+function renderScheduleTime(startTime: string, endTime: string) {
+  const label = formatTimeRange(startTime, endTime);
+  if (label === "-" || !endTime || startTime === endTime) {
+    return <span className="schedule-time"><span className="schedule-time-part">{label}</span></span>;
+  }
+
+  return (
+    <span className="schedule-time">
+      <span className="schedule-time-part">{startTime}</span>
+      <span className="schedule-time-dash">-</span>
+      <span className="schedule-time-part">{endTime}</span>
+    </span>
+  );
 }
