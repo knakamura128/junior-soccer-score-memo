@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { ScheduleDashboard } from "@/components/schedule-dashboard";
+import { serializeScheduleDate } from "@/lib/schedule-format";
 
 export const dynamic = "force-dynamic";
 
@@ -25,7 +26,7 @@ async function getInitialData() {
   return {
     schedules: schedules.map((entry) => ({
       ...entry,
-      eventDate: entry.eventDate.toISOString().slice(0, 10),
+      eventDate: serializeScheduleDate(entry.eventDate),
       createdAt: entry.createdAt.toISOString(),
       updatedAt: entry.updatedAt.toISOString(),
       dutyAssignment: entry.dutyAssignment

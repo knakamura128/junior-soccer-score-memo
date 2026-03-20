@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { upsertLineUser } from "@/lib/upsert-line-user";
+import { serializeScheduleDate } from "@/lib/schedule-format";
 import { z } from "zod";
 
 const schedulePayloadSchema = z.object({
@@ -42,7 +43,7 @@ export async function GET() {
   return NextResponse.json(
     schedules.map((entry) => ({
       ...entry,
-      eventDate: entry.eventDate.toISOString().slice(0, 10),
+      eventDate: serializeScheduleDate(entry.eventDate),
       createdAt: entry.createdAt.toISOString(),
       updatedAt: entry.updatedAt.toISOString(),
       dutyAssignment: entry.dutyAssignment
@@ -91,7 +92,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       ...saved,
-      eventDate: saved.eventDate.toISOString().slice(0, 10),
+      eventDate: serializeScheduleDate(saved.eventDate),
       createdAt: saved.createdAt.toISOString(),
       updatedAt: saved.updatedAt.toISOString(),
       dutyAssignment: null,

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { serializeScheduleDate } from "@/lib/schedule-format";
 import { upsertLineUser } from "@/lib/upsert-line-user";
 import { z } from "zod";
 
@@ -53,7 +54,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
 
   return NextResponse.json({
     ...entry,
-    eventDate: entry.eventDate.toISOString().slice(0, 10),
+    eventDate: serializeScheduleDate(entry.eventDate),
     createdAt: entry.createdAt.toISOString(),
     updatedAt: entry.updatedAt.toISOString(),
     dutyAssignment: entry.dutyAssignment
