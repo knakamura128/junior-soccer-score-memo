@@ -199,6 +199,7 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
   function openNewEditor() {
     setEditingId(null);
     setScheduleForm(createEmptySchedule(`${selectedMonth}-01`));
+    setFeedback("");
     setEditorOpen(true);
   }
 
@@ -215,6 +216,7 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
       isMatch: entry.isMatch,
       note: entry.note || ""
     });
+    setFeedback("");
     setEditorOpen(true);
   }
 
@@ -225,7 +227,7 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
   }
 
   async function saveSchedule() {
-    if (scheduleForm.tags.length === 0 || !scheduleForm.location || !scheduleForm.content) {
+    if (!scheduleForm.eventDate || scheduleForm.tags.length === 0 || !scheduleForm.location || !scheduleForm.content) {
       setFeedback("日付、タグ、場所、内容は必須です。");
       return;
     }
@@ -237,10 +239,12 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
         body: JSON.stringify({ idToken, schedule: scheduleForm })
       });
       if (!response.ok) {
-        throw new Error("スケジュール保存に失敗しました。");
+        const detail = await response.text();
+        throw new Error(detail || "スケジュール保存に失敗しました。");
       }
       const saved = (await response.json()) as ScheduleRow;
       upsertSchedule(saved);
+      setSelectedMonth(saved.eventDate.slice(0, 7));
       closeEditor();
       setFeedback(editingId ? "スケジュールを更新しました。" : "スケジュールを追加しました。");
     } catch (error) {
@@ -728,16 +732,18 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
               <label>
                 開始
                 <input
-                  type="time"
+                  type="text"
                   value={scheduleForm.startTime}
+                  placeholder="09:00 または -"
                   onChange={(event) => setScheduleForm((current) => ({ ...current, startTime: event.target.value }))}
                 />
               </label>
               <label>
                 終了
                 <input
-                  type="time"
+                  type="text"
                   value={scheduleForm.endTime}
+                  placeholder="11:00 または -"
                   onChange={(event) => setScheduleForm((current) => ({ ...current, endTime: event.target.value }))}
                 />
               </label>

@@ -63,41 +63,46 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const parsed = createSchema.parse(await request.json());
-  const user = await upsertLineUser(parsed.idToken);
+  try {
+    const parsed = createSchema.parse(await request.json());
+    const user = await upsertLineUser(parsed.idToken);
 
-  const saved = await prisma.scheduleEntry.create({
-    data: {
-      eventDate: new Date(`${parsed.schedule.eventDate}T00:00:00+09:00`),
-      tags: parsed.schedule.tags,
-      startTime: parsed.schedule.startTime,
-      endTime: parsed.schedule.endTime,
-      location: parsed.schedule.location,
-      content: parsed.schedule.content,
-      dutyLabel: parsed.schedule.dutyLabel || null,
-      isMatch: parsed.schedule.isMatch,
-      note: parsed.schedule.note || null,
-      createdById: user.id,
-      updatedById: user.id
-    },
-    include: {
-      createdBy: true,
-      updatedBy: true,
-      attendances: { include: { user: true }, orderBy: [{ updatedAt: "desc" }] },
-      dutyAssignment: { include: { assignedUser: true, decidedBy: true } }
-    }
-  });
+    const saved = await prisma.scheduleEntry.create({
+      data: {
+        eventDate: new Date(`${parsed.schedule.eventDate}T00:00:00+09:00`),
+        tags: parsed.schedule.tags,
+        startTime: parsed.schedule.startTime,
+        endTime: parsed.schedule.endTime,
+        location: parsed.schedule.location,
+        content: parsed.schedule.content,
+        dutyLabel: parsed.schedule.dutyLabel || null,
+        isMatch: parsed.schedule.isMatch,
+        note: parsed.schedule.note || null,
+        createdById: user.id,
+        updatedById: user.id
+      },
+      include: {
+        createdBy: true,
+        updatedBy: true,
+        attendances: { include: { user: true }, orderBy: [{ updatedAt: "desc" }] },
+        dutyAssignment: { include: { assignedUser: true, decidedBy: true } }
+      }
+    });
 
-  return NextResponse.json({
-    ...saved,
-    eventDate: saved.eventDate.toISOString().slice(0, 10),
-    createdAt: saved.createdAt.toISOString(),
-    updatedAt: saved.updatedAt.toISOString(),
-    dutyAssignment: null,
-    attendances: saved.attendances.map((attendance) => ({
-      ...attendance,
-      createdAt: attendance.createdAt.toISOString(),
-      updatedAt: attendance.updatedAt.toISOString()
-    }))
-  });
+    return NextResponse.json({
+      ...saved,
+      eventDate: saved.eventDate.toISOString().slice(0, 10),
+      createdAt: saved.createdAt.toISOString(),
+      updatedAt: saved.updatedAt.toISOString(),
+      dutyAssignment: null,
+      attendances: saved.attendances.map((attendance) => ({
+        ...attendance,
+        createdAt: attendance.createdAt.toISOString(),
+        updatedAt: attendance.updatedAt.toISOString()
+      }))
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "スケジュール作成に失敗しました。";
+    return new NextResponse(message, { status: 400 });
+  }
 }

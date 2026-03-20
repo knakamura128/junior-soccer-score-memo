@@ -37,6 +37,15 @@ export function serializeScheduleDate(date: Date) {
 }
 
 export function formatTimeRange(startTime: string, endTime: string) {
+  if ((startTime === "-" || !startTime) && (endTime === "-" || !endTime)) {
+    return "-";
+  }
+  if (startTime === "-" && endTime) {
+    return endTime;
+  }
+  if (endTime === "-" && startTime) {
+    return startTime;
+  }
   return [startTime, endTime].filter(Boolean).join(" - ");
 }
 
@@ -128,11 +137,27 @@ export function parseScheduleCsv(text: string) {
       const rawNote = readCell(row, index, ["備考", "note"]);
       const rawMatch = readCell(row, index, ["試合", "isMatch"]);
 
-      const [startTime = "09:00", endTime = "11:00"] = rawTime
-        .replace(/[〜~]/g, "-")
-        .split("-")
-        .map((item) => item.trim())
-        .filter(Boolean);
+      const normalizedTime = rawTime.trim();
+      let startTime = "09:00";
+      let endTime = "11:00";
+
+      if (normalizedTime === "-") {
+        startTime = "-";
+        endTime = "-";
+      } else {
+        const parts = normalizedTime
+          .replace(/[〜~]/g, "-")
+          .split("-")
+          .map((item) => item.trim())
+          .filter(Boolean);
+
+        if (parts.length >= 2) {
+          [startTime, endTime] = parts;
+        } else if (parts.length === 1) {
+          startTime = parts[0];
+          endTime = "-";
+        }
+      }
 
       return {
         eventDate: normalizeImportedDate(rawDate),
