@@ -217,9 +217,15 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
       }
       const { default: liff } = await import("@line/liff");
       await liff.init({ liffId });
-      if (!liff.isLoggedIn()) {
-        liff.login({ redirectUri: window.location.href });
+      if (liff.isLoggedIn()) {
+        const idToken = liff.getIDToken() || "";
+        if (idToken) {
+          window.location.reload();
+          return;
+        }
+        liff.logout();
       }
+      liff.login({ redirectUri: window.location.href });
     } catch (error) {
       setAuth({
         status: "error",
