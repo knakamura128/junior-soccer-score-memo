@@ -787,20 +787,6 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
               ))}
             </select>
           </label>
-          <label className="file-input">
-            予定表を取り込む
-            <input
-              type="file"
-              accept=".csv,.tsv,.txt,.png,.jpg,.jpeg"
-              onChange={(event) => {
-                const file = event.target.files?.[0];
-                if (file) {
-                  void importSchedules(file);
-                }
-                event.currentTarget.value = "";
-              }}
-            />
-          </label>
         </div>
 
         <div className={`table-wrap schedule-table-wrap ${compactView ? "is-compact" : ""}`}>
@@ -902,9 +888,28 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
           </table>
         </div>
         <div className="schedule-footer-actions">
-          <button className="ghost calendar-export" type="button" onClick={exportGoogleCalendar}>
-            Googleカレンダー取込
-          </button>
+          <div className="footer-button-row">
+            <label className="file-input schedule-import-input">
+              予定表を取り込む
+              <input
+                type="file"
+                accept=".csv,.tsv,.txt,.png,.jpg,.jpeg"
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  if (file) {
+                    void importSchedules(file);
+                  }
+                  event.currentTarget.value = "";
+                }}
+              />
+            </label>
+            <button className="ghost calendar-export" type="button" onClick={exportGoogleCalendar}>
+              Googleカレンダー取込
+            </button>
+          </div>
+          <p className="calendar-note">
+            予定表取込では、`日付 / 開始 / 終了 / 場所 / 内容 / タグ` が完全一致する予定は自動でスキップします。
+          </p>
           <p className="calendar-note">Googleカレンダーへは現在の絞り込み結果だけを書き出します。取り込み後も同期はされません。</p>
         </div>
       </section>
