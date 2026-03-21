@@ -12,6 +12,7 @@ import {
   type AttendanceStatus,
   type SchedulePayload
 } from "@/lib/schedule-format";
+import { buildScheduleIcs } from "@/lib/schedule-ics";
 
 const SCHEDULE_ROW_TAG_ORDER = ["キッズ", "1年", "2年", "3年", "4年", "5年", "6年"] as const;
 const SCHEDULE_BADGE_ORDER = ["低学年", "中学年", "高学年", "キッズ", "1年", "2年", "3年", "4年", "5年", "6年"] as const;
@@ -427,6 +428,35 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
     .map((entry) => entry.updatedAt)
     .sort((left, right) => right.localeCompare(left))[0];
 
+  function exportGoogleCalendar() {
+    if (visibleSchedules.length === 0) {
+      setFeedback("現在の絞り込み条件で書き出せる予定がありません。");
+      return;
+    }
+
+    const ics = buildScheduleIcs(
+      visibleSchedules.map((entry) => ({
+        id: entry.id,
+        eventDate: entry.eventDate,
+        startTime: entry.startTime,
+        endTime: entry.endTime,
+        location: entry.location,
+        content: entry.content,
+        tags: entry.tags,
+        note: entry.note
+      }))
+    );
+
+    const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `fc-kumano-schedule-${selectedMonth}${filterTag === "すべて" ? "" : `-${filterTag}`}.ics`;
+    link.click();
+    URL.revokeObjectURL(url);
+    setFeedback("Googleカレンダー取り込み用ファイルを書き出しました。同期はされません。");
+  }
+
   return (
     <div className="app-shell schedule-shell">
       <header className="hero schedule-hero">
@@ -642,6 +672,12 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
               )}
             </tbody>
           </table>
+        </div>
+        <div className="schedule-footer-actions">
+          <button className="ghost calendar-export" type="button" onClick={exportGoogleCalendar}>
+            Googleカレンダー取込
+          </button>
+          <p className="calendar-note">Googleカレンダーへは現在の絞り込み結果だけを書き出します。取り込み後も同期はされません。</p>
         </div>
       </section>
 
