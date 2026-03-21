@@ -351,6 +351,10 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
         body: JSON.stringify({ idToken })
       });
       if (!response.ok) {
+        if (response.status === 400) {
+          await loginWithLine();
+          return;
+        }
         const detail = await readResponseError(response, "スケジュール削除に失敗しました。");
         throw new Error(detail);
       }
@@ -383,6 +387,10 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
         })
       });
       if (!response.ok) {
+        if (response.status === 400) {
+          await loginWithLine();
+          return;
+        }
         const detail = await readResponseError(response, "出欠保存に失敗しました。");
         throw new Error(detail);
       }
@@ -416,6 +424,10 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
         })
       });
       if (!response.ok) {
+        if (response.status === 400) {
+          await loginWithLine();
+          return;
+        }
         const detail = await readResponseError(response, "当番保存に失敗しました。");
         throw new Error(detail);
       }
@@ -452,6 +464,10 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
         })
       });
       if (!response.ok) {
+        if (response.status === 400) {
+          await loginWithLine();
+          return;
+        }
         const detail = await readResponseError(response, "配車保存に失敗しました。");
         throw new Error(detail);
       }
@@ -487,6 +503,10 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
           })
         });
         if (!response.ok) {
+          if (response.status === 400) {
+            await loginWithLine();
+            return;
+          }
           const detail = await readResponseError(response, `出欠一括登録に失敗しました。`);
           throw new Error(`${entry.eventDate} ${entry.content}: ${detail}`);
         }
