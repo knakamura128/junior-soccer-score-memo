@@ -110,6 +110,8 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
   const [bulkAttendanceOpen, setBulkAttendanceOpen] = useState(false);
   const [bulkAttendanceStatus, setBulkAttendanceStatus] = useState<AttendanceStatus>("参加");
   const [bulkAttendanceNote, setBulkAttendanceNote] = useState("");
+  const [bulkAttendanceDate, setBulkAttendanceDate] = useState("すべて");
+  const [bulkAttendanceTag, setBulkAttendanceTag] = useState("すべて");
 
   useEffect(() => {
     let cancelled = false;
@@ -151,6 +153,17 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
     [filterTag, schedules, selectedMonth]
   );
   const monthOptions = getMonthOptions(selectedMonth);
+  const bulkAttendanceDateOptions = Array.from(new Set(visibleSchedules.map((entry) => entry.eventDate))).sort((left, right) =>
+    left.localeCompare(right)
+  );
+  const bulkAttendanceTagOptions = Array.from(
+    new Set(visibleSchedules.flatMap((entry) => entry.tags.filter((tag) => /^(キッズ|低学年|中学年|高学年|[1-6]年)$/.test(tag))))
+  ).sort((left, right) => scheduleRowTagRank(left) - scheduleRowTagRank(right));
+  const bulkAttendanceTargets = visibleSchedules.filter((entry) => {
+    const matchesDate = bulkAttendanceDate === "すべて" ? true : entry.eventDate === bulkAttendanceDate;
+    const matchesTag = bulkAttendanceTag === "すべて" ? true : entry.tags.includes(bulkAttendanceTag);
+    return matchesDate && matchesTag;
+  });
 
   const modalEntry = schedules.find((entry) => entry.id === modalEntryId) || null;
   const currentAttendance =
@@ -252,6 +265,8 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
   function openBulkAttendance() {
     setBulkAttendanceStatus("参加");
     setBulkAttendanceNote("");
+    setBulkAttendanceDate("すべて");
+    setBulkAttendanceTag("すべて");
     setFeedback("");
     setBulkAttendanceOpen(true);
   }
@@ -452,7 +467,7 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
   }
 
   async function saveBulkAttendance() {
-    if (visibleSchedules.length === 0) {
+    if (bulkAttendanceTargets.length === 0) {
       setFeedback("一括登録できる予定がありません。");
       return;
     }
@@ -461,7 +476,7 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
       const idToken = await requireIdToken();
       const savedRows: ScheduleRow[] = [];
 
-      for (const entry of visibleSchedules) {
+      for (const entry of bulkAttendanceTargets) {
         const response = await fetch(`/api/schedules/${entry.id}/attendance`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -1112,7 +1127,7 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
               <div>
                 <h2>出欠一括登録</h2>
                 <p>
-                  現在の表示月・学年の {visibleSchedules.length} 件に同じ出欠を登録します。
+                  現在の表示月・学年から、日付と対象タグを選んでまとめて登録します。
                 </p>
               </div>
               <button className="ghost modal-close" type="button" onClick={closeBulkAttendance}>
@@ -1120,6 +1135,30 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
               </button>
             </div>
             <div className="modal-section">
+              <div className="form-grid schedule-form-grid">
+                <label>
+                  日付
+                  <select value={bulkAttendanceDate} onChange={(event) => setBulkAttendanceDate(event.target.value)}>
+                    <option value="すべて">すべての日付</option>
+                    {bulkAttendanceDateOptions.map((date) => (
+                      <option key={date} value={date}>
+                        {formatDateCell(date)}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  対象タグ
+                  <select value={bulkAttendanceTag} onChange={(event) => setBulkAttendanceTag(event.target.value)}>
+                    <option value="すべて">すべてのタグ</option>
+                    {bulkAttendanceTagOptions.map((tag) => (
+                      <option key={tag} value={tag}>
+                        {tag}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
               <div className="attendance-choice-row">
                 {(["参加", "欠席", "未定"] as AttendanceStatus[]).map((status) => (
                   <button
@@ -1136,6 +1175,7 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
                 備考
                 <input value={bulkAttendanceNote} onChange={(event) => setBulkAttendanceNote(event.target.value)} placeholder="全予定に同じ備考を入れます" />
               </label>
+              <p className="muted">対象件数: {bulkAttendanceTargets.length}件</p>
               <div className="stack-actions">
                 <button className="primary" type="button" onClick={() => void saveBulkAttendance()}>
                   一括保存
