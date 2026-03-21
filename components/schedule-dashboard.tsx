@@ -97,27 +97,10 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
   useEffect(() => {
     let cancelled = false;
     async function initLiff() {
-      const liffId = process.env.NEXT_PUBLIC_LIFF_ID;
-      if (!liffId) {
-        setAuth({ status: "error", idToken: "", displayName: "", error: "NEXT_PUBLIC_LIFF_ID が未設定です。" });
-        return;
-      }
       try {
-        const { default: liff } = await import("@line/liff");
-        await liff.init({ liffId });
-        if (!liff.isLoggedIn()) {
-          setAuth({ status: "ready", idToken: "", displayName: "未ログイン" });
-          return;
-        }
-        const [profile, idToken] = await Promise.all([liff.getProfile(), Promise.resolve(liff.getIDToken() || "")]);
+        const session = await fetchLiffSession();
         if (!cancelled) {
-          setAuth({
-            status: "ready",
-            idToken,
-            displayName: profile.displayName,
-            pictureUrl: profile.pictureUrl,
-            lineUserId: profile.userId
-          });
+          setAuth(session);
         }
       } catch {
         if (!cancelled) {
@@ -176,10 +159,12 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
   }
 
   async function requireIdToken() {
-    if (!auth.idToken) {
+    const session = await fetchLiffSession();
+    setAuth(session);
+    if (!session.idToken) {
       throw new Error("保存にはLINEログインが必要です。");
     }
-    return auth.idToken;
+    return session.idToken;
   }
 
   async function loginWithLine() {
@@ -781,6 +766,7 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
                 <input value={scheduleForm.note} onChange={(event) => setScheduleForm((current) => ({ ...current, note: event.target.value }))} />
               </label>
             </div>
+            {feedback ? <p className={feedback.includes("失敗") ? "error" : "muted"}>{feedback}</p> : null}
             <label className="checkbox-row">
               <input
                 type="checkbox"
@@ -799,6 +785,30 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
       ) : null}
     </div>
   );
+}
+
+async function fetchLiffSession(): Promise<AuthState> {
+  const liffId = process.env.NEXT_PUBLIC_LIFF_ID;
+  if (!liffId) {
+    return { status: "error", idToken: "", displayName: "", error: "NEXT_PUBLIC_LIFF_ID が未設定です。" };
+  }
+
+  const { default: liff } = await import("@line/liff");
+  await liff.init({ liffId });
+
+  if (!liff.isLoggedIn()) {
+    return { status: "ready", idToken: "", displayName: "未ログイン" };
+  }
+
+  const [profile, idToken] = await Promise.all([liff.getProfile(), Promise.resolve(liff.getIDToken() || "")]);
+
+  return {
+    status: "ready",
+    idToken,
+    displayName: profile.displayName,
+    pictureUrl: profile.pictureUrl,
+    lineUserId: profile.userId
+  };
 }
 
 function TagSelector({ value, onChange }: { value: string[]; onChange: (tags: string[]) => void }) {

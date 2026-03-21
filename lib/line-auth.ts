@@ -30,7 +30,7 @@ export async function verifyLineIdToken(idToken: string): Promise<VerifiedLinePr
   });
 
   if (!response.ok) {
-    throw new Error("Failed to verify LINE ID token.");
+    throw new Error("LINE認証の確認に失敗しました。再度LINEでログインしてください。");
   }
 
   const payload = (await response.json()) as VerifyResponse;
