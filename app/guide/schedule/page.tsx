@@ -1,0 +1,503 @@
+type GuideSchedulePageProps = {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+};
+
+const scheduleRows = [
+  {
+    date: "2026-03-20",
+    tags: ["低学年", "2年"],
+    time: "09:00 - 10:00",
+    location: "西が丘FS/A",
+    content: "練習",
+    duty: "未定",
+    attendance: { join: 10, absent: 0, undecided: 0 },
+    updatedBy: "中村一尋",
+    updatedAt: "3/20 23:59"
+  },
+  {
+    date: "2026-03-20",
+    tags: ["中学年", "3年", "4年"],
+    time: "08:00 - 10:00",
+    location: "目白台FS東3",
+    content: "練習",
+    duty: "未定",
+    attendance: { join: 11, absent: 0, undecided: 0 },
+    updatedBy: "中村一尋",
+    updatedAt: "3/21 00:14"
+  },
+  {
+    date: "2026-03-20",
+    tags: ["高学年", "5年", "6年"],
+    time: "08:00 - 14:00",
+    location: "仲町地域センター",
+    content: "6年生を送る会",
+    duty: "寺島さん",
+    attendance: { join: 10, absent: 0, undecided: 0 },
+    updatedBy: "中村一尋",
+    updatedAt: "3/21 00:14"
+  },
+  {
+    date: "2026-03-21",
+    tags: ["高学年", "5年", "6年"],
+    time: "12:00 - 16:00",
+    location: "四ツ木橋競技場",
+    content: "TOHON CUP卒業大会 集合板五/板七 10:45",
+    duty: "寺島さん",
+    attendance: { join: 9, absent: 1, undecided: 1 },
+    updatedBy: "中村一尋",
+    updatedAt: "3/21 08:10"
+  }
+];
+
+const attendanceRows = [
+  { name: "10 中村アオイ", status: "参加", note: "現地集合", updatedBy: "中村一尋", updatedAt: "3/21 08:03" },
+  { name: "11 松本ユウト", status: "参加", note: "", updatedBy: "松本由美", updatedAt: "3/21 08:05" },
+  { name: "12 高橋ソウタ", status: "欠席", note: "学校行事", updatedBy: "高橋麻衣", updatedAt: "3/21 08:11" },
+  { name: "13 斉藤ハルト", status: "未定", note: "午後から合流予定", updatedBy: "斉藤舞", updatedAt: "3/21 08:20" }
+];
+
+const dutyCandidates = [
+  { name: "中村一尋", status: "参加" },
+  { name: "松本由美", status: "参加" },
+  { name: "高橋麻衣", status: "欠席" },
+  { name: "斉藤舞", status: "未定" }
+];
+
+export default async function GuideSchedulePage({ searchParams }: GuideSchedulePageProps) {
+  const params = searchParams ? await searchParams : {};
+  const view = typeof params.view === "string" ? params.view : "top";
+
+  return (
+    <div className="app-shell schedule-shell guide-shell">
+      <header className="hero schedule-hero">
+        <div>
+          <p className="eyebrow">Guide Capture</p>
+          <div className="brand-lockup">
+            <img src="/fc-kumano-logo.png" alt="FC KUMANO logo" className="brand-logo" />
+            <div>
+              <h1>FC KUMANO スケジュール管理</h1>
+              <p className="hero-copy">使い方ガイド用の画面状態です。</p>
+            </div>
+          </div>
+        </div>
+        <aside className="auth-box">
+          <div className="auth-row">
+            <div className="guide-avatar" aria-hidden="true">
+              N
+            </div>
+            <div>
+              <strong>中村一尋</strong>
+              <div className="auth-meta">出欠入力と修正者として記録されます</div>
+            </div>
+          </div>
+          <div className="schedule-hero-actions">
+            <span className="ghost link-chip">LINEログイン中</span>
+            <span className="ghost link-chip">スコア管理へ</span>
+          </div>
+        </aside>
+      </header>
+
+      {view === "top" ? <ScheduleTopScene /> : null}
+      {view === "attendance-input" ? <AttendanceInputScene /> : null}
+      {view === "attendance-list" ? <AttendanceListScene /> : null}
+      {view === "duty" ? <DutyScene /> : null}
+      {view === "edit" ? <EditScene /> : null}
+    </div>
+  );
+}
+
+function ScheduleTopScene() {
+  return (
+    <section className="card schedule-card guide-scene-card">
+      <div className="section-title schedule-title">
+        <div>
+          <h2>月間スケジュール</h2>
+          <span>当番調整あり 2件 / 最新更新 2026/3/21</span>
+        </div>
+        <button className="primary" type="button">
+          予定を追加
+        </button>
+      </div>
+
+      <div className="results-toolbar compact-toolbar schedule-toolbar">
+        <div className="month-filter">
+          <span className="month-filter-label">表示月</span>
+          <div className="month-chip-row">
+            <button className="tab month-chip" type="button">
+              2月
+            </button>
+            <button className="tab month-chip is-active" type="button">
+              3月
+            </button>
+            <button className="tab month-chip" type="button">
+              4月
+            </button>
+          </div>
+        </div>
+        <div className="month-filter">
+          <span className="month-filter-label">表示切替</span>
+          <div className="month-chip-row">
+            <button className="tab month-chip is-active" type="button">
+              短縮
+            </button>
+            <button className="tab month-chip" type="button">
+              通常
+            </button>
+          </div>
+        </div>
+        <label>
+          学年
+          <select defaultValue="すべて">
+            <option>すべて</option>
+            <option>キッズ</option>
+            <option>低学年</option>
+            <option>中学年</option>
+            <option>高学年</option>
+          </select>
+        </label>
+        <label className="file-input">
+          予定表を取り込む
+          <input type="file" />
+        </label>
+      </div>
+
+      <div className="table-wrap schedule-table-wrap is-compact">
+        <table className="results-table schedule-results-table is-compact">
+          <thead>
+            <tr>
+              <th>日付</th>
+              <th>学年</th>
+              <th>時間</th>
+              <th>場所</th>
+              <th>内容</th>
+              <th>当番</th>
+              <th>出欠</th>
+            </tr>
+          </thead>
+          <tbody>
+            {scheduleRows.map((entry) => (
+              <tr key={`${entry.date}-${entry.content}`}>
+                <td>{renderScheduleDate(entry.date)}</td>
+                <td>
+                  <div className="badge-row">
+                    {entry.tags.map((tag) => (
+                      <span key={tag} className={`badge ${tagClassName(tag)}`}>
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                </td>
+                <td>{renderScheduleTime(entry.time)}</td>
+                <td>{entry.location}</td>
+                <td>{entry.content}</td>
+                <td>{entry.duty}</td>
+                <td>
+                  <div className="badge-row">
+                    <span className="badge result-win">参 {entry.attendance.join}</span>
+                    <span className="badge result-loss">欠 {entry.attendance.absent}</span>
+                    <span className="badge result-draw">未 {entry.attendance.undecided}</span>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="schedule-footer-actions">
+        <button className="ghost calendar-export" type="button">
+          Googleカレンダー取込
+        </button>
+        <p className="calendar-note">Googleカレンダーへ取り込み後、このアプリとは同期されません。</p>
+      </div>
+    </section>
+  );
+}
+
+function AttendanceInputScene() {
+  return (
+    <div className="modal-backdrop guide-modal-backdrop">
+      <div className="modal-card schedule-modal" role="dialog" aria-modal="true">
+        <div className="section-title">
+          <div>
+            <h2>出欠を入力</h2>
+            <span>2026/3/21 四ツ木橋競技場 / TOHON CUP卒業大会</span>
+          </div>
+          <button className="ghost modal-close" type="button">
+            閉じる
+          </button>
+        </div>
+        <div className="schedule-modal-tabs tab-bar">
+          <button className="tab is-active" type="button">
+            出欠入力
+          </button>
+          <button className="tab" type="button">
+            出欠一覧
+          </button>
+          <button className="tab" type="button">
+            当番管理
+          </button>
+        </div>
+        <div className="modal-section">
+          <div className="attendance-choice-row">
+            <button className="status-toggle is-active" type="button">
+              参加
+            </button>
+            <button className="status-toggle" type="button">
+              欠席
+            </button>
+            <button className="status-toggle" type="button">
+              未定
+            </button>
+          </div>
+          <label>
+            備考
+            <input defaultValue="現地集合です。" />
+          </label>
+          <button className="primary" type="button">
+            出欠を保存
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AttendanceListScene() {
+  return (
+    <div className="modal-backdrop guide-modal-backdrop">
+      <div className="modal-card schedule-modal" role="dialog" aria-modal="true">
+        <div className="section-title">
+          <div>
+            <h2>出欠一覧</h2>
+            <span>2026/3/21 四ツ木橋競技場 / TOHON CUP卒業大会</span>
+          </div>
+          <button className="ghost modal-close" type="button">
+            閉じる
+          </button>
+        </div>
+        <div className="schedule-modal-tabs tab-bar">
+          <button className="tab" type="button">
+            出欠入力
+          </button>
+          <button className="tab is-active" type="button">
+            出欠一覧
+          </button>
+          <button className="tab" type="button">
+            当番管理
+          </button>
+        </div>
+        <div className="summary-grid schedule-summary-grid">
+          <div className="summary-card">
+            <h3>参加</h3>
+            <strong>2</strong>
+          </div>
+          <div className="summary-card">
+            <h3>欠席</h3>
+            <strong>1</strong>
+          </div>
+          <div className="summary-card">
+            <h3>未定</h3>
+            <strong>1</strong>
+          </div>
+        </div>
+        <div className="badge-row guide-filter-row">
+          <span className="badge">全員</span>
+          <span className="badge result-win">参加</span>
+          <span className="badge result-loss">欠席</span>
+          <span className="badge result-draw">未定</span>
+          <span className="badge tag-high">高学年</span>
+        </div>
+        <div className="modal-section">
+          <table className="results-table modal-results-table">
+            <thead>
+              <tr>
+                <th>選手</th>
+                <th>出欠</th>
+                <th>入力者</th>
+                <th>更新日時</th>
+                <th>備考</th>
+              </tr>
+            </thead>
+            <tbody>
+              {attendanceRows.map((row) => (
+                <tr key={row.name}>
+                  <td>{row.name}</td>
+                  <td>
+                    <span className={`badge ${attendanceBadgeClass(row.status)}`}>{row.status}</span>
+                  </td>
+                  <td>{row.updatedBy}</td>
+                  <td>{row.updatedAt}</td>
+                  <td>{row.note || "-"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DutyScene() {
+  return (
+    <div className="modal-backdrop guide-modal-backdrop">
+      <div className="modal-card schedule-modal" role="dialog" aria-modal="true">
+        <div className="section-title">
+          <div>
+            <h2>当番管理</h2>
+            <span>2026/3/21 四ツ木橋競技場 / TOHON CUP卒業大会</span>
+          </div>
+          <button className="ghost modal-close" type="button">
+            閉じる
+          </button>
+        </div>
+        <div className="schedule-modal-tabs tab-bar">
+          <button className="tab" type="button">
+            出欠入力
+          </button>
+          <button className="tab" type="button">
+            出欠一覧
+          </button>
+          <button className="tab is-active" type="button">
+            当番管理
+          </button>
+        </div>
+        <div className="modal-section">
+          <label>
+            当番担当者
+            <select defaultValue="中村一尋">
+              <option value="">未定</option>
+              {dutyCandidates.map((row) => (
+                <option key={row.name} value={row.name}>
+                  {row.name} ({row.status})
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            メモ
+            <input defaultValue="10:15 集合、受付対応" />
+          </label>
+          <div className="muted duty-meta">決定者: 中村一尋 / 決定日時: 2026/3/21 08:22</div>
+          <div className="summary-card">
+            <h3>参加者候補</h3>
+            <div className="record-table">
+              {dutyCandidates.map((row) => (
+                <div key={row.name} className="record-row">
+                  <strong>{row.name}</strong>
+                  <span>{row.status}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <button className="primary" type="button">
+            当番を保存
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function EditScene() {
+  return (
+    <div className="modal-backdrop guide-modal-backdrop">
+      <div className="modal-card schedule-modal editor-modal" role="dialog" aria-modal="true">
+        <div className="section-title">
+          <div>
+            <h2>予定を修正</h2>
+            <span>修正者はLINEログイン名で記録されます。</span>
+          </div>
+          <button className="ghost modal-close" type="button">
+            閉じる
+          </button>
+        </div>
+        <div className="form-grid schedule-form-grid">
+          <label>
+            日付
+            <input type="date" defaultValue="2026-03-21" />
+          </label>
+          <label>
+            タグ
+            <div className="tag-selector">
+              {["キッズ", "低学年", "中学年", "高学年", "1年", "2年", "3年", "4年", "5年", "6年"].map((tag) => (
+                <label key={tag} className="tag-option">
+                  <input type="checkbox" defaultChecked={["高学年", "5年", "6年"].includes(tag)} />
+                  <span>{tag}</span>
+                </label>
+              ))}
+            </div>
+          </label>
+          <label>
+            開始
+            <input defaultValue="12:00" />
+          </label>
+          <label>
+            終了
+            <input defaultValue="16:00" />
+          </label>
+          <label>
+            場所
+            <input defaultValue="四ツ木橋競技場" />
+          </label>
+          <label>
+            内容
+            <input defaultValue="TOHON CUP卒業大会 集合板五/板七 10:45" />
+          </label>
+          <label>
+            登板メモ
+            <input defaultValue="10:15 集合、受付対応" />
+          </label>
+          <label>
+            備考
+            <input defaultValue="ユニフォームは赤黒。水筒持参。" />
+          </label>
+        </div>
+        <label className="checkbox-row">
+          <input type="checkbox" defaultChecked />
+          <span>試合として扱う</span>
+        </label>
+        <button className="primary" type="button">
+          予定を更新
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function renderScheduleDate(value: string) {
+  const date = new Date(`${value}T00:00:00+09:00`);
+  const label = `${date.getMonth() + 1}/${date.getDate()}`;
+  const week = ["日", "月", "火", "水", "木", "金", "土"][date.getDay()];
+  return (
+    <span className="schedule-date">
+      <span className="schedule-date-main">{label}</span>
+      <span className="schedule-date-week">({week})</span>
+    </span>
+  );
+}
+
+function renderScheduleTime(value: string) {
+  const [start, end] = value.split(" - ");
+  return (
+    <span className="schedule-time">
+      <span className="schedule-time-part">{start}</span>
+      <span className="schedule-time-dash">-</span>
+      <span className="schedule-time-part">{end}</span>
+    </span>
+  );
+}
+
+function tagClassName(tag: string) {
+  if (tag === "低学年" || tag === "1年" || tag === "2年") return "tag-low";
+  if (tag === "中学年" || tag === "3年" || tag === "4年") return "tag-mid";
+  if (tag === "高学年" || tag === "5年" || tag === "6年") return "tag-high";
+  return "";
+}
+
+function attendanceBadgeClass(status: string) {
+  if (status === "参加") return "result-win";
+  if (status === "欠席") return "result-loss";
+  return "result-draw";
+}

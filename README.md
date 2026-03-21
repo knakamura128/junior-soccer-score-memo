@@ -36,3 +36,4 @@ Vercel デプロイ前提の Next.js + Prisma + LINE LIFF 構成です。
 
 - [スケジュール管理 使い方](/Users/kazuhiro/Documents/score-manager/docs/schedule-guide.md)
 - [スコア管理 使い方](/Users/kazuhiro/Documents/score-manager/docs/score-guide.md)
+- Web 画面内の案内は `/guide` から確認できます

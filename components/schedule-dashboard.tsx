@@ -495,6 +495,9 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
                 LINEログアウト
               </button>
             )}
+            <Link href="/guide" className="ghost link-chip">
+              使い方ガイド
+            </Link>
             <Link href="/score" className="ghost link-chip">
               スコア管理へ
             </Link>

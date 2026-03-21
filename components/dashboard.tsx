@@ -575,7 +575,10 @@ export function Dashboard({ initialData, initialMatch }: DashboardProps) {
               LINEログアウト
             </button>
           )}
-          <div style={{ marginTop: 12 }}>
+          <div style={{ marginTop: 12, display: "flex", flexWrap: "wrap", gap: 10 }}>
+            <Link href="/guide" className="ghost link-chip">
+              使い方ガイド
+            </Link>
             <Link href="/" className="ghost link-chip">
               スケジュール管理へ
             </Link>
