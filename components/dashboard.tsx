@@ -68,9 +68,9 @@ export function Dashboard({ initialData, initialMatch }: DashboardProps) {
   const [goalPlayer, setGoalPlayer] = useState("");
   const [playerForm, setPlayerForm] = useState({ number: "", name: "", tags: [] as string[] });
   const [filterTag, setFilterTag] = useState("すべて");
-  const [filterMonth, setFilterMonth] = useState("");
+  const [filterMonth, setFilterMonth] = useState(() => new Date().toISOString().slice(0, 7));
   const [sortValue, setSortValue] = useState("date-desc");
-  const [showAudit, setShowAudit] = useState(true);
+  const [compactResultsView, setCompactResultsView] = useState(true);
   const [auth, setAuth] = useState<AuthState>({ status: "loading", idToken: "", displayName: "" });
   const [feedback, setFeedback] = useState<string>("");
 
@@ -109,13 +109,6 @@ export function Dashboard({ initialData, initialMatch }: DashboardProps) {
   useEffect(() => {
     setMatch((current) => ({ ...current, duration: formatClock(timerSeconds) }));
   }, [timerSeconds]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
-    setShowAudit(!window.matchMedia("(max-width: 899px)").matches);
-  }, []);
 
   const filteredPlayers = players.filter((player) =>
     match.tags.length === 0 ? true : player.tags.some((tag) => match.tags.includes(tag))
@@ -215,6 +208,7 @@ export function Dashboard({ initialData, initialMatch }: DashboardProps) {
     },
     { win: 0, draw: 0, loss: 0 }
   );
+  const matchMonthOptions = getMonthOptions(filterMonth);
 
   async function requireIdToken() {
     if (!auth.idToken) {
@@ -698,11 +692,43 @@ export function Dashboard({ initialData, initialMatch }: DashboardProps) {
       <section className={`tab-panel ${activeTab === "results" ? "is-active" : ""}`}>
         <section className="card">
           <div className="section-title"><h2>試合結果一覧</h2><span>保存者/更新者つき</span></div>
-          <div className="results-toolbar compact-toolbar">
+          <div className="results-toolbar compact-toolbar score-results-toolbar">
+            <div className="month-filter">
+              <span className="month-filter-label">表示月</span>
+              <div className="month-chip-row">
+                {matchMonthOptions.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    className={`tab month-chip ${filterMonth === option.value ? "is-active" : ""}`}
+                    onClick={() => setFilterMonth(option.value)}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="month-filter">
+              <span className="month-filter-label">表示切替</span>
+              <div className="month-chip-row">
+                <button
+                  type="button"
+                  className={`tab month-chip ${compactResultsView ? "is-active" : ""}`}
+                  onClick={() => setCompactResultsView(true)}
+                >
+                  短縮
+                </button>
+                <button
+                  type="button"
+                  className={`tab month-chip ${compactResultsView ? "" : "is-active"}`}
+                  onClick={() => setCompactResultsView(false)}
+                >
+                  通常
+                </button>
+              </div>
+            </div>
             <label>タグで絞り込み<select value={filterTag} onChange={(event) => setFilterTag(event.target.value)}><option value="すべて">すべて</option>{CATEGORY_OPTIONS.map((option) => <option key={option} value={option}>{option}</option>)}</select></label>
-            <label>表示年月<input type="month" value={filterMonth} onChange={(event) => setFilterMonth(event.target.value)} /></label>
             <label>並び順<select value={sortValue} onChange={(event) => setSortValue(event.target.value)}><option value="date-desc">日付が新しい順</option><option value="date-asc">日付が古い順</option><option value="goals-desc">総得点が多い順</option><option value="opponent-asc">対戦相手順</option></select></label>
-            <button className="ghost dark-ghost" type="button" onClick={() => setShowAudit((current) => !current)}>{showAudit ? "保存者を隠す" : "保存者を表示"}</button>
             <button className="primary csv-export" type="button" onClick={exportCsv}>CSVを書き出す</button>
             <label className="file-input csv-import">CSVを取り込む<input type="file" accept=".csv,text/csv" onChange={(event) => { const file = event.target.files?.[0]; if (file) void importReferenceCsv(file); event.currentTarget.value = ""; }} /></label>
           </div>
@@ -724,15 +750,15 @@ export function Dashboard({ initialData, initialMatch }: DashboardProps) {
               {opponentRecords.length === 0 ? <div className="empty-state">対戦結果データがまだありません。</div> : <details className="expandable" open={opponentRecords.length <= 8}><summary>対戦相手 {opponentRecords.length}件</summary><div className="record-table">{opponentRecords.map(([name, record]) => <div key={name} className="record-row"><strong>{name}</strong><span>{record.win}勝 {record.draw}分 {record.loss}敗</span></div>)}</div></details>}
             </section>
           </div>
-          <div className="table-wrap">
-            <table className="results-table">
+          <div className={`table-wrap ${compactResultsView ? "is-compact" : ""}`}>
+            <table className={`results-table score-results-table ${compactResultsView ? "is-compact" : ""}`}>
               <thead>
                 <tr>
-                  <th>日時</th><th>大会・試合名</th><th>タグ</th><th>対戦相手</th><th>スコア</th><th>勝敗</th><th>得点者</th>{showAudit ? <th>保存者 / 更新者</th> : null}<th>操作</th>
+                  <th>日時</th><th>大会・試合名</th><th>タグ</th><th>対戦相手</th><th>スコア</th><th>勝敗</th><th>得点者</th>{!compactResultsView ? <th>保存者 / 更新者</th> : null}{!compactResultsView ? <th>操作</th> : null}
                 </tr>
               </thead>
               <tbody>
-                {visibleMatches.length === 0 ? <tr><td colSpan={showAudit ? 9 : 8} className="empty-state">保存された試合結果はまだありません。</td></tr> : visibleMatches.map((entry) => (
+                {visibleMatches.length === 0 ? <tr><td colSpan={compactResultsView ? 7 : 9} className="empty-state">保存された試合結果はまだありません。</td></tr> : visibleMatches.map((entry) => (
                   <tr key={entry.id}>
                     <td>{entry.matchDate}</td>
                     <td>{joinTournamentAndTitle(entry)}</td>
@@ -741,13 +767,13 @@ export function Dashboard({ initialData, initialMatch }: DashboardProps) {
                     <td>{formatScore(entry)}</td>
                     <td><span className={`badge ${getOutcomeBadgeClass(entry.outcome)}`}>{entry.outcome}</span></td>
                     <td>{entry.goals.filter((goal) => goal.side === "home" && goal.player).map((goal) => goal.player).join(", ") || "なし"}</td>
-                    {showAudit ? <td><div>{entry.createdBy?.displayName || "不明"} / {entry.updatedBy?.displayName || "不明"}</div></td> : null}
-                    <td>
+                    {!compactResultsView ? <td><div>{entry.createdBy?.displayName || "不明"} / {entry.updatedBy?.displayName || "不明"}</div></td> : null}
+                    {!compactResultsView ? <td>
                       <div className="action-row">
                         <button className="text-button" type="button" onClick={() => editMatch(entry)}>修正</button>
                         <button className="text-button danger" type="button" onClick={() => void deleteMatch(entry.id)}>削除</button>
                       </div>
-                    </td>
+                    </td> : null}
                   </tr>
                 ))}
               </tbody>
@@ -890,4 +916,17 @@ function shouldRefreshDashboardLineLogin(error: unknown) {
   }
 
   return false;
+}
+
+function getMonthOptions(selectedMonth: string) {
+  const [yearText = "2026", monthText = "1"] = selectedMonth.split("-");
+  const baseDate = new Date(Number(yearText), Number(monthText) - 1, 1);
+
+  return [-1, 0, 1].map((offset) => {
+    const date = new Date(baseDate.getFullYear(), baseDate.getMonth() + offset, 1);
+    return {
+      value: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`,
+      label: `${date.getMonth() + 1}月`
+    };
+  });
 }

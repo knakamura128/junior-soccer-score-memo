@@ -155,6 +155,25 @@ input[type="month"] { min-width: 0; }
   gap: 8px;
   justify-items: start;
 }
+.score-results-toolbar {
+  grid-template-columns: 1fr .85fr .95fr auto auto;
+}
+.score-results-table.is-compact {
+  min-width: 0;
+  table-layout: fixed;
+}
+.score-results-table.is-compact th,
+.score-results-table.is-compact td {
+  padding: 6px 4px;
+  font-size: 0.64rem;
+}
+.score-results-table.is-compact .badge {
+  padding: 3px 6px;
+  font-size: 0.62rem;
+}
+.score-results-table.is-compact .badge-row {
+  gap: 3px;
+}
 .schedule-table-wrap { margin-top: 12px; }
 .schedule-results-table { min-width: 1120px; }
 .schedule-results-table td { line-height: 1.35; }
@@ -373,6 +392,10 @@ button:active { transform: translateY(0); }
     grid-template-columns: 1fr;
   }
 
+  .score-results-toolbar {
+    grid-template-columns: 1fr;
+  }
+
   .compact-toolbar > * {
     width: 100%;
   }
@@ -396,6 +419,17 @@ button:active { transform: translateY(0); }
   }
 
   .schedule-results-table.is-compact .badge {
+    padding: 3px 5px;
+    font-size: 0.58rem;
+  }
+
+  .score-results-table.is-compact th,
+  .score-results-table.is-compact td {
+    padding: 5px 3px;
+    font-size: 0.6rem;
+  }
+
+  .score-results-table.is-compact .badge {
     padding: 3px 5px;
     font-size: 0.58rem;
   }
