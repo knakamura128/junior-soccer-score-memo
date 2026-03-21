@@ -594,12 +594,19 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
       }
       const authPayload = await requireLineAuth();
       const savedRows: ScheduleRow[] = [];
+      const existingKeys = new Set(schedules.map((entry) => buildScheduleDuplicateKey(entry)));
+      let skippedCount = 0;
       for (const [index, schedule] of parsed.entries()) {
         if (schedule.tags.length === 0) {
           throw new Error(`CSV ${index + 2}行目の学年タグを解釈できませんでした。`);
         }
         if (!schedule.location) {
           throw new Error(`CSV ${index + 2}行目の場所が空です。`);
+        }
+        const duplicateKey = buildScheduleDuplicateKey(schedule);
+        if (existingKeys.has(duplicateKey)) {
+          skippedCount += 1;
+          continue;
         }
         const response = await fetch("/api/schedules", {
           method: "POST",
@@ -610,10 +617,18 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
           const detail = await response.text();
           throw new Error(`CSV ${index + 2}行目の取り込みに失敗しました。${detail}`);
         }
-        savedRows.push((await response.json()) as ScheduleRow);
+        const saved = (await response.json()) as ScheduleRow;
+        savedRows.push(saved);
+        existingKeys.add(duplicateKey);
       }
       setSchedules((current) => [...current, ...savedRows]);
-      setFeedback(`${savedRows.length}件の予定を取り込みました。`);
+      if (savedRows.length === 0 && skippedCount > 0) {
+        setFeedback(`完全一致の予定 ${skippedCount}件をスキップしました。新規取り込みはありません。`);
+      } else if (skippedCount > 0) {
+        setFeedback(`${savedRows.length}件の予定を取り込み、完全一致の予定 ${skippedCount}件をスキップしました。`);
+      } else {
+        setFeedback(`${savedRows.length}件の予定を取り込みました。`);
+      }
     } catch (error) {
       if (shouldRefreshLineLogin(error)) {
         await loginWithLine();
@@ -1473,4 +1488,15 @@ function getMonthOptions(selectedMonth: string) {
       label: `${date.getMonth() + 1}月`
     };
   });
+}
+
+function buildScheduleDuplicateKey(schedule: Pick<SchedulePayload, "eventDate" | "startTime" | "endTime" | "location" | "content" | "tags">) {
+  return [
+    schedule.eventDate.trim(),
+    schedule.startTime.trim(),
+    schedule.endTime.trim(),
+    schedule.location.trim(),
+    schedule.content.trim(),
+    sortTagsForDisplay(schedule.tags).join("|")
+  ].join("::");
 }
