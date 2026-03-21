@@ -497,6 +497,28 @@ export function Dashboard({ initialData, initialMatch }: DashboardProps) {
     }
   }
 
+  async function logoutFromLine() {
+    try {
+      const liffId = process.env.NEXT_PUBLIC_LIFF_ID;
+      if (!liffId) {
+        throw new Error("NEXT_PUBLIC_LIFF_ID が未設定です。");
+      }
+      const { default: liff } = await import("@line/liff");
+      await liff.init({ liffId });
+      if (liff.isLoggedIn()) {
+        liff.logout();
+      }
+      window.location.reload();
+    } catch (error) {
+      setAuth({
+        status: "error",
+        idToken: "",
+        displayName: "",
+        error: buildDashboardLiffErrorMessage(error, "LINEログアウトに失敗しました。")
+      });
+    }
+  }
+
   return (
     <div className="app-shell">
       <header className="hero">
@@ -529,7 +551,11 @@ export function Dashboard({ initialData, initialMatch }: DashboardProps) {
             <button className="primary" type="button" onClick={() => void loginWithLine()} style={{ marginTop: 12 }}>
               LINEでログイン
             </button>
-          ) : null}
+          ) : (
+            <button className="ghost link-chip" type="button" onClick={() => void logoutFromLine()} style={{ marginTop: 12 }}>
+              LINEログアウト
+            </button>
+          )}
           <div style={{ marginTop: 12 }}>
             <Link href="/" className="ghost link-chip">
               スケジュール管理へ
