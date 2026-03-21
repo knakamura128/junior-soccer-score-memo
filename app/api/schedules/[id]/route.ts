@@ -57,13 +57,18 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
 }
 
 export async function DELETE(request: Request, context: { params: Promise<{ id: string }> }) {
-  const { id } = await context.params;
-  const parsed = deleteSchema.parse(await request.json());
-  await verifyLineIdToken(parsed.idToken);
+  try {
+    const { id } = await context.params;
+    const parsed = deleteSchema.parse(await request.json());
+    await verifyLineIdToken(parsed.idToken);
 
-  await prisma.scheduleEntry.delete({
-    where: { id }
-  });
+    await prisma.scheduleEntry.delete({
+      where: { id }
+    });
 
-  return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "スケジュール削除に失敗しました。";
+    return new NextResponse(message, { status: 400 });
+  }
 }

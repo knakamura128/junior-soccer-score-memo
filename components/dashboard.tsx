@@ -313,7 +313,8 @@ export function Dashboard({ initialData, initialMatch }: DashboardProps) {
         body: JSON.stringify({ idToken })
       });
       if (!response.ok) {
-        throw new Error("選手削除に失敗しました。");
+        const detail = await response.text();
+        throw new Error(detail || "選手削除に失敗しました。");
       }
       setPlayers((current) => current.filter((entry) => entry.id !== id));
       if (goalPlayer && player && goalPlayer === player.id) {
@@ -429,7 +430,8 @@ export function Dashboard({ initialData, initialMatch }: DashboardProps) {
         body: JSON.stringify({ idToken })
       });
       if (!response.ok) {
-        throw new Error("削除に失敗しました。");
+        const detail = await response.text();
+        throw new Error(detail || "削除に失敗しました。");
       }
       setMatches((current) => current.filter((entry) => entry.id !== id));
       if (editingId === id) {

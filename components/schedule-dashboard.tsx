@@ -351,7 +351,8 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
         body: JSON.stringify({ idToken })
       });
       if (!response.ok) {
-        throw new Error("スケジュール削除に失敗しました。");
+        const detail = await readResponseError(response, "スケジュール削除に失敗しました。");
+        throw new Error(detail);
       }
       setSchedules((current) => current.filter((entry) => entry.id !== id));
       if (modalEntryId === id) {
