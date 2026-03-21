@@ -269,26 +269,43 @@ function BulkAttendanceScene() {
           </button>
         </div>
         <div className="modal-section">
-          <div className="form-grid schedule-form-grid">
-            <label>
-              日付
-              <select defaultValue="2026-03-21">
-                <option value="すべて">すべての日付</option>
-                <option value="2026-03-20">3/20(金)</option>
-                <option value="2026-03-21">3/21(土)</option>
-              </select>
-            </label>
-            <label>
-              対象タグ
-              <select defaultValue="高学年">
-                <option value="すべて">すべてのタグ</option>
-                <option value="低学年">低学年</option>
-                <option value="中学年">中学年</option>
-                <option value="高学年">高学年</option>
-                <option value="5年">5年</option>
-                <option value="6年">6年</option>
-              </select>
-            </label>
+          <div className="bulk-filter-grid">
+            <div>
+              <p className="bulk-filter-label">日付</p>
+              <div className="bulk-checkbox-grid">
+                <label className="filter-check is-active">
+                  <input type="checkbox" defaultChecked />
+                  <span>3/20(金)</span>
+                </label>
+                <label className="filter-check is-active">
+                  <input type="checkbox" defaultChecked />
+                  <span>3/21(土)</span>
+                </label>
+              </div>
+              <p className="muted">未選択なら表示中の日付すべてが対象です。</p>
+            </div>
+            <div>
+              <p className="bulk-filter-label">対象タグ</p>
+              <div className="bulk-checkbox-grid">
+                <label className="filter-check">
+                  <input type="checkbox" />
+                  <span>低学年</span>
+                </label>
+                <label className="filter-check">
+                  <input type="checkbox" />
+                  <span>中学年</span>
+                </label>
+                <label className="filter-check is-active">
+                  <input type="checkbox" defaultChecked />
+                  <span>高学年</span>
+                </label>
+                <label className="filter-check is-active">
+                  <input type="checkbox" defaultChecked />
+                  <span>6年</span>
+                </label>
+              </div>
+              <p className="muted">未選択なら表示中のタグすべてが対象です。</p>
+            </div>
           </div>
           <div className="attendance-choice-row">
             <button className="status-toggle is-active" type="button">
@@ -310,7 +327,7 @@ function BulkAttendanceScene() {
             一括保存
           </button>
         </div>
-        <GuideCallout className="callout-bulk-filter" number="1" text="表示中の月・学年から、さらに日付と対象タグを選んで範囲を絞ります。" />
+        <GuideCallout className="callout-bulk-filter" number="1" text="表示中の月・学年から、さらに日付と対象タグを複数選択で絞り込みます。" />
         <GuideCallout className="callout-bulk-status" number="2" text="参加、欠席、未定のどれかを選ぶと、対象予定へまとめて同じ出欠を入れられます。" />
         <GuideCallout className="callout-bulk-count" number="3" text="対象件数を見ながら一括保存するので、意図しない予定に入れにくくしています。" />
       </div>

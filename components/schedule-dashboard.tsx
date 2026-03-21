@@ -111,8 +111,8 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
   const [bulkAttendanceOpen, setBulkAttendanceOpen] = useState(false);
   const [bulkAttendanceStatus, setBulkAttendanceStatus] = useState<AttendanceStatus>("参加");
   const [bulkAttendanceNote, setBulkAttendanceNote] = useState("");
-  const [bulkAttendanceDate, setBulkAttendanceDate] = useState("すべて");
-  const [bulkAttendanceTag, setBulkAttendanceTag] = useState("すべて");
+  const [bulkAttendanceDates, setBulkAttendanceDates] = useState<string[]>([]);
+  const [bulkAttendanceTags, setBulkAttendanceTags] = useState<string[]>([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -162,8 +162,8 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
     new Set(visibleSchedules.flatMap((entry) => entry.tags.filter((tag) => /^(キッズ|低学年|中学年|高学年|[1-6]年)$/.test(tag))))
   ).sort((left, right) => scheduleRowTagRank(left) - scheduleRowTagRank(right));
   const bulkAttendanceTargets = visibleSchedules.filter((entry) => {
-    const matchesDate = bulkAttendanceDate === "すべて" ? true : entry.eventDate === bulkAttendanceDate;
-    const matchesTag = bulkAttendanceTag === "すべて" ? true : entry.tags.includes(bulkAttendanceTag);
+    const matchesDate = bulkAttendanceDates.length === 0 ? true : bulkAttendanceDates.includes(entry.eventDate);
+    const matchesTag = bulkAttendanceTags.length === 0 ? true : bulkAttendanceTags.some((tag) => entry.tags.includes(tag));
     return matchesDate && matchesTag;
   });
 
@@ -311,14 +311,22 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
   function openBulkAttendance() {
     setBulkAttendanceStatus("参加");
     setBulkAttendanceNote("");
-    setBulkAttendanceDate("すべて");
-    setBulkAttendanceTag("すべて");
+    setBulkAttendanceDates([]);
+    setBulkAttendanceTags([]);
     setFeedback("");
     setBulkAttendanceOpen(true);
   }
 
   function closeBulkAttendance() {
     setBulkAttendanceOpen(false);
+  }
+
+  function toggleBulkAttendanceDate(date: string) {
+    setBulkAttendanceDates((current) => (current.includes(date) ? current.filter((item) => item !== date) : [...current, date]));
+  }
+
+  function toggleBulkAttendanceTag(tag: string) {
+    setBulkAttendanceTags((current) => (current.includes(tag) ? current.filter((item) => item !== tag) : [...current, tag]));
   }
 
   function openNewEditor() {
@@ -1205,29 +1213,31 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
             </div>
             {auth.error ? <p className="error">{auth.error}</p> : null}
             <div className="modal-section">
-              <div className="form-grid schedule-form-grid">
-                <label>
-                  日付
-                  <select value={bulkAttendanceDate} onChange={(event) => setBulkAttendanceDate(event.target.value)}>
-                    <option value="すべて">すべての日付</option>
+              <div className="bulk-filter-grid">
+                <div>
+                  <p className="bulk-filter-label">日付</p>
+                  <div className="bulk-checkbox-grid">
                     {bulkAttendanceDateOptions.map((date) => (
-                      <option key={date} value={date}>
-                        {formatDateCell(date)}
-                      </option>
+                      <label key={date} className={`filter-check ${bulkAttendanceDates.includes(date) ? "is-active" : ""}`}>
+                        <input type="checkbox" checked={bulkAttendanceDates.includes(date)} onChange={() => toggleBulkAttendanceDate(date)} />
+                        <span>{formatDateCell(date)}</span>
+                      </label>
                     ))}
-                  </select>
-                </label>
-                <label>
-                  対象タグ
-                  <select value={bulkAttendanceTag} onChange={(event) => setBulkAttendanceTag(event.target.value)}>
-                    <option value="すべて">すべてのタグ</option>
+                  </div>
+                  <p className="muted">未選択なら表示中の日付すべてが対象です。</p>
+                </div>
+                <div>
+                  <p className="bulk-filter-label">対象タグ</p>
+                  <div className="bulk-checkbox-grid">
                     {bulkAttendanceTagOptions.map((tag) => (
-                      <option key={tag} value={tag}>
-                        {tag}
-                      </option>
+                      <label key={tag} className={`filter-check ${bulkAttendanceTags.includes(tag) ? "is-active" : ""}`}>
+                        <input type="checkbox" checked={bulkAttendanceTags.includes(tag)} onChange={() => toggleBulkAttendanceTag(tag)} />
+                        <span>{tag}</span>
+                      </label>
                     ))}
-                  </select>
-                </label>
+                  </div>
+                  <p className="muted">未選択なら表示中のタグすべてが対象です。</p>
+                </div>
               </div>
               <div className="attendance-choice-row">
                 {(["参加", "欠席", "未定"] as AttendanceStatus[]).map((status) => (

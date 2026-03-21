@@ -251,6 +251,22 @@ input[type="month"] { min-width: 0; }
 .schedule-modal-tabs .tab { min-width: 0; }
 .modal-section { display: grid; gap: 14px; margin-top: 16px; }
 .attendance-choice-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.bulk-filter-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 12px; }
+.bulk-filter-label { margin: 0 0 8px; font-size: .85rem; font-weight: 700; color: var(--green-dark); }
+.bulk-checkbox-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+.filter-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fffdf8;
+  color: var(--text);
+  font-size: .84rem;
+}
+.filter-check input { width: auto; margin: 0; }
+.filter-check.is-active { border-color: var(--green-dark); background: #eef6f0; color: var(--green-dark); }
 .status-toggle {
   border: 1px solid var(--line);
   border-radius: 16px;
@@ -676,6 +692,22 @@ button:active { transform: translateY(0); }
 
   .attendance-choice-row {
     gap: 8px;
+  }
+
+  .bulk-filter-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .bulk-checkbox-grid {
+    gap: 6px;
+  }
+
+  .filter-check {
+    width: 100%;
+    justify-content: flex-start;
+    font-size: 0.78rem;
+    padding: 8px 10px;
   }
 
   .status-toggle {
