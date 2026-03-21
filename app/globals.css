@@ -399,6 +399,12 @@ input[type="month"] { min-width: 0; }
 .callout-attend-note::after { right: 100%; top: 20px; width: 24px; }
 .callout-attend-save { bottom: 24px; right: 10px; }
 .callout-attend-save::after { right: 100%; top: 20px; width: 24px; }
+.callout-bulk-filter { top: 118px; right: 8px; }
+.callout-bulk-filter::after { right: 100%; top: 18px; width: 22px; }
+.callout-bulk-status { top: 292px; left: 10px; }
+.callout-bulk-status::after { left: 100%; top: 18px; width: 22px; }
+.callout-bulk-count { bottom: 38px; right: 10px; }
+.callout-bulk-count::after { right: 100%; top: 18px; width: 22px; }
 .callout-list-summary { top: 138px; right: 8px; }
 .callout-list-summary::after { right: 100%; top: 18px; width: 24px; }
 .callout-list-filter { top: 250px; left: 10px; }
@@ -462,6 +468,9 @@ input[type="month"] { min-width: 0; }
 .guide-device-desktop .callout-attend-status { top: 180px; left: 18px; width: 240px; }
 .guide-device-desktop .callout-attend-note { top: 296px; right: 18px; width: 220px; }
 .guide-device-desktop .callout-attend-save { bottom: 26px; right: 18px; width: 240px; }
+.guide-device-desktop .callout-bulk-filter { top: 118px; right: 18px; width: 260px; }
+.guide-device-desktop .callout-bulk-status { top: 236px; left: 18px; width: 260px; }
+.guide-device-desktop .callout-bulk-count { bottom: 34px; right: 18px; width: 250px; }
 
 .guide-device-desktop .callout-list-summary { top: 132px; right: 18px; width: 250px; }
 .guide-device-desktop .callout-list-filter { top: 256px; left: 18px; width: 230px; }

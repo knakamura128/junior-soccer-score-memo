@@ -73,6 +73,7 @@ export default async function GuideSchedulePage({ searchParams }: GuideScheduleP
       {view === "top" ? <ScheduleTopScene /> : null}
       {view === "attendance-input" ? <AttendanceInputScene /> : null}
       {view === "attendance-list" ? <AttendanceListScene /> : null}
+      {view === "bulk-attendance" ? <BulkAttendanceScene /> : null}
       {view === "carpool" ? <CarpoolScene /> : null}
       {view === "duty" ? <DutyScene /> : null}
       {view === "edit" ? <EditScene /> : null}
@@ -88,9 +89,14 @@ function ScheduleTopScene() {
           <h2>月間スケジュール</h2>
           <span>当番調整あり 2件 / 最新更新 2026/3/21</span>
         </div>
-        <button className="primary" type="button">
-          予定を追加
-        </button>
+        <div className="action-row">
+          <button className="ghost dark-ghost" type="button">
+            出欠一括登録
+          </button>
+          <button className="primary" type="button">
+            予定を追加
+          </button>
+        </div>
       </div>
 
       <div className="results-toolbar compact-toolbar schedule-toolbar">
@@ -244,6 +250,69 @@ function AttendanceInputScene() {
         <GuideCallout className="callout-attend-status" number="2" text="参加、欠席、未定のどれかを選んで登録します。" />
         <GuideCallout className="callout-attend-note" number="3" text="備考には現地集合や遅刻予定などを残せます。" />
         <GuideCallout className="callout-attend-save" number="4" text="保存すると、その保護者の LINE 名で更新者が記録されます。" />
+      </div>
+    </div>
+  );
+}
+
+function BulkAttendanceScene() {
+  return (
+    <div className="modal-backdrop guide-modal-backdrop">
+      <div className="modal-card schedule-modal guide-annotated" role="dialog" aria-modal="true">
+        <div className="section-title">
+          <div>
+            <h2>出欠一括登録</h2>
+            <span>表示中の月と学年から、さらに日付と対象タグを絞って一括登録します。</span>
+          </div>
+          <button className="ghost modal-close" type="button">
+            閉じる
+          </button>
+        </div>
+        <div className="modal-section">
+          <div className="form-grid schedule-form-grid">
+            <label>
+              日付
+              <select defaultValue="2026-03-21">
+                <option value="すべて">すべての日付</option>
+                <option value="2026-03-20">3/20(金)</option>
+                <option value="2026-03-21">3/21(土)</option>
+              </select>
+            </label>
+            <label>
+              対象タグ
+              <select defaultValue="高学年">
+                <option value="すべて">すべてのタグ</option>
+                <option value="低学年">低学年</option>
+                <option value="中学年">中学年</option>
+                <option value="高学年">高学年</option>
+                <option value="5年">5年</option>
+                <option value="6年">6年</option>
+              </select>
+            </label>
+          </div>
+          <div className="attendance-choice-row">
+            <button className="status-toggle is-active" type="button">
+              参加
+            </button>
+            <button className="status-toggle" type="button">
+              欠席
+            </button>
+            <button className="status-toggle" type="button">
+              未定
+            </button>
+          </div>
+          <label>
+            備考
+            <input defaultValue="現地集合予定です" />
+          </label>
+          <p className="muted">対象件数: 2件</p>
+          <button className="primary" type="button">
+            一括保存
+          </button>
+        </div>
+        <GuideCallout className="callout-bulk-filter" number="1" text="表示中の月・学年から、さらに日付と対象タグを選んで範囲を絞ります。" />
+        <GuideCallout className="callout-bulk-status" number="2" text="参加、欠席、未定のどれかを選ぶと、対象予定へまとめて同じ出欠を入れられます。" />
+        <GuideCallout className="callout-bulk-count" number="3" text="対象件数を見ながら一括保存するので、意図しない予定に入れにくくしています。" />
       </div>
     </div>
   );

@@ -20,15 +20,18 @@ export default function GuideIndexPage() {
         <section className="card">
           <div className="section-title">
             <h2>スケジュール管理</h2>
-            <span>予定、出欠、当番、修正</span>
+            <span>予定、出欠、配車、当番、修正</span>
           </div>
-          <p className="muted">月間予定の見方、CSV取込、出欠入力、当番決定、予定修正の流れを確認できます。</p>
+          <p className="muted">月間予定、CSV取込、出欠入力と一括登録、配車管理、当番決定、予定修正の流れを確認できます。</p>
           <div className="schedule-hero-actions">
             <Link href="/guide/schedule?view=top" className="primary">
               使い方を見る
             </Link>
             <Link href="/guide/schedule?view=attendance-list" className="ghost link-chip">
               出欠一覧例
+            </Link>
+            <Link href="/guide/schedule?view=bulk-attendance" className="ghost link-chip">
+              一括登録例
             </Link>
           </div>
         </section>
