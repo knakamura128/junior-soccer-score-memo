@@ -13,33 +13,38 @@ const bodySchema = z.object({
 });
 
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
-  const { id } = await context.params;
-  const parsed = bodySchema.parse(await request.json());
-  const user = await upsertLineUser(parsed.idToken);
+  try {
+    const { id } = await context.params;
+    const parsed = bodySchema.parse(await request.json());
+    const user = await upsertLineUser(parsed.idToken);
 
-  await prisma.attendance.upsert({
-    where: {
-      scheduleEntryId_userId: {
+    await prisma.attendance.upsert({
+      where: {
+        scheduleEntryId_userId: {
+          scheduleEntryId: id,
+          userId: user.id
+        }
+      },
+      update: {
+        status: parsed.attendance.status,
+        note: parsed.attendance.note || null
+      },
+      create: {
         scheduleEntryId: id,
-        userId: user.id
+        userId: user.id,
+        status: parsed.attendance.status,
+        note: parsed.attendance.note || null
       }
-    },
-    update: {
-      status: parsed.attendance.status,
-      note: parsed.attendance.note || null
-    },
-    create: {
-      scheduleEntryId: id,
-      userId: user.id,
-      status: parsed.attendance.status,
-      note: parsed.attendance.note || null
-    }
-  });
+    });
 
-  const entry = await prisma.scheduleEntry.findUniqueOrThrow({
-    where: { id },
-    include: scheduleEntryInclude
-  });
+    const entry = await prisma.scheduleEntry.findUniqueOrThrow({
+      where: { id },
+      include: scheduleEntryInclude
+    });
 
-  return NextResponse.json(serializeScheduleEntry(entry));
+    return NextResponse.json(serializeScheduleEntry(entry));
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "出欠保存に失敗しました。";
+    return new NextResponse(message, { status: 400 });
+  }
 }

@@ -12,31 +12,36 @@ const bodySchema = z.object({
 });
 
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
-  const { id } = await context.params;
-  const parsed = bodySchema.parse(await request.json());
-  const user = await upsertLineUser(parsed.idToken);
+  try {
+    const { id } = await context.params;
+    const parsed = bodySchema.parse(await request.json());
+    const user = await upsertLineUser(parsed.idToken);
 
-  await prisma.carpoolPreference.upsert({
-    where: {
-      scheduleEntryId_userId: {
+    await prisma.carpoolPreference.upsert({
+      where: {
+        scheduleEntryId_userId: {
+          scheduleEntryId: id,
+          userId: user.id
+        }
+      },
+      update: {
+        choice: parsed.carpool.choice
+      },
+      create: {
         scheduleEntryId: id,
-        userId: user.id
+        userId: user.id,
+        choice: parsed.carpool.choice
       }
-    },
-    update: {
-      choice: parsed.carpool.choice
-    },
-    create: {
-      scheduleEntryId: id,
-      userId: user.id,
-      choice: parsed.carpool.choice
-    }
-  });
+    });
 
-  const entry = await prisma.scheduleEntry.findUniqueOrThrow({
-    where: { id },
-    include: scheduleEntryInclude
-  });
+    const entry = await prisma.scheduleEntry.findUniqueOrThrow({
+      where: { id },
+      include: scheduleEntryInclude
+    });
 
-  return NextResponse.json(serializeScheduleEntry(entry));
+    return NextResponse.json(serializeScheduleEntry(entry));
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "配車保存に失敗しました。";
+    return new NextResponse(message, { status: 400 });
+  }
 }

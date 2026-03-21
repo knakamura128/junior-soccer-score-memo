@@ -13,31 +13,36 @@ const bodySchema = z.object({
 });
 
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
-  const { id } = await context.params;
-  const parsed = bodySchema.parse(await request.json());
-  const user = await upsertLineUser(parsed.idToken);
+  try {
+    const { id } = await context.params;
+    const parsed = bodySchema.parse(await request.json());
+    const user = await upsertLineUser(parsed.idToken);
 
-  await prisma.dutyAssignment.upsert({
-    where: { scheduleEntryId: id },
-    update: {
-      assignedUserId: parsed.duty.assignedUserId || null,
-      decidedById: user.id,
-      note: parsed.duty.note || null,
-      decidedAt: new Date()
-    },
-    create: {
-      scheduleEntryId: id,
-      assignedUserId: parsed.duty.assignedUserId || null,
-      decidedById: user.id,
-      note: parsed.duty.note || null,
-      decidedAt: new Date()
-    }
-  });
+    await prisma.dutyAssignment.upsert({
+      where: { scheduleEntryId: id },
+      update: {
+        assignedUserId: parsed.duty.assignedUserId || null,
+        decidedById: user.id,
+        note: parsed.duty.note || null,
+        decidedAt: new Date()
+      },
+      create: {
+        scheduleEntryId: id,
+        assignedUserId: parsed.duty.assignedUserId || null,
+        decidedById: user.id,
+        note: parsed.duty.note || null,
+        decidedAt: new Date()
+      }
+    });
 
-  const entry = await prisma.scheduleEntry.findUniqueOrThrow({
-    where: { id },
-    include: scheduleEntryInclude
-  });
+    const entry = await prisma.scheduleEntry.findUniqueOrThrow({
+      where: { id },
+      include: scheduleEntryInclude
+    });
 
-  return NextResponse.json(serializeScheduleEntry(entry));
+    return NextResponse.json(serializeScheduleEntry(entry));
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "当番保存に失敗しました。";
+    return new NextResponse(message, { status: 400 });
+  }
 }
