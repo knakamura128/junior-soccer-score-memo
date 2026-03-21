@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { serializeScheduleDate } from "@/lib/schedule-format";
+import { scheduleEntryInclude, serializeScheduleEntry } from "@/lib/schedule-entry";
 import { upsertLineUser } from "@/lib/upsert-line-user";
 import { z } from "zod";
 
@@ -36,39 +36,8 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
 
   const entry = await prisma.scheduleEntry.findUniqueOrThrow({
     where: { id },
-    include: {
-      createdBy: true,
-      updatedBy: true,
-      attendances: {
-        include: { user: true },
-        orderBy: [{ updatedAt: "desc" }]
-      },
-      dutyAssignment: {
-        include: {
-          assignedUser: true,
-          decidedBy: true
-        }
-      }
-    }
+    include: scheduleEntryInclude
   });
 
-  return NextResponse.json({
-    ...entry,
-    eventDate: serializeScheduleDate(entry.eventDate),
-    createdAt: entry.createdAt.toISOString(),
-    updatedAt: entry.updatedAt.toISOString(),
-    dutyAssignment: entry.dutyAssignment
-      ? {
-          ...entry.dutyAssignment,
-          decidedAt: entry.dutyAssignment.decidedAt?.toISOString() || null,
-          createdAt: entry.dutyAssignment.createdAt.toISOString(),
-          updatedAt: entry.dutyAssignment.updatedAt.toISOString()
-        }
-      : null,
-    attendances: entry.attendances.map((attendance) => ({
-      ...attendance,
-      createdAt: attendance.createdAt.toISOString(),
-      updatedAt: attendance.updatedAt.toISOString()
-    }))
-  });
+  return NextResponse.json(serializeScheduleEntry(entry));
 }

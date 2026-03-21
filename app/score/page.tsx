@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { Dashboard } from "@/components/dashboard";
 import { createEmptyMatch } from "@/lib/score-draft";
 import { type MatchPayload } from "@/lib/match-format";
+import { ensureAnnualPlayerPromotion } from "@/lib/player-promotion";
 
 export const dynamic = "force-dynamic";
 
@@ -10,6 +11,7 @@ type ScorePageProps = {
 };
 
 async function getInitialData() {
+  await ensureAnnualPlayerPromotion();
   const [players, matches] = await Promise.all([
     prisma.player.findMany({ orderBy: [{ createdAt: "asc" }] }),
     prisma.match.findMany({

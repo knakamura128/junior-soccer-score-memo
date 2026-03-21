@@ -28,37 +28,10 @@ const resultRows = [
 export default async function GuideScorePage({ searchParams }: GuideScorePageProps) {
   const params = searchParams ? await searchParams : {};
   const view = typeof params.view === "string" ? params.view : "scoring";
+  const device = typeof params.device === "string" ? params.device : "mobile";
 
   return (
-    <div className="app-shell guide-shell">
-      <header className="hero">
-        <div>
-          <p className="eyebrow">Guide Capture</p>
-          <div className="brand-lockup">
-            <img src="/fc-kumano-logo.png" alt="FC KUMANO logo" className="brand-logo" />
-            <div>
-              <h1>FC KUMANO スコア管理</h1>
-              <p className="hero-copy">使い方ガイド用の画面状態です。</p>
-            </div>
-          </div>
-        </div>
-        <aside className="auth-box">
-          <div className="auth-row">
-            <div className="guide-avatar" aria-hidden="true">
-              N
-            </div>
-            <div>
-              <strong>保護者A</strong>
-              <div className="auth-meta">保存・更新者として記録されます</div>
-            </div>
-          </div>
-          <div className="schedule-hero-actions">
-            <span className="ghost link-chip">LINEログイン中</span>
-            <span className="ghost link-chip">スケジュール管理へ</span>
-          </div>
-        </aside>
-      </header>
-
+    <div className={`app-shell guide-shell guide-device-${device}`}>
       {view === "scoring" ? <ScoreScoringScene /> : null}
       {view === "players" ? <ScorePlayersScene /> : null}
       {view === "results" ? <ScoreResultsScene compact={true} /> : null}
@@ -327,9 +300,14 @@ function ScorePlayersScene() {
                 <strong>{player.split(" / ")[0]}</strong>
                 <p className="player-meta">タグ: {player.split(" / ")[1]}</p>
               </div>
-              <button className="text-button danger" type="button">
-                削除
-              </button>
+              <div className="action-row">
+                <button className="text-button" type="button">
+                  編集
+                </button>
+                <button className="text-button danger" type="button">
+                  削除
+                </button>
+              </div>
             </li>
           ))}
         </ul>
@@ -361,6 +339,9 @@ function ScoreResultsScene({ compact }: { compact: boolean }) {
           <div className="month-filter">
             <span className="month-filter-label">表示月</span>
             <div className="month-chip-row">
+              <button className="tab month-chip" type="button">
+                全期間
+              </button>
               <button className="tab month-chip" type="button">
                 2月
               </button>

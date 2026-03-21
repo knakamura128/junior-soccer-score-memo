@@ -67,6 +67,7 @@ export function Dashboard({ initialData, initialMatch }: DashboardProps) {
   const [timerRunning, setTimerRunning] = useState(false);
   const [goalPlayer, setGoalPlayer] = useState("");
   const [playerForm, setPlayerForm] = useState({ number: "", name: "", tags: [] as string[] });
+  const [editingPlayerId, setEditingPlayerId] = useState<string | null>(null);
   const [filterTag, setFilterTag] = useState("すべて");
   const [filterMonth, setFilterMonth] = useState(() => new Date().toISOString().slice(0, 7));
   const [sortValue, setSortValue] = useState("date-desc");
@@ -113,12 +114,16 @@ export function Dashboard({ initialData, initialMatch }: DashboardProps) {
   const filteredPlayers = players.filter((player) =>
     match.tags.length === 0 ? true : player.tags.some((tag) => match.tags.includes(tag))
   );
+  const playerNameCounts = players.reduce<Record<string, number>>((counts, player) => {
+    counts[player.name] = (counts[player.name] || 0) + 1;
+    return counts;
+  }, {});
 
   useEffect(() => {
     if (!goalPlayer) {
       return;
     }
-    const stillVisible = filteredPlayers.some((player) => `${player.number} ${player.name}` === goalPlayer);
+    const stillVisible = filteredPlayers.some((player) => player.id === goalPlayer);
     if (!stillVisible) {
       setGoalPlayer("");
     }
@@ -168,7 +173,7 @@ export function Dashboard({ initialData, initialMatch }: DashboardProps) {
 
   const visibleMatches = matches
     .filter((entry) => (filterTag === "すべて" ? true : entry.tags.includes(filterTag)))
-    .filter((entry) => (filterMonth ? entry.matchDate.startsWith(filterMonth) : true))
+    .filter((entry) => (filterMonth && filterMonth !== "all" ? entry.matchDate.startsWith(filterMonth) : true))
     .sort((left, right) => {
       switch (sortValue) {
         case "date-asc":
@@ -184,7 +189,11 @@ export function Dashboard({ initialData, initialMatch }: DashboardProps) {
 
   const topScorers = Array.from(
     visibleMatches
-      .flatMap((entry) => entry.goals.filter((goal) => goal.side === "home" && goal.player).map((goal) => goal.player as string))
+      .flatMap((entry) =>
+        entry.goals
+          .filter((goal) => goal.side === "home" && goal.player)
+          .map((goal) => resolveGoalPlayerName(goal.player as string, players, entry.tags, playerNameCounts))
+      )
       .reduce((map, name) => map.set(name, (map.get(name) || 0) + 1), new Map<string, number>())
   ).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "ja"));
 
@@ -225,8 +234,8 @@ export function Dashboard({ initialData, initialMatch }: DashboardProps) {
     }
     try {
       const idToken = await requireIdToken();
-      const response = await fetch("/api/players", {
-        method: "POST",
+      const response = await fetch(editingPlayerId ? `/api/players/${editingPlayerId}` : "/api/players", {
+        method: editingPlayerId ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           idToken,
@@ -235,9 +244,12 @@ export function Dashboard({ initialData, initialMatch }: DashboardProps) {
       });
       if (!response.ok) throw new Error();
       const saved = (await response.json()) as Player;
-      setPlayers((current) => [...current, saved]);
+      setPlayers((current) =>
+        editingPlayerId ? current.map((entry) => (entry.id === editingPlayerId ? saved : entry)) : [...current, saved]
+      );
       setPlayerForm({ number: "", name: "", tags: [] });
-      setFeedback("選手を保存しました。");
+      setEditingPlayerId(null);
+      setFeedback(editingPlayerId ? "選手を更新しました。" : "選手を保存しました。");
     } catch (error) {
       if (shouldRefreshDashboardLineLogin(error)) {
         await loginWithLine();
@@ -249,7 +261,7 @@ export function Dashboard({ initialData, initialMatch }: DashboardProps) {
 
   async function registerPlayersFromMatches() {
     const candidates = extractPlayersFromMatches(matches).filter(
-      (candidate) => !players.some((player) => player.name === candidate.name)
+      (candidate) => !players.some((player) => getPlayerIdentityKey(player) === getPlayerIdentityKey(candidate))
     );
     if (candidates.length === 0) {
       setFeedback("試合結果から追加できる選手はありません。");
@@ -304,8 +316,11 @@ export function Dashboard({ initialData, initialMatch }: DashboardProps) {
         throw new Error("選手削除に失敗しました。");
       }
       setPlayers((current) => current.filter((entry) => entry.id !== id));
-      if (goalPlayer && player && goalPlayer === `${player.number} ${player.name}`) {
+      if (goalPlayer && player && goalPlayer === player.id) {
         setGoalPlayer("");
+      }
+      if (editingPlayerId === id) {
+        cancelPlayerEditing();
       }
       setFeedback("選手を削除しました。");
     } catch (error) {
@@ -317,6 +332,21 @@ export function Dashboard({ initialData, initialMatch }: DashboardProps) {
     }
   }
 
+  function startPlayerEditing(player: Player) {
+    setEditingPlayerId(player.id);
+    setPlayerForm({
+      number: player.number,
+      name: player.name,
+      tags: player.tags
+    });
+    setFeedback("");
+  }
+
+  function cancelPlayerEditing() {
+    setEditingPlayerId(null);
+    setPlayerForm({ number: "", name: "", tags: [] });
+  }
+
   function addGoal(side: "home" | "away") {
     setMatch((current) => ({
       ...current,
@@ -326,7 +356,7 @@ export function Dashboard({ initialData, initialMatch }: DashboardProps) {
         ...current.events,
         {
           side,
-          player: side === "home" ? goalPlayer : "",
+          player: side === "home" ? playerIdToStoredValue(goalPlayer, players, playerNameCounts) : "",
           period: current.periodMode === "halves" ? current.currentPeriod : "試合中",
           time: formatClock(timerSeconds)
         }
@@ -622,7 +652,7 @@ export function Dashboard({ initialData, initialMatch }: DashboardProps) {
               <div className="score-separator"><p className="period-indicator">{match.periodMode === "halves" ? match.currentPeriod : "試合中"}</p><span>vs</span></div>
               <div className="team-panel"><p className="team-label">相手チーム</p><p className="score">{match.awayScore}</p><button className="score-btn away" type="button" onClick={() => addGoal("away")}>失点を追加</button></div>
             </div>
-            <label>得点選手<select value={goalPlayer} onChange={(event) => setGoalPlayer(event.target.value)}><option value="">未選択</option>{filteredPlayers.map((player) => <option key={player.id} value={`${player.number} ${player.name}`}>{player.number} {player.name}</option>)}</select></label>
+            <label>得点選手<select value={goalPlayer} onChange={(event) => setGoalPlayer(event.target.value)}><option value="">未選択</option>{filteredPlayers.map((player) => <option key={player.id} value={player.id}>{formatPlayerDisplay(player, playerNameCounts)}</option>)}</select></label>
             <div className="timer-block">
               <div className="timer-display">{formatClock(timerSeconds)}</div>
               <div className="timer-actions">
@@ -643,11 +673,14 @@ export function Dashboard({ initialData, initialMatch }: DashboardProps) {
                         <strong>{event.time} {event.period} {event.side === "home" ? "自チーム得点" : "相手チーム得点"}</strong>
                       </div>
                       {event.side === "home" ? (
-                        <select value={event.player} onChange={(e) => updateEventPlayer(index, e.target.value)}>
+                        <select
+                          value={resolveStoredPlayerId(event.player, players, match.tags)}
+                          onChange={(e) => updateEventPlayer(index, playerIdToStoredValue(e.target.value, players, playerNameCounts))}
+                        >
                           <option value="">未選択</option>
-                          {players.map((player) => (
-                            <option key={player.id} value={`${player.number} ${player.name}`}>
-                              {player.number} {player.name}
+                          {filteredPlayers.map((player) => (
+                            <option key={player.id} value={player.id}>
+                              {formatPlayerDisplay(player, playerNameCounts)}
                             </option>
                           ))}
                         </select>
@@ -674,16 +707,20 @@ export function Dashboard({ initialData, initialMatch }: DashboardProps) {
               <label>背番号<input value={playerForm.number} onChange={(event) => setPlayerForm({ ...playerForm, number: event.target.value })} /></label>
               <label>名前<input value={playerForm.name} onChange={(event) => setPlayerForm({ ...playerForm, name: event.target.value })} /></label>
               <label>グループ<TagSelector compact value={playerForm.tags} onChange={(tags) => setPlayerForm({ ...playerForm, tags })} /></label>
-              <button className="primary" type="button" onClick={() => void savePlayer()}>選手を追加</button>
+              <button className="primary" type="button" onClick={() => void savePlayer()}>{editingPlayerId ? "選手を更新" : "選手を追加"}</button>
               <button className="ghost dark-ghost" type="button" onClick={() => void registerPlayersFromMatches()}>試合結果から登録</button>
+              {editingPlayerId ? <button className="ghost" type="button" onClick={cancelPlayerEditing}>編集を取り消す</button> : null}
             </div>
             <details className="expandable" open={players.length <= 8}>
               <summary>登録選手一覧 {players.length}人</summary>
               <ul className="player-list">
                 {players.length === 0 ? <li className="empty-state">選手を登録すると、得点時に選択できます。</li> : players.map((player) => (
                   <li key={player.id} className="player-item">
-                    <div><strong>{player.number} {player.name}</strong><p className="player-meta">タグ: {player.tags.join(", ")}</p></div>
-                    <button className="text-button danger" type="button" onClick={() => void deletePlayer(player.id)}>削除</button>
+                    <div><strong>{formatPlayerDisplay(player, playerNameCounts)}</strong><p className="player-meta">タグ: {player.tags.join(", ")}</p></div>
+                    <div className="action-row">
+                      <button className="text-button" type="button" onClick={() => startPlayerEditing(player)}>編集</button>
+                      <button className="text-button danger" type="button" onClick={() => void deletePlayer(player.id)}>削除</button>
+                    </div>
                   </li>
                 ))}
               </ul>
@@ -769,7 +806,7 @@ export function Dashboard({ initialData, initialMatch }: DashboardProps) {
                     <td>{entry.opponent}</td>
                     <td>{formatScore(entry)}</td>
                     <td><span className={`badge ${getOutcomeBadgeClass(entry.outcome)}`}>{entry.outcome}</span></td>
-                    <td>{entry.goals.filter((goal) => goal.side === "home" && goal.player).map((goal) => goal.player).join(", ") || "なし"}</td>
+                    <td>{entry.goals.filter((goal) => goal.side === "home" && goal.player).map((goal) => resolveGoalPlayerName(goal.player as string, players, entry.tags, playerNameCounts)).join(", ") || "なし"}</td>
                     {!compactResultsView ? <td><div>{entry.createdBy?.displayName || "不明"} / {entry.updatedBy?.displayName || "不明"}</div></td> : null}
                     {!compactResultsView ? <td>
                       <div className="action-row">
@@ -856,10 +893,13 @@ function extractPlayersFromMatches(matches: MatchRow[]) {
         if (!rawName) {
           return;
         }
-        const name = rawName.replace(/^\S+\s+/, "");
-        const entry = map.get(name) || { number: "-", name, tags: new Set<string>() };
+        const name = normalizeStoredPlayerName(rawName);
+        const draft = { number: "-", name, tags: new Set<string>() };
+        match.tags.forEach((tag) => draft.tags.add(tag));
+        const key = getPlayerIdentityKey({ ...draft, tags: [...draft.tags] });
+        const entry = map.get(key) || draft;
         match.tags.forEach((tag) => entry.tags.add(tag));
-        map.set(name, entry);
+        map.set(key, entry);
       });
   });
   return [...map.values()].map((entry) => ({
@@ -922,14 +962,106 @@ function shouldRefreshDashboardLineLogin(error: unknown) {
 }
 
 function getMonthOptions(selectedMonth: string) {
+  if (selectedMonth === "all") {
+    const baseDate = new Date();
+    return [
+      { value: "all", label: "全期間" },
+      ...[-1, 0, 1].map((offset) => {
+        const date = new Date(baseDate.getFullYear(), baseDate.getMonth() + offset, 1);
+        return {
+          value: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`,
+          label: `${date.getMonth() + 1}月`
+        };
+      })
+    ];
+  }
   const [yearText = "2026", monthText = "1"] = selectedMonth.split("-");
   const baseDate = new Date(Number(yearText), Number(monthText) - 1, 1);
 
-  return [-1, 0, 1].map((offset) => {
-    const date = new Date(baseDate.getFullYear(), baseDate.getMonth() + offset, 1);
-    return {
-      value: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`,
-      label: `${date.getMonth() + 1}月`
-    };
-  });
+  return [
+    { value: "all", label: "全期間" },
+    ...[-1, 0, 1].map((offset) => {
+      const date = new Date(baseDate.getFullYear(), baseDate.getMonth() + offset, 1);
+      return {
+        value: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`,
+        label: `${date.getMonth() + 1}月`
+      };
+    })
+  ];
+}
+
+function getPlayerIdentityKey(player: { name: string; tags: string[] }) {
+  return `${player.name}::${getPrimaryPlayerTag(player.tags)}`;
+}
+
+function getPrimaryPlayerTag(tags: string[]) {
+  const ordered = ["キッズ", "1年", "2年", "3年", "4年", "5年", "6年", "低学年", "中学年", "高学年"];
+  return ordered.find((tag) => tags.includes(tag)) || tags.slice().sort().join("/");
+}
+
+function formatPlayerDisplay(player: Player, counts: Record<string, number>) {
+  const base = player.number && player.number !== "-" ? `${player.number} ${player.name}` : player.name;
+  if ((counts[player.name] || 0) < 2) {
+    return base;
+  }
+  return `${base} (${getPrimaryPlayerTag(player.tags)})`;
+}
+
+function normalizeStoredPlayerName(value: string) {
+  return String(value || "")
+    .replace(/^\S+\s+/, "")
+    .replace(/\s*\([^)]*\)\s*$/, "")
+    .trim();
+}
+
+function resolveStoredPlayerId(storedValue: string, players: Player[], matchTags: string[]) {
+  if (!storedValue) {
+    return "";
+  }
+  const exactId = players.find((player) => player.id === storedValue);
+  if (exactId) {
+    return exactId.id;
+  }
+  const counts = players.reduce<Record<string, number>>((result, player) => {
+    result[player.name] = (result[player.name] || 0) + 1;
+    return result;
+  }, {});
+  const exactLabel = players.find((player) => formatPlayerDisplay(player, counts) === storedValue);
+  if (exactLabel) {
+    return exactLabel.id;
+  }
+  const normalized = normalizeStoredPlayerName(storedValue);
+  const candidates = players.filter((player) => player.name === normalized);
+  if (candidates.length === 1) {
+    return candidates[0].id;
+  }
+  const tagMatched = candidates.find((player) => player.tags.some((tag) => matchTags.includes(tag) && /^(キッズ|[1-6]年)$/.test(tag)));
+  return tagMatched?.id || "";
+}
+
+function playerIdToStoredValue(playerId: string, players: Player[], counts: Record<string, number>) {
+  if (!playerId) {
+    return "";
+  }
+  const player = players.find((entry) => entry.id === playerId);
+  if (!player) {
+    return "";
+  }
+  return formatPlayerDisplay(player, counts);
+}
+
+function resolveGoalPlayerName(
+  storedValue: string,
+  players: Player[],
+  matchTags: string[],
+  counts: Record<string, number>
+) {
+  if (!storedValue) {
+    return "";
+  }
+  const playerId = resolveStoredPlayerId(storedValue, players, matchTags);
+  if (!playerId) {
+    return storedValue;
+  }
+  return playerIdToStoredValue(playerId, players, counts) || storedValue;
 }

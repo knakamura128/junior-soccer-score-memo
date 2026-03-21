@@ -66,40 +66,14 @@ const dutyCandidates = [
 export default async function GuideSchedulePage({ searchParams }: GuideSchedulePageProps) {
   const params = searchParams ? await searchParams : {};
   const view = typeof params.view === "string" ? params.view : "top";
+  const device = typeof params.device === "string" ? params.device : "mobile";
 
   return (
-    <div className="app-shell schedule-shell guide-shell">
-      <header className="hero schedule-hero">
-        <div>
-          <p className="eyebrow">Guide Capture</p>
-          <div className="brand-lockup">
-            <img src="/fc-kumano-logo.png" alt="FC KUMANO logo" className="brand-logo" />
-            <div>
-              <h1>FC KUMANO スケジュール管理</h1>
-              <p className="hero-copy">使い方ガイド用の画面状態です。</p>
-            </div>
-          </div>
-        </div>
-        <aside className="auth-box">
-          <div className="auth-row">
-            <div className="guide-avatar" aria-hidden="true">
-              N
-            </div>
-            <div>
-              <strong>保護者A</strong>
-              <div className="auth-meta">出欠入力と修正者として記録されます</div>
-            </div>
-          </div>
-          <div className="schedule-hero-actions">
-            <span className="ghost link-chip">LINEログイン中</span>
-            <span className="ghost link-chip">スコア管理へ</span>
-          </div>
-        </aside>
-      </header>
-
+    <div className={`app-shell schedule-shell guide-shell guide-device-${device}`}>
       {view === "top" ? <ScheduleTopScene /> : null}
       {view === "attendance-input" ? <AttendanceInputScene /> : null}
       {view === "attendance-list" ? <AttendanceListScene /> : null}
+      {view === "carpool" ? <CarpoolScene /> : null}
       {view === "duty" ? <DutyScene /> : null}
       {view === "edit" ? <EditScene /> : null}
     </div>
@@ -213,7 +187,7 @@ function ScheduleTopScene() {
       <GuideCallout className="callout-top-month" number="1" text="表示月を切り替えると、その月の予定だけを表示します。" />
       <GuideCallout className="callout-top-compact" number="2" text="短縮は月全体を見やすくする表示です。修正や操作は通常で確認します。" />
       <GuideCallout className="callout-top-import" number="3" text="予定表を取り込むから CSV を読み込んで、一括で予定を追加できます。" />
-      <GuideCallout className="callout-top-row" number="4" text="各行に日付、学年、時間、場所、内容、当番、出欠がまとまります。" />
+      <GuideCallout className="callout-top-row" number="4" text="通常表示の操作では、出欠、一覧、配車、当番、修正、削除を使えます。" />
       <GuideCallout className="callout-top-calendar" number="5" text="下部の Googleカレンダー取込は、今見えている月と学年の内容だけを書き出します。" />
     </section>
   );
@@ -238,6 +212,9 @@ function AttendanceInputScene() {
           </button>
           <button className="tab" type="button">
             出欠一覧
+          </button>
+          <button className="tab" type="button">
+            配車管理
           </button>
           <button className="tab" type="button">
             当番管理
@@ -267,6 +244,70 @@ function AttendanceInputScene() {
         <GuideCallout className="callout-attend-status" number="2" text="参加、欠席、未定のどれかを選んで登録します。" />
         <GuideCallout className="callout-attend-note" number="3" text="備考には現地集合や遅刻予定などを残せます。" />
         <GuideCallout className="callout-attend-save" number="4" text="保存すると、その保護者の LINE 名で更新者が記録されます。" />
+      </div>
+    </div>
+  );
+}
+
+function CarpoolScene() {
+  return (
+    <div className="modal-backdrop guide-modal-backdrop">
+      <div className="modal-card schedule-modal guide-annotated" role="dialog" aria-modal="true">
+        <div className="section-title">
+          <div>
+            <h2>配車管理</h2>
+            <span>2026/3/21 四ツ木橋競技場 / TOHON CUP卒業大会</span>
+          </div>
+          <button className="ghost modal-close" type="button">
+            閉じる
+          </button>
+        </div>
+        <div className="schedule-modal-tabs tab-bar">
+          <button className="tab" type="button">
+            出欠入力
+          </button>
+          <button className="tab" type="button">
+            出欠一覧
+          </button>
+          <button className="tab is-active" type="button">
+            配車管理
+          </button>
+          <button className="tab" type="button">
+            当番管理
+          </button>
+        </div>
+        <div className="modal-section">
+          <div className="attendance-choice-row">
+            <button className="status-toggle is-active" type="button">
+              配車希望
+            </button>
+            <button className="status-toggle" type="button">
+              現地集合
+            </button>
+            <button className="status-toggle" type="button">
+              自家用車同乗可
+            </button>
+          </div>
+          <div className="summary-grid schedule-summary-grid">
+            <div className="summary-card">
+              <h3>配車希望</h3>
+              <strong>2</strong>
+            </div>
+            <div className="summary-card">
+              <h3>現地集合</h3>
+              <strong>6</strong>
+            </div>
+            <div className="summary-card">
+              <h3>自家用車同乗可</h3>
+              <strong>1</strong>
+            </div>
+          </div>
+          <button className="primary" type="button">
+            配車を保存
+          </button>
+        </div>
+        <GuideCallout className="callout-duty-tabs" number="1" text="配車管理では、配車希望、現地集合、自家用車同乗可の3択で入力します。" />
+        <GuideCallout className="callout-duty-select" number="2" text="自分の選択を押して保存すると、一覧に反映されます。" />
       </div>
     </div>
   );

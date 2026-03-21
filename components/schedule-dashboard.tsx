@@ -16,6 +16,7 @@ import { buildScheduleIcs } from "@/lib/schedule-ics";
 
 const SCHEDULE_ROW_TAG_ORDER = ["キッズ", "1年", "2年", "3年", "4年", "5年", "6年"] as const;
 const SCHEDULE_BADGE_ORDER = ["低学年", "中学年", "高学年", "キッズ", "1年", "2年", "3年", "4年", "5年", "6年"] as const;
+const CARPOOL_CHOICES = ["配車希望", "現地集合", "自家用車同乗可"] as const;
 
 type AuthState = {
   status: "loading" | "ready" | "error";
@@ -52,6 +53,15 @@ type DutyAssignmentRow = {
   decidedBy: UserLite | null;
 };
 
+type CarpoolPreferenceRow = {
+  id: string;
+  userId: string;
+  choice: string;
+  createdAt: string;
+  updatedAt: string;
+  user: UserLite;
+};
+
 type ScheduleRow = {
   id: string;
   eventDate: string;
@@ -69,6 +79,7 @@ type ScheduleRow = {
   updatedBy: UserLite | null;
   attendances: AttendanceRow[];
   dutyAssignment: DutyAssignmentRow | null;
+  carpoolPreferences: CarpoolPreferenceRow[];
 };
 
 type ScheduleDashboardProps = {
@@ -77,7 +88,7 @@ type ScheduleDashboardProps = {
   };
 };
 
-type ModalTab = "attendance-input" | "attendance-list" | "duty";
+type ModalTab = "attendance-input" | "attendance-list" | "duty" | "carpool";
 
 export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
   const [schedules, setSchedules] = useState(initialData.schedules);
@@ -91,6 +102,7 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
   const [attendanceStatus, setAttendanceStatus] = useState<AttendanceStatus>("参加");
   const [dutyUserId, setDutyUserId] = useState("");
   const [dutyNote, setDutyNote] = useState("");
+  const [carpoolChoice, setCarpoolChoice] = useState<(typeof CARPOOL_CHOICES)[number] | "">("");
   const [editorOpen, setEditorOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [scheduleForm, setScheduleForm] = useState<SchedulePayload>(() => createEmptySchedule());
@@ -145,6 +157,10 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
   const participatingUsers = modalEntry
     ? modalEntry.attendances.filter((attendance) => attendance.status === "参加")
     : [];
+  const currentCarpoolPreference =
+    modalEntry && auth.lineUserId
+      ? modalEntry.carpoolPreferences.find((preference) => preference.user.lineUserId === auth.lineUserId) || null
+      : null;
 
   useEffect(() => {
     if (!modalEntry) {
@@ -154,7 +170,8 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
     setAttendanceStatus((currentAttendance?.status as AttendanceStatus | undefined) || "参加");
     setDutyUserId(modalEntry.dutyAssignment?.assignedUserId || "");
     setDutyNote(modalEntry.dutyAssignment?.note || "");
-  }, [currentAttendance, modalEntry]);
+    setCarpoolChoice((currentCarpoolPreference?.choice as (typeof CARPOOL_CHOICES)[number] | undefined) || "");
+  }, [currentAttendance, currentCarpoolPreference, modalEntry]);
 
   function upsertSchedule(nextEntry: ScheduleRow) {
     setSchedules((current) => {
@@ -220,8 +237,9 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
   }
 
   function openModal(entryId: string, tab: ModalTab) {
+    const entry = schedules.find((current) => current.id === entryId);
     setModalEntryId(entryId);
-    setModalTab(tab);
+    setModalTab(tab === "carpool" && entry && shouldHideCarpool(entry.location) ? "attendance-input" : tab);
   }
 
   function closeModal() {
@@ -378,6 +396,41 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
         return;
       }
       setFeedback(error instanceof Error ? error.message : "当番保存に失敗しました。");
+    }
+  }
+
+  async function saveCarpool() {
+    if (!modalEntry) {
+      return;
+    }
+    if (!carpoolChoice) {
+      setFeedback("配車管理ではいずれかを選択してください。");
+      return;
+    }
+    try {
+      const idToken = await requireIdToken();
+      const response = await fetch(`/api/schedules/${modalEntry.id}/carpool`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          idToken,
+          carpool: {
+            choice: carpoolChoice
+          }
+        })
+      });
+      if (!response.ok) {
+        throw new Error("配車保存に失敗しました。");
+      }
+      const saved = (await response.json()) as ScheduleRow;
+      upsertSchedule(saved);
+      setFeedback("配車希望を更新しました。");
+    } catch (error) {
+      if (shouldRefreshLineLogin(error)) {
+        await loginWithLine();
+        return;
+      }
+      setFeedback(error instanceof Error ? error.message : "配車保存に失敗しました。");
     }
   }
 
@@ -652,6 +705,11 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
                             <button className="text-button" type="button" onClick={() => openModal(entry.id, "attendance-list")}>
                               一覧
                             </button>
+                            {!shouldHideCarpool(entry.location) ? (
+                              <button className="text-button" type="button" onClick={() => openModal(entry.id, "carpool")}>
+                                配車
+                              </button>
+                            ) : null}
                             <button className="text-button" type="button" onClick={() => openModal(entry.id, "duty")}>
                               当番
                             </button>
@@ -709,6 +767,11 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
               <button className={`tab ${modalTab === "attendance-list" ? "is-active" : ""}`} type="button" onClick={() => setModalTab("attendance-list")}>
                 出欠一覧
               </button>
+              {!shouldHideCarpool(modalEntry.location) ? (
+                <button className={`tab ${modalTab === "carpool" ? "is-active" : ""}`} type="button" onClick={() => setModalTab("carpool")}>
+                  配車管理
+                </button>
+              ) : null}
               <button className={`tab ${modalTab === "duty" ? "is-active" : ""}`} type="button" onClick={() => setModalTab("duty")}>
                 当番管理
               </button>
@@ -821,6 +884,64 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
                 <div className="stack-actions">
                   <button className="primary" type="button" onClick={() => void saveDuty()}>
                     当番を保存
+                  </button>
+                </div>
+              </div>
+            ) : null}
+
+            {modalTab === "carpool" ? (
+              <div className="modal-section">
+                <div className="attendance-choice-row">
+                  {CARPOOL_CHOICES.map((choice) => (
+                    <button
+                      key={choice}
+                      type="button"
+                      className={`status-toggle ${carpoolChoice === choice ? "is-active" : ""}`}
+                      onClick={() => setCarpoolChoice(choice)}
+                    >
+                      {choice}
+                    </button>
+                  ))}
+                </div>
+                <div className="summary-grid schedule-summary-grid">
+                  {CARPOOL_CHOICES.map((choice) => (
+                    <div key={choice} className="summary-card">
+                      <h3>{choice}</h3>
+                      <strong>{modalEntry.carpoolPreferences.filter((preference) => preference.choice === choice).length}</strong>
+                    </div>
+                  ))}
+                </div>
+                <div className="table-wrap">
+                  <table className="results-table modal-results-table">
+                    <thead>
+                      <tr>
+                        <th>入力者</th>
+                        <th>選択</th>
+                        <th>更新</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {modalEntry.carpoolPreferences.length === 0 ? (
+                        <tr>
+                          <td colSpan={3} className="empty-state schedule-empty">
+                            まだ配車の入力はありません。
+                          </td>
+                        </tr>
+                      ) : (
+                        modalEntry.carpoolPreferences.map((preference) => (
+                          <tr key={preference.id}>
+                            <td>{preference.user.displayName}</td>
+                            <td>{preference.choice}</td>
+                            <td>{formatDateTimeCell(preference.updatedAt)}</td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="stack-actions">
+                  <button className="primary" type="button" onClick={() => void saveCarpool()}>
+                    配車を保存
                   </button>
                 </div>
               </div>
@@ -1048,6 +1169,10 @@ function attendanceBadgeClass(status: string) {
   if (status === "参加") return "result-win";
   if (status === "欠席") return "result-loss";
   return "result-draw";
+}
+
+function shouldHideCarpool(location: string) {
+  return location.includes("板七小");
 }
 
 function formatDateCell(value: string) {

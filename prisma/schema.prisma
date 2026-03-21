@@ -21,6 +21,7 @@ model User {
   attendances      Attendance[]
   dutiesAssigned   DutyAssignment[] @relation("DutyAssignedTo")
   dutiesDecided    DutyAssignment[] @relation("DutyDecidedBy")
+  carpoolPreferences CarpoolPreference[]
 }
 
 model Player {
@@ -86,6 +87,7 @@ model ScheduleEntry {
   updatedBy      User           @relation("ScheduleUpdatedBy", fields: [updatedById], references: [id])
   attendances    Attendance[]
   dutyAssignment DutyAssignment?
+  carpoolPreferences CarpoolPreference[]
 }
 
 model Attendance {
@@ -114,4 +116,23 @@ model DutyAssignment {
   scheduleEntry   ScheduleEntry @relation(fields: [scheduleEntryId], references: [id], onDelete: Cascade)
   assignedUser    User?         @relation("DutyAssignedTo", fields: [assignedUserId], references: [id], onDelete: SetNull)
   decidedBy       User?         @relation("DutyDecidedBy", fields: [decidedById], references: [id], onDelete: SetNull)
+}
+
+model CarpoolPreference {
+  id              String        @id @default(cuid())
+  scheduleEntryId String
+  userId          String
+  choice          String
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  scheduleEntry   ScheduleEntry @relation(fields: [scheduleEntryId], references: [id], onDelete: Cascade)
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([scheduleEntryId, userId])
+}
+
+model PlayerPromotionRun {
+  id        String   @id @default(cuid())
+  year      Int      @unique
+  appliedAt DateTime @default(now())
 }

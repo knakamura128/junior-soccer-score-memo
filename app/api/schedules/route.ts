@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { upsertLineUser } from "@/lib/upsert-line-user";
-import { serializeScheduleDate } from "@/lib/schedule-format";
+import { scheduleEntryInclude, serializeScheduleEntry } from "@/lib/schedule-entry";
 import { z } from "zod";
 
 const schedulePayloadSchema = z.object({
@@ -23,44 +23,11 @@ const createSchema = z.object({
 
 export async function GET() {
   const schedules = await prisma.scheduleEntry.findMany({
-    include: {
-      createdBy: true,
-      updatedBy: true,
-      attendances: {
-        include: { user: true },
-        orderBy: [{ updatedAt: "desc" }]
-      },
-      dutyAssignment: {
-        include: {
-          assignedUser: true,
-          decidedBy: true
-        }
-      }
-    },
+    include: scheduleEntryInclude,
     orderBy: [{ eventDate: "asc" }, { startTime: "asc" }, { createdAt: "asc" }]
   });
 
-  return NextResponse.json(
-    schedules.map((entry) => ({
-      ...entry,
-      eventDate: serializeScheduleDate(entry.eventDate),
-      createdAt: entry.createdAt.toISOString(),
-      updatedAt: entry.updatedAt.toISOString(),
-      dutyAssignment: entry.dutyAssignment
-        ? {
-            ...entry.dutyAssignment,
-            decidedAt: entry.dutyAssignment.decidedAt?.toISOString() || null,
-            createdAt: entry.dutyAssignment.createdAt.toISOString(),
-            updatedAt: entry.dutyAssignment.updatedAt.toISOString()
-          }
-        : null,
-      attendances: entry.attendances.map((attendance) => ({
-        ...attendance,
-        createdAt: attendance.createdAt.toISOString(),
-        updatedAt: attendance.updatedAt.toISOString()
-      }))
-    }))
-  );
+  return NextResponse.json(schedules.map(serializeScheduleEntry));
 }
 
 export async function POST(request: Request) {
@@ -82,26 +49,10 @@ export async function POST(request: Request) {
         createdById: user.id,
         updatedById: user.id
       },
-      include: {
-        createdBy: true,
-        updatedBy: true,
-        attendances: { include: { user: true }, orderBy: [{ updatedAt: "desc" }] },
-        dutyAssignment: { include: { assignedUser: true, decidedBy: true } }
-      }
+      include: scheduleEntryInclude
     });
 
-    return NextResponse.json({
-      ...saved,
-      eventDate: serializeScheduleDate(saved.eventDate),
-      createdAt: saved.createdAt.toISOString(),
-      updatedAt: saved.updatedAt.toISOString(),
-      dutyAssignment: null,
-      attendances: saved.attendances.map((attendance) => ({
-        ...attendance,
-        createdAt: attendance.createdAt.toISOString(),
-        updatedAt: attendance.updatedAt.toISOString()
-      }))
-    });
+    return NextResponse.json(serializeScheduleEntry(saved));
   } catch (error) {
     const message = error instanceof Error ? error.message : "スケジュール作成に失敗しました。";
     return new NextResponse(message, { status: 400 });

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { serializeScheduleDate } from "@/lib/schedule-format";
+import { scheduleEntryInclude, serializeScheduleEntry } from "@/lib/schedule-entry";
 import { upsertLineUser } from "@/lib/upsert-line-user";
 import { verifyLineIdToken } from "@/lib/line-auth";
 import { z } from "zod";
@@ -46,41 +46,10 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
         note: parsed.schedule.note || null,
         updatedById: user.id
       },
-      include: {
-        createdBy: true,
-        updatedBy: true,
-        attendances: {
-          include: { user: true },
-          orderBy: [{ updatedAt: "desc" }]
-        },
-        dutyAssignment: {
-          include: {
-            assignedUser: true,
-            decidedBy: true
-          }
-        }
-      }
+      include: scheduleEntryInclude
     });
 
-    return NextResponse.json({
-      ...updated,
-      eventDate: serializeScheduleDate(updated.eventDate),
-      createdAt: updated.createdAt.toISOString(),
-      updatedAt: updated.updatedAt.toISOString(),
-      dutyAssignment: updated.dutyAssignment
-        ? {
-            ...updated.dutyAssignment,
-            decidedAt: updated.dutyAssignment.decidedAt?.toISOString() || null,
-            createdAt: updated.dutyAssignment.createdAt.toISOString(),
-            updatedAt: updated.dutyAssignment.updatedAt.toISOString()
-          }
-        : null,
-      attendances: updated.attendances.map((attendance) => ({
-        ...attendance,
-        createdAt: attendance.createdAt.toISOString(),
-        updatedAt: attendance.updatedAt.toISOString()
-      }))
-    });
+    return NextResponse.json(serializeScheduleEntry(updated));
   } catch (error) {
     const message = error instanceof Error ? error.message : "スケジュール更新に失敗しました。";
     return new NextResponse(message, { status: 400 });

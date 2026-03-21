@@ -319,10 +319,14 @@ input[type="month"] { min-width: 0; }
 .muted { color: var(--muted); }
 .error { color: #9d4311; }
 .guide-shell {
+  padding-top: 8px;
   padding-bottom: 16px;
 }
+.guide-device-desktop {
+  width: min(1440px, calc(100% - 24px));
+}
 .guide-scene-card {
-  min-height: calc(100vh - 180px);
+  min-height: calc(100vh - 32px);
 }
 .guide-modal-backdrop {
   position: static;
@@ -336,17 +340,6 @@ input[type="month"] { min-width: 0; }
 }
 .guide-index-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-.guide-avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 999px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: #dff1e6;
-  color: var(--green-dark);
-  font-weight: 800;
 }
 .guide-annotated {
   position: relative;
@@ -458,6 +451,50 @@ input[type="month"] { min-width: 0; }
 .callout-edit-cancel::after { left: 100%; top: 18px; width: 22px; }
 .callout-edit-update { bottom: 22px; right: 8px; }
 .callout-edit-update::after { right: 100%; top: 18px; width: 22px; }
+
+.guide-device-desktop .callout-top-month { top: 118px; left: 18px; width: 220px; }
+.guide-device-desktop .callout-top-compact { top: 118px; left: 320px; width: 220px; }
+.guide-device-desktop .callout-top-import { top: 118px; right: 28px; width: 250px; }
+.guide-device-desktop .callout-top-row { top: 250px; right: 24px; width: 260px; }
+.guide-device-desktop .callout-top-calendar { bottom: 36px; right: 28px; width: 280px; }
+
+.guide-device-desktop .callout-attend-tabs { top: 92px; right: 20px; width: 250px; }
+.guide-device-desktop .callout-attend-status { top: 180px; left: 18px; width: 240px; }
+.guide-device-desktop .callout-attend-note { top: 296px; right: 18px; width: 220px; }
+.guide-device-desktop .callout-attend-save { bottom: 26px; right: 18px; width: 240px; }
+
+.guide-device-desktop .callout-list-summary { top: 132px; right: 18px; width: 250px; }
+.guide-device-desktop .callout-list-filter { top: 256px; left: 18px; width: 230px; }
+.guide-device-desktop .callout-list-table { bottom: 26px; right: 18px; width: 260px; }
+
+.guide-device-desktop .callout-duty-select { top: 128px; right: 18px; width: 250px; }
+.guide-device-desktop .callout-duty-note { top: 250px; left: 18px; width: 240px; }
+.guide-device-desktop .callout-duty-meta { bottom: 118px; right: 18px; width: 260px; }
+
+.guide-device-desktop .callout-edit-date { top: 118px; right: 18px; width: 260px; }
+.guide-device-desktop .callout-edit-time { top: 238px; left: 18px; width: 240px; }
+.guide-device-desktop .callout-edit-match { bottom: 108px; left: 18px; width: 240px; }
+.guide-device-desktop .callout-edit-save { bottom: 18px; right: 18px; width: 250px; }
+
+.guide-device-desktop .callout-score-info { top: 112px; left: 18px; width: 250px; }
+.guide-device-desktop .callout-score-board { top: 116px; left: 490px; width: 220px; }
+.guide-device-desktop .callout-score-timer { top: 338px; left: 510px; width: 220px; }
+.guide-device-desktop .callout-score-log { bottom: 86px; left: 470px; width: 250px; }
+.guide-device-desktop .callout-score-save { bottom: 22px; left: 468px; width: 240px; }
+
+.guide-device-desktop .callout-player-form { top: 108px; right: 18px; width: 240px; }
+.guide-device-desktop .callout-player-import { top: 238px; right: 18px; width: 240px; }
+.guide-device-desktop .callout-player-list { bottom: 44px; right: 18px; width: 250px; }
+
+.guide-device-desktop .callout-results-month { top: 110px; left: 18px; width: 240px; }
+.guide-device-desktop .callout-results-filter { top: 112px; left: 520px; width: 230px; }
+.guide-device-desktop .callout-results-summary { top: 220px; right: 18px; width: 250px; }
+.guide-device-desktop .callout-results-table { bottom: 56px; right: 18px; width: 260px; }
+
+.guide-device-desktop .callout-edit-log { top: 120px; right: 18px; width: 250px; }
+.guide-device-desktop .callout-edit-remove { top: 308px; left: 18px; width: 230px; }
+.guide-device-desktop .callout-edit-cancel { bottom: 88px; left: 18px; width: 240px; }
+.guide-device-desktop .callout-edit-update { bottom: 22px; right: 18px; width: 250px; }
 button:hover { transform: translateY(-1px); }
 button:active { transform: translateY(0); }
 @media (min-width: 900px) {

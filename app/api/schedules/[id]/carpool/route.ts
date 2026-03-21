@@ -6,9 +6,8 @@ import { z } from "zod";
 
 const bodySchema = z.object({
   idToken: z.string().min(1),
-  attendance: z.object({
-    status: z.enum(["参加", "欠席", "未定"]),
-    note: z.string()
+  carpool: z.object({
+    choice: z.enum(["配車希望", "現地集合", "自家用車同乗可"])
   })
 });
 
@@ -17,7 +16,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
   const parsed = bodySchema.parse(await request.json());
   const user = await upsertLineUser(parsed.idToken);
 
-  await prisma.attendance.upsert({
+  await prisma.carpoolPreference.upsert({
     where: {
       scheduleEntryId_userId: {
         scheduleEntryId: id,
@@ -25,14 +24,12 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       }
     },
     update: {
-      status: parsed.attendance.status,
-      note: parsed.attendance.note || null
+      choice: parsed.carpool.choice
     },
     create: {
       scheduleEntryId: id,
       userId: user.id,
-      status: parsed.attendance.status,
-      note: parsed.attendance.note || null
+      choice: parsed.carpool.choice
     }
   });
 
