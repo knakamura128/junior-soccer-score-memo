@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { verifyLineIdToken } from "@/lib/line-auth";
+import { normalizePlayerTags } from "@/lib/player-promotion";
 import { z } from "zod";
 
 const deleteSchema = z.object({
@@ -26,7 +27,7 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
     data: {
       number: parsed.player.number,
       name: parsed.player.name,
-      tags: parsed.player.tags
+      tags: normalizePlayerTags(parsed.player.name, parsed.player.tags)
     }
   });
 
