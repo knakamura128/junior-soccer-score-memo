@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { scheduleEntryInclude, serializeScheduleEntry } from "@/lib/schedule-entry";
 import { upsertLineUser } from "@/lib/upsert-line-user";
-import { verifyLineIdToken } from "@/lib/line-auth";
+import { verifyLineSession } from "@/lib/line-auth";
 import { z } from "zod";
 
 const schedulePayloadSchema = z.object({
@@ -18,19 +18,25 @@ const schedulePayloadSchema = z.object({
 });
 
 const updateSchema = z.object({
-  idToken: z.string().min(1),
+  idToken: z.string().optional(),
+  accessToken: z.string().optional(),
   schedule: schedulePayloadSchema
+}).refine((value) => value.idToken || value.accessToken, {
+  message: "LINEログインが必要です。"
 });
 
 const deleteSchema = z.object({
-  idToken: z.string().min(1)
+  idToken: z.string().optional(),
+  accessToken: z.string().optional()
+}).refine((value) => value.idToken || value.accessToken, {
+  message: "LINEログインが必要です。"
 });
 
 export async function PUT(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await context.params;
     const parsed = updateSchema.parse(await request.json());
-    const user = await upsertLineUser(parsed.idToken);
+    const user = await upsertLineUser({ idToken: parsed.idToken, accessToken: parsed.accessToken });
 
     const updated = await prisma.scheduleEntry.update({
       where: { id },
@@ -60,7 +66,7 @@ export async function DELETE(request: Request, context: { params: Promise<{ id: 
   try {
     const { id } = await context.params;
     const parsed = deleteSchema.parse(await request.json());
-    await verifyLineIdToken(parsed.idToken);
+    await verifyLineSession({ idToken: parsed.idToken, accessToken: parsed.accessToken });
 
     await prisma.scheduleEntry.delete({
       where: { id }

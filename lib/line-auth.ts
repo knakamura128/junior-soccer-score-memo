@@ -4,6 +4,11 @@ type VerifiedLineProfile = {
   pictureUrl?: string;
 };
 
+export type LineAuthPayload = {
+  idToken?: string;
+  accessToken?: string;
+};
+
 type VerifyResponse = {
   sub: string;
   name?: string;
@@ -53,5 +58,59 @@ export async function verifyLineIdToken(idToken: string): Promise<VerifiedLinePr
     lineUserId: payload.sub,
     displayName: payload.name || "LINE user",
     pictureUrl: payload.picture
+  };
+}
+
+export async function verifyLineSession({ idToken, accessToken }: LineAuthPayload): Promise<VerifiedLineProfile> {
+  if (idToken) {
+    try {
+      return await verifyLineIdToken(idToken);
+    } catch (error) {
+      if (!accessToken) {
+        throw error;
+      }
+    }
+  }
+
+  if (accessToken) {
+    return verifyLineAccessToken(accessToken);
+  }
+
+  throw new Error("LINEログインが必要です。");
+}
+
+async function verifyLineAccessToken(accessToken: string): Promise<VerifiedLineProfile> {
+  const response = await fetch("https://api.line.me/v2/profile", {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${accessToken}`
+    },
+    cache: "no-store"
+  });
+
+  if (!response.ok) {
+    let detail = "";
+    try {
+      detail = await response.text();
+    } catch {
+      detail = "";
+    }
+    throw new Error(`LINEアクセストークンの確認に失敗しました。${detail ? ` (${detail})` : ""}`);
+  }
+
+  const payload = (await response.json()) as {
+    userId: string;
+    displayName?: string;
+    pictureUrl?: string;
+  };
+
+  if (!payload.userId) {
+    throw new Error("LINEプロフィールの取得に失敗しました。");
+  }
+
+  return {
+    lineUserId: payload.userId,
+    displayName: payload.displayName || "LINE user",
+    pictureUrl: payload.pictureUrl
   };
 }

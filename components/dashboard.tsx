@@ -49,6 +49,7 @@ type DashboardProps = {
 type AuthState = {
   status: "loading" | "ready" | "error";
   idToken: string;
+  accessToken: string;
   displayName: string;
   pictureUrl?: string;
   lineUserId?: string;
@@ -72,7 +73,7 @@ export function Dashboard({ initialData, initialMatch }: DashboardProps) {
   const [filterMonth, setFilterMonth] = useState(() => new Date().toISOString().slice(0, 7));
   const [sortValue, setSortValue] = useState("date-desc");
   const [compactResultsView, setCompactResultsView] = useState(true);
-  const [auth, setAuth] = useState<AuthState>({ status: "loading", idToken: "", displayName: "" });
+  const [auth, setAuth] = useState<AuthState>({ status: "loading", idToken: "", accessToken: "", displayName: "" });
   const [feedback, setFeedback] = useState<string>("");
 
   useEffect(() => {
@@ -134,21 +135,26 @@ export function Dashboard({ initialData, initialMatch }: DashboardProps) {
     async function initLiff() {
       const liffId = process.env.NEXT_PUBLIC_LIFF_ID;
       if (!liffId) {
-        setAuth({ status: "error", idToken: "", displayName: "", error: "NEXT_PUBLIC_LIFF_ID が未設定です。" });
+        setAuth({ status: "error", idToken: "", accessToken: "", displayName: "", error: "NEXT_PUBLIC_LIFF_ID が未設定です。" });
         return;
       }
       try {
         const { default: liff } = await import("@line/liff");
         await liff.init({ liffId });
         if (!liff.isLoggedIn()) {
-          setAuth({ status: "ready", idToken: "", displayName: "未ログイン" });
+          setAuth({ status: "ready", idToken: "", accessToken: "", displayName: "未ログイン" });
           return;
         }
-        const [profile, idToken] = await Promise.all([liff.getProfile(), Promise.resolve(liff.getIDToken() || "")]);
+        const [profile, idToken, accessToken] = await Promise.all([
+          liff.getProfile(),
+          Promise.resolve(liff.getIDToken() || ""),
+          Promise.resolve(liff.getAccessToken() || "")
+        ]);
         if (!cancelled) {
           setAuth({
             status: "ready",
             idToken,
+            accessToken,
             displayName: profile.displayName,
             pictureUrl: profile.pictureUrl,
             lineUserId: profile.userId
@@ -159,6 +165,7 @@ export function Dashboard({ initialData, initialMatch }: DashboardProps) {
           setAuth({
             status: "error",
             idToken: "",
+            accessToken: "",
             displayName: "",
             error: buildDashboardLiffErrorMessage(error, "LIFF 初期化に失敗しました。")
           });
@@ -219,12 +226,15 @@ export function Dashboard({ initialData, initialMatch }: DashboardProps) {
   );
   const matchMonthOptions = getMonthOptions(filterMonth);
 
-  async function requireIdToken() {
-    if (!auth.idToken) {
+  async function requireLineAuth() {
+    if (!auth.idToken && !auth.accessToken) {
       await loginWithLine();
       throw new Error("LINEログインを更新しています。再度操作してください。");
     }
-    return auth.idToken;
+    return {
+      idToken: auth.idToken || undefined,
+      accessToken: auth.accessToken || undefined
+    };
   }
 
   async function savePlayer() {
@@ -233,12 +243,12 @@ export function Dashboard({ initialData, initialMatch }: DashboardProps) {
       return;
     }
     try {
-      const idToken = await requireIdToken();
+      const authPayload = await requireLineAuth();
       const response = await fetch(editingPlayerId ? `/api/players/${editingPlayerId}` : "/api/players", {
         method: editingPlayerId ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          idToken,
+          ...authPayload,
           player: playerForm
         })
       });
@@ -269,14 +279,14 @@ export function Dashboard({ initialData, initialMatch }: DashboardProps) {
     }
 
     try {
-      const idToken = await requireIdToken();
+      const authPayload = await requireLineAuth();
       const savedPlayers: Player[] = [];
       for (const candidate of candidates) {
         const response = await fetch("/api/players", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            idToken,
+            ...authPayload,
             player: candidate
           })
         });
@@ -306,11 +316,11 @@ export function Dashboard({ initialData, initialMatch }: DashboardProps) {
     }
 
     try {
-      const idToken = await requireIdToken();
+      const authPayload = await requireLineAuth();
       const response = await fetch(`/api/players/${id}`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ idToken })
+        body: JSON.stringify(authPayload)
       });
       if (!response.ok) {
         const detail = await response.text();
@@ -390,11 +400,11 @@ export function Dashboard({ initialData, initialMatch }: DashboardProps) {
       return;
     }
     try {
-      const idToken = await requireIdToken();
+      const authPayload = await requireLineAuth();
       const response = await fetch(editingId ? `/api/matches/${editingId}` : "/api/matches", {
         method: editingId ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ idToken, match })
+        body: JSON.stringify({ ...authPayload, match })
       });
       if (!response.ok) throw new Error("保存に失敗しました。");
       const saved = (await response.json()) as MatchRow;
@@ -423,11 +433,11 @@ export function Dashboard({ initialData, initialMatch }: DashboardProps) {
     }
 
     try {
-      const idToken = await requireIdToken();
+      const authPayload = await requireLineAuth();
       const response = await fetch(`/api/matches/${id}`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ idToken })
+        body: JSON.stringify(authPayload)
       });
       if (!response.ok) {
         const detail = await response.text();
@@ -493,14 +503,14 @@ export function Dashboard({ initialData, initialMatch }: DashboardProps) {
 
   async function importReferenceCsv(file: File) {
     try {
-      const idToken = await requireIdToken();
+      const authPayload = await requireLineAuth();
       const text = await file.text();
       const payloads = parseReferenceMatchesCsv(text, file.name);
       for (const payload of payloads) {
         const response = await fetch("/api/matches", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ idToken, match: payload })
+          body: JSON.stringify({ ...authPayload, match: payload })
         });
         if (!response.ok) throw new Error("CSVの取り込みに失敗しました。");
         const saved = (await response.json()) as MatchRow;
@@ -542,6 +552,7 @@ export function Dashboard({ initialData, initialMatch }: DashboardProps) {
       setAuth({
         status: "error",
         idToken: "",
+        accessToken: "",
         displayName: "",
         error: buildDashboardLiffErrorMessage(error, "LINEログインに失敗しました。")
       });
@@ -564,6 +575,7 @@ export function Dashboard({ initialData, initialMatch }: DashboardProps) {
       setAuth({
         status: "error",
         idToken: "",
+        accessToken: "",
         displayName: "",
         error: buildDashboardLiffErrorMessage(error, "LINEログアウトに失敗しました。")
       });
@@ -598,7 +610,7 @@ export function Dashboard({ initialData, initialMatch }: DashboardProps) {
               <div className={`auth-meta ${auth.error ? "error" : ""}`}>{auth.error || "保存前にログイン状態を確認します"}</div>
             </div>
           )}
-          {!auth.idToken ? (
+          {!auth.idToken && !auth.accessToken ? (
             <button className="primary" type="button" onClick={() => void loginWithLine()} style={{ marginTop: 12 }}>
               LINEでログイン
             </button>

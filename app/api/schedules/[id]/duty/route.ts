@@ -5,18 +5,21 @@ import { upsertLineUser } from "@/lib/upsert-line-user";
 import { z } from "zod";
 
 const bodySchema = z.object({
-  idToken: z.string().min(1),
+  idToken: z.string().optional(),
+  accessToken: z.string().optional(),
   duty: z.object({
     assignedUserId: z.string().optional().nullable(),
     note: z.string()
   })
+}).refine((value) => value.idToken || value.accessToken, {
+  message: "LINEログインが必要です。"
 });
 
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await context.params;
     const parsed = bodySchema.parse(await request.json());
-    const user = await upsertLineUser(parsed.idToken);
+    const user = await upsertLineUser({ idToken: parsed.idToken, accessToken: parsed.accessToken });
 
     await prisma.dutyAssignment.upsert({
       where: { scheduleEntryId: id },

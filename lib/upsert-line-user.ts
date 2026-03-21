@@ -1,8 +1,8 @@
 import { prisma } from "@/lib/prisma";
-import { verifyLineIdToken } from "@/lib/line-auth";
+import { type LineAuthPayload, verifyLineSession } from "@/lib/line-auth";
 
-export async function upsertLineUser(idToken: string) {
-  const profile = await verifyLineIdToken(idToken);
+export async function upsertLineUser(auth: LineAuthPayload) {
+  const profile = await verifyLineSession(auth);
 
   return prisma.user.upsert({
     where: { lineUserId: profile.lineUserId },

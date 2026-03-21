@@ -1,16 +1,19 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { verifyLineIdToken } from "@/lib/line-auth";
+import { verifyLineSession } from "@/lib/line-auth";
 import { ensureAnnualPlayerPromotion, normalizeExistingPlayers, normalizePlayerTags } from "@/lib/player-promotion";
 import { z } from "zod";
 
 const playerSchema = z.object({
-  idToken: z.string().min(1),
+  idToken: z.string().optional(),
+  accessToken: z.string().optional(),
   player: z.object({
     number: z.string().min(1),
     name: z.string().min(1),
     tags: z.array(z.string()).min(1)
   })
+}).refine((value) => value.idToken || value.accessToken, {
+  message: "LINEログインが必要です。"
 });
 
 export async function GET() {
@@ -24,7 +27,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   const parsed = playerSchema.parse(await request.json());
-  await verifyLineIdToken(parsed.idToken);
+  await verifyLineSession({ idToken: parsed.idToken, accessToken: parsed.accessToken });
 
   const player = await prisma.player.create({
     data: {

@@ -21,6 +21,7 @@ const CARPOOL_CHOICES = ["配車希望", "現地集合", "自家用車同乗可"
 type AuthState = {
   status: "loading" | "ready" | "error";
   idToken: string;
+  accessToken: string;
   displayName: string;
   pictureUrl?: string;
   lineUserId?: string;
@@ -94,7 +95,7 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
   const [schedules, setSchedules] = useState(initialData.schedules);
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
   const [filterTag, setFilterTag] = useState("すべて");
-  const [auth, setAuth] = useState<AuthState>({ status: "loading", idToken: "", displayName: "" });
+  const [auth, setAuth] = useState<AuthState>({ status: "loading", idToken: "", accessToken: "", displayName: "" });
   const [feedback, setFeedback] = useState("");
   const [modalEntryId, setModalEntryId] = useState<string | null>(null);
   const [modalTab, setModalTab] = useState<ModalTab>("attendance-input");
@@ -126,6 +127,7 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
           setAuth({
             status: "error",
             idToken: "",
+            accessToken: "",
             displayName: "",
             error: buildLiffErrorMessage(error, "LIFF 初期化に失敗しました。")
           });
@@ -199,14 +201,17 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
     });
   }
 
-  async function requireIdToken() {
+  async function requireLineAuth() {
     const session = await fetchLiffSession();
     setAuth(session);
-    if (!session.idToken) {
+    if (!session.idToken && !session.accessToken) {
       await loginWithLine();
       throw new Error("LINEログインを更新しています。再度操作してください。");
     }
-    return session.idToken;
+    return {
+      idToken: session.idToken || undefined,
+      accessToken: session.accessToken || undefined
+    };
   }
 
   async function loginWithLine() {
@@ -230,6 +235,7 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
       setAuth({
         status: "error",
         idToken: "",
+        accessToken: "",
         displayName: "",
         error: buildLiffErrorMessage(error, "LINEログインに失敗しました。")
       });
@@ -249,6 +255,7 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
         ...current,
         status: "error",
         idToken: "",
+        accessToken: "",
         error: message
       }));
       setFeedback(message);
@@ -261,6 +268,7 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
         ...current,
         status: "error",
         idToken: "",
+        accessToken: "",
         error: buildLiffErrorMessage(error, message)
       }));
       setFeedback(buildLiffErrorMessage(error, message));
@@ -283,6 +291,7 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
       setAuth({
         status: "error",
         idToken: "",
+        accessToken: "",
         displayName: "",
         error: buildLiffErrorMessage(error, "LINEログアウトに失敗しました。")
       });
@@ -348,11 +357,11 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
       return;
     }
     try {
-      const idToken = await requireIdToken();
+      const authPayload = await requireLineAuth();
       const response = await fetch(editingId ? `/api/schedules/${editingId}` : "/api/schedules", {
         method: editingId ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ idToken, schedule: scheduleForm })
+        body: JSON.stringify({ ...authPayload, schedule: scheduleForm })
       });
       if (!response.ok) {
         const detail = await response.text();
@@ -381,11 +390,11 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
       return;
     }
     try {
-      const idToken = await requireIdToken();
+      const authPayload = await requireLineAuth();
       const response = await fetch(`/api/schedules/${id}`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ idToken })
+        body: JSON.stringify(authPayload)
       });
       if (!response.ok) {
         if (response.status === 400) {
@@ -414,12 +423,12 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
       return;
     }
     try {
-      const idToken = await requireIdToken();
+      const authPayload = await requireLineAuth();
       const response = await fetch(`/api/schedules/${modalEntry.id}/attendance`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          idToken,
+          ...authPayload,
           attendance: { status: attendanceStatus, note: attendanceNote }
         })
       });
@@ -448,12 +457,12 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
       return;
     }
     try {
-      const idToken = await requireIdToken();
+      const authPayload = await requireLineAuth();
       const response = await fetch(`/api/schedules/${modalEntry.id}/duty`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          idToken,
+          ...authPayload,
           duty: {
             assignedUserId: dutyUserId || null,
             note: dutyNote
@@ -489,12 +498,12 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
       return;
     }
     try {
-      const idToken = await requireIdToken();
+      const authPayload = await requireLineAuth();
       const response = await fetch(`/api/schedules/${modalEntry.id}/carpool`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          idToken,
+          ...authPayload,
           carpool: {
             choice: carpoolChoice
           }
@@ -527,7 +536,7 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
     }
 
     try {
-      const idToken = await requireIdToken();
+      const authPayload = await requireLineAuth();
       const savedRows: ScheduleRow[] = [];
 
       for (const entry of bulkAttendanceTargets) {
@@ -535,7 +544,7 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            idToken,
+            ...authPayload,
             attendance: { status: bulkAttendanceStatus, note: bulkAttendanceNote }
           })
         });
@@ -575,7 +584,7 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
         setFeedback("取り込める予定が見つかりませんでした。");
         return;
       }
-      const idToken = await requireIdToken();
+      const authPayload = await requireLineAuth();
       const savedRows: ScheduleRow[] = [];
       for (const [index, schedule] of parsed.entries()) {
         if (schedule.tags.length === 0) {
@@ -587,7 +596,7 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
         const response = await fetch("/api/schedules", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ idToken, schedule })
+          body: JSON.stringify({ ...authPayload, schedule })
         });
         if (!response.ok) {
           const detail = await response.text();
@@ -669,7 +678,7 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
             </div>
           )}
           <div className="schedule-hero-actions">
-            {!auth.idToken ? (
+            {!auth.idToken && !auth.accessToken ? (
               <button className="primary" type="button" onClick={() => void loginWithLine()}>
                 LINEでログイン
               </button>
@@ -1253,21 +1262,26 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
 async function fetchLiffSession(): Promise<AuthState> {
   const liffId = process.env.NEXT_PUBLIC_LIFF_ID;
   if (!liffId) {
-    return { status: "error", idToken: "", displayName: "", error: "NEXT_PUBLIC_LIFF_ID が未設定です。" };
+    return { status: "error", idToken: "", accessToken: "", displayName: "", error: "NEXT_PUBLIC_LIFF_ID が未設定です。" };
   }
 
   const { default: liff } = await import("@line/liff");
   await liff.init({ liffId });
 
   if (!liff.isLoggedIn()) {
-    return { status: "ready", idToken: "", displayName: "未ログイン" };
+    return { status: "ready", idToken: "", accessToken: "", displayName: "未ログイン" };
   }
 
-  const [profile, idToken] = await Promise.all([liff.getProfile(), Promise.resolve(liff.getIDToken() || "")]);
+  const [profile, idToken, accessToken] = await Promise.all([
+    liff.getProfile(),
+    Promise.resolve(liff.getIDToken() || ""),
+    Promise.resolve(liff.getAccessToken() || "")
+  ]);
 
   return {
     status: "ready",
     idToken,
+    accessToken,
     displayName: profile.displayName,
     pictureUrl: profile.pictureUrl,
     lineUserId: profile.userId

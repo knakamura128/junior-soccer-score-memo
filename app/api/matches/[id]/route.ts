@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { verifyLineIdToken } from "@/lib/line-auth";
+import { verifyLineSession } from "@/lib/line-auth";
 import { calculateOutcome } from "@/lib/match-format";
 import { z } from "zod";
 
 const bodySchema = z.object({
-  idToken: z.string().min(1),
+  idToken: z.string().optional(),
+  accessToken: z.string().optional(),
   match: z.object({
     tournament: z.string(),
     title: z.string(),
@@ -28,16 +29,21 @@ const bodySchema = z.object({
       })
     )
   })
+}).refine((value) => value.idToken || value.accessToken, {
+  message: "LINEログインが必要です。"
 });
 
 const deleteSchema = z.object({
-  idToken: z.string().min(1)
+  idToken: z.string().optional(),
+  accessToken: z.string().optional()
+}).refine((value) => value.idToken || value.accessToken, {
+  message: "LINEログインが必要です。"
 });
 
 export async function PUT(request: Request, context: { params: Promise<{ id: string }> }) {
   const { id } = await context.params;
   const parsed = bodySchema.parse(await request.json());
-  const profile = await verifyLineIdToken(parsed.idToken);
+  const profile = await verifyLineSession({ idToken: parsed.idToken, accessToken: parsed.accessToken });
 
   const user = await prisma.user.upsert({
     where: { lineUserId: profile.lineUserId },
@@ -95,7 +101,7 @@ export async function DELETE(request: Request, context: { params: Promise<{ id: 
   try {
     const { id } = await context.params;
     const parsed = deleteSchema.parse(await request.json());
-    await verifyLineIdToken(parsed.idToken);
+    await verifyLineSession({ idToken: parsed.idToken, accessToken: parsed.accessToken });
 
     await prisma.match.delete({
       where: { id }

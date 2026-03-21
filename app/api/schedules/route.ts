@@ -17,8 +17,11 @@ const schedulePayloadSchema = z.object({
 });
 
 const createSchema = z.object({
-  idToken: z.string().min(1),
+  idToken: z.string().optional(),
+  accessToken: z.string().optional(),
   schedule: schedulePayloadSchema
+}).refine((value) => value.idToken || value.accessToken, {
+  message: "LINEログインが必要です。"
 });
 
 export async function GET() {
@@ -33,7 +36,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const parsed = createSchema.parse(await request.json());
-    const user = await upsertLineUser(parsed.idToken);
+    const user = await upsertLineUser({ idToken: parsed.idToken, accessToken: parsed.accessToken });
 
     const saved = await prisma.scheduleEntry.create({
       data: {

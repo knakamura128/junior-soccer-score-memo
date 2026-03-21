@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { verifyLineIdToken } from "@/lib/line-auth";
+import { verifyLineSession } from "@/lib/line-auth";
 import { calculateOutcome } from "@/lib/match-format";
 import { z } from "zod";
 
@@ -12,7 +12,8 @@ const goalSchema = z.object({
 });
 
 const matchSchema = z.object({
-  idToken: z.string().min(1),
+  idToken: z.string().optional(),
+  accessToken: z.string().optional(),
   match: z.object({
     id: z.string().optional(),
     tournament: z.string(),
@@ -29,6 +30,8 @@ const matchSchema = z.object({
     duration: z.string(),
     events: z.array(goalSchema)
   })
+}).refine((value) => value.idToken || value.accessToken, {
+  message: "LINEログインが必要です。"
 });
 
 export async function GET() {
@@ -51,7 +54,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   const parsed = matchSchema.parse(await request.json());
-  const profile = await verifyLineIdToken(parsed.idToken);
+  const profile = await verifyLineSession({ idToken: parsed.idToken, accessToken: parsed.accessToken });
 
   const user = await prisma.user.upsert({
     where: { lineUserId: profile.lineUserId },
