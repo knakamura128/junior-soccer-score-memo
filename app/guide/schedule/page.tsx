@@ -108,7 +108,7 @@ export default async function GuideSchedulePage({ searchParams }: GuideScheduleP
 
 function ScheduleTopScene() {
   return (
-    <section className="card schedule-card guide-scene-card">
+    <section className="card schedule-card guide-scene-card guide-annotated">
       <div className="section-title schedule-title">
         <div>
           <h2>月間スケジュール</h2>
@@ -210,6 +210,11 @@ function ScheduleTopScene() {
         </button>
         <p className="calendar-note">Googleカレンダーへ取り込み後、このアプリとは同期されません。</p>
       </div>
+      <GuideCallout className="callout-top-month" number="1" text="表示月を切り替えると、その月の予定だけを表示します。" />
+      <GuideCallout className="callout-top-compact" number="2" text="短縮は月全体を見やすくする表示です。修正や操作は通常で確認します。" />
+      <GuideCallout className="callout-top-import" number="3" text="予定表を取り込むから CSV を読み込んで、一括で予定を追加できます。" />
+      <GuideCallout className="callout-top-row" number="4" text="各行に日付、学年、時間、場所、内容、当番、出欠がまとまります。" />
+      <GuideCallout className="callout-top-calendar" number="5" text="下部の Googleカレンダー取込は、今見えている月と学年の内容だけを書き出します。" />
     </section>
   );
 }
@@ -217,7 +222,7 @@ function ScheduleTopScene() {
 function AttendanceInputScene() {
   return (
     <div className="modal-backdrop guide-modal-backdrop">
-      <div className="modal-card schedule-modal" role="dialog" aria-modal="true">
+      <div className="modal-card schedule-modal guide-annotated" role="dialog" aria-modal="true">
         <div className="section-title">
           <div>
             <h2>出欠を入力</h2>
@@ -258,6 +263,10 @@ function AttendanceInputScene() {
             出欠を保存
           </button>
         </div>
+        <GuideCallout className="callout-attend-tabs" number="1" text="出欠入力、一覧、当番管理は同じポップアップ内で切り替えます。" />
+        <GuideCallout className="callout-attend-status" number="2" text="参加、欠席、未定のどれかを選んで登録します。" />
+        <GuideCallout className="callout-attend-note" number="3" text="備考には現地集合や遅刻予定などを残せます。" />
+        <GuideCallout className="callout-attend-save" number="4" text="保存すると、その保護者の LINE 名で更新者が記録されます。" />
       </div>
     </div>
   );
@@ -266,7 +275,7 @@ function AttendanceInputScene() {
 function AttendanceListScene() {
   return (
     <div className="modal-backdrop guide-modal-backdrop">
-      <div className="modal-card schedule-modal" role="dialog" aria-modal="true">
+      <div className="modal-card schedule-modal guide-annotated" role="dialog" aria-modal="true">
         <div className="section-title">
           <div>
             <h2>出欠一覧</h2>
@@ -334,6 +343,9 @@ function AttendanceListScene() {
             </tbody>
           </table>
         </div>
+        <GuideCallout className="callout-list-summary" number="1" text="上段の集計で、参加、欠席、未定の人数をすぐ確認できます。" />
+        <GuideCallout className="callout-list-filter" number="2" text="絞り込みチップで、全員や参加者だけに絞って確認します。" />
+        <GuideCallout className="callout-list-table" number="3" text="一覧には選手名、出欠、入力者、更新日時、備考が並びます。" />
       </div>
     </div>
   );
@@ -342,7 +354,7 @@ function AttendanceListScene() {
 function DutyScene() {
   return (
     <div className="modal-backdrop guide-modal-backdrop">
-      <div className="modal-card schedule-modal" role="dialog" aria-modal="true">
+      <div className="modal-card schedule-modal guide-annotated" role="dialog" aria-modal="true">
         <div className="section-title">
           <div>
             <h2>当番管理</h2>
@@ -395,6 +407,9 @@ function DutyScene() {
             当番を保存
           </button>
         </div>
+        <GuideCallout className="callout-duty-select" number="1" text="当番担当者は参加可能な保護者から選びます。" />
+        <GuideCallout className="callout-duty-note" number="2" text="集合時間や役割メモを残して、引き継ぎしやすくします。" />
+        <GuideCallout className="callout-duty-meta" number="3" text="誰が決めたかは当番モーダル内だけで確認できます。" />
       </div>
     </div>
   );
@@ -403,7 +418,7 @@ function DutyScene() {
 function EditScene() {
   return (
     <div className="modal-backdrop guide-modal-backdrop">
-      <div className="modal-card schedule-modal editor-modal" role="dialog" aria-modal="true">
+      <div className="modal-card schedule-modal editor-modal guide-annotated" role="dialog" aria-modal="true">
         <div className="section-title">
           <div>
             <h2>予定を修正</h2>
@@ -461,7 +476,20 @@ function EditScene() {
         <button className="primary" type="button">
           予定を更新
         </button>
+        <GuideCallout className="callout-edit-date" number="1" text="日付、タグ、場所、内容が予定の基本情報です。" />
+        <GuideCallout className="callout-edit-time" number="2" text="開始と終了は時間未定なら - でも保存できます。" />
+        <GuideCallout className="callout-edit-match" number="3" text="試合として扱うをオンにすると、スコア管理への連携対象になります。" />
+        <GuideCallout className="callout-edit-save" number="4" text="更新すると修正者の LINE 名が記録されます。" />
       </div>
+    </div>
+  );
+}
+
+function GuideCallout({ className, number, text }: { className: string; number: string; text: string }) {
+  return (
+    <div className={`guide-callout ${className}`}>
+      <span className="guide-callout-badge">{number}</span>
+      <p>{text}</p>
     </div>
   );
 }

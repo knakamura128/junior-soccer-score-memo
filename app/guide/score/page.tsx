@@ -80,7 +80,7 @@ function ScoreScoringScene() {
         </button>
       </nav>
       <section className="tab-panel is-active">
-        <div className="panel-grid">
+        <div className="panel-grid guide-annotated">
           <section className="card">
             <div className="section-title">
               <h2>試合情報</h2>
@@ -266,6 +266,11 @@ function ScoreScoringScene() {
               </button>
             </div>
           </section>
+          <GuideCallout className="callout-score-info" number="1" text="大会名、相手、タグ、日付を先に入れると試合の基本情報が固まります。" />
+          <GuideCallout className="callout-score-board" number="2" text="ゴールを追加と失点を追加でスコアを記録します。" />
+          <GuideCallout className="callout-score-timer" number="3" text="タイマーは試合時間の目安です。スタート、ストップ、リセットが使えます。" />
+          <GuideCallout className="callout-score-log" number="4" text="ゴールログでは時間、区分、得点選手を確認し、取消もできます。" />
+          <GuideCallout className="callout-score-save" number="5" text="保存すると試合結果一覧に追加され、自動保存中の下書きもクリアされます。" />
         </div>
       </section>
     </>
@@ -274,7 +279,7 @@ function ScoreScoringScene() {
 
 function ScorePlayersScene() {
   return (
-    <section className="card guide-scene-card">
+    <section className="card guide-scene-card guide-annotated">
       <div className="section-title">
         <h2>選手登録</h2>
         <span>登録済み選手</span>
@@ -329,6 +334,9 @@ function ScorePlayersScene() {
           ))}
         </ul>
       </details>
+      <GuideCallout className="callout-player-form" number="1" text="背番号、名前、タグを入れて選手を追加します。" />
+      <GuideCallout className="callout-player-import" number="2" text="試合結果から登録を押すと、既存得点者をまとめて選手登録できます。" />
+      <GuideCallout className="callout-player-list" number="3" text="登録選手一覧は開閉でき、不要な選手は削除できます。" />
     </section>
   );
 }
@@ -344,7 +352,7 @@ function ScoreResultsScene({ compact }: { compact: boolean }) {
           試合結果一覧
         </button>
       </nav>
-      <section className="card">
+      <section className="card guide-annotated">
         <div className="section-title">
           <h2>試合結果一覧</h2>
           <span>短縮表示と通常表示を切替可能</span>
@@ -489,6 +497,10 @@ function ScoreResultsScene({ compact }: { compact: boolean }) {
             </tbody>
           </table>
         </div>
+        <GuideCallout className="callout-results-month" number="1" text="表示月と表示切替で、見たい結果だけを素早く確認します。" />
+        <GuideCallout className="callout-results-filter" number="2" text="タグと並び順で学年別や日付順に整理できます。" />
+        <GuideCallout className="callout-results-summary" number="3" text="通算結果、得点ランキング、対戦相手別勝敗表は絞り込みに連動します。" />
+        <GuideCallout className="callout-results-table" number="4" text="一覧では対戦相手、スコア、勝敗、得点者を一行で確認できます。" />
       </section>
     </>
   );
@@ -506,7 +518,7 @@ function ScoreEditScene() {
         </button>
       </nav>
       <section className="tab-panel is-active">
-        <div className="panel-grid">
+        <div className="panel-grid guide-annotated">
           <section className="card score-card guide-scene-card">
             <div className="section-title">
               <h2>スコア</h2>
@@ -572,9 +584,22 @@ function ScoreEditScene() {
               </button>
             </div>
           </section>
+          <GuideCallout className="callout-edit-log" number="1" text="試合修正では、過去のゴールログをそのまま編集できます。" />
+          <GuideCallout className="callout-edit-remove" number="2" text="不要な得点は得点を取り消すで削除し、スコアも再計算されます。" />
+          <GuideCallout className="callout-edit-cancel" number="3" text="修正を取り消すを押すと、編集中の変更を破棄して一覧へ戻ります。" />
+          <GuideCallout className="callout-edit-update" number="4" text="試合結果を更新すると、更新者も記録し直されます。" />
         </div>
       </section>
     </>
+  );
+}
+
+function GuideCallout({ className, number, text }: { className: string; number: string; text: string }) {
+  return (
+    <div className={`guide-callout ${className}`}>
+      <span className="guide-callout-badge">{number}</span>
+      <p>{text}</p>
+    </div>
   );
 }
 

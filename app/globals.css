@@ -348,6 +348,116 @@ input[type="month"] { min-width: 0; }
   color: var(--green-dark);
   font-weight: 800;
 }
+.guide-annotated {
+  position: relative;
+}
+.guide-callout {
+  position: absolute;
+  z-index: 5;
+  width: min(180px, 42vw);
+  padding: 10px 12px;
+  border-radius: 16px;
+  background: rgba(255, 250, 240, 0.97);
+  border: 2px solid #d96d2f;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
+}
+.guide-callout::after {
+  content: "";
+  position: absolute;
+  width: 34px;
+  height: 2px;
+  background: #d96d2f;
+}
+.guide-callout p {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.45;
+}
+.guide-callout-badge {
+  position: absolute;
+  top: -10px;
+  left: -10px;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #d96d2f;
+  color: #fff;
+  font-weight: 800;
+  font-size: 0.75rem;
+}
+.callout-top-month { top: 104px; left: 8px; }
+.callout-top-month::after { left: 100%; top: 20px; }
+.callout-top-compact { top: 176px; right: 8px; }
+.callout-top-compact::after { right: 100%; top: 20px; }
+.callout-top-import { top: 282px; right: 12px; }
+.callout-top-import::after { right: 100%; top: 18px; width: 26px; }
+.callout-top-row { top: 420px; right: 8px; }
+.callout-top-row::after { right: 100%; top: 22px; width: 38px; }
+.callout-top-calendar { bottom: 48px; right: 16px; }
+.callout-top-calendar::after { right: 100%; top: 18px; width: 30px; }
+.callout-attend-tabs { top: 94px; right: 8px; }
+.callout-attend-tabs::after { right: 100%; top: 18px; width: 24px; }
+.callout-attend-status { top: 170px; left: 10px; }
+.callout-attend-status::after { left: 100%; top: 20px; width: 24px; }
+.callout-attend-note { top: 300px; right: 8px; }
+.callout-attend-note::after { right: 100%; top: 20px; width: 24px; }
+.callout-attend-save { bottom: 24px; right: 10px; }
+.callout-attend-save::after { right: 100%; top: 20px; width: 24px; }
+.callout-list-summary { top: 138px; right: 8px; }
+.callout-list-summary::after { right: 100%; top: 18px; width: 24px; }
+.callout-list-filter { top: 250px; left: 10px; }
+.callout-list-filter::after { left: 100%; top: 18px; width: 22px; }
+.callout-list-table { bottom: 28px; right: 10px; }
+.callout-list-table::after { right: 100%; top: 22px; width: 26px; }
+.callout-duty-select { top: 130px; right: 8px; }
+.callout-duty-select::after { right: 100%; top: 18px; width: 22px; }
+.callout-duty-note { top: 248px; left: 10px; }
+.callout-duty-note::after { left: 100%; top: 18px; width: 24px; }
+.callout-duty-meta { bottom: 90px; right: 10px; }
+.callout-duty-meta::after { right: 100%; top: 18px; width: 22px; }
+.callout-edit-date { top: 120px; right: 8px; }
+.callout-edit-date::after { right: 100%; top: 18px; width: 22px; }
+.callout-edit-time { top: 312px; left: 10px; }
+.callout-edit-time::after { left: 100%; top: 18px; width: 20px; }
+.callout-edit-match { bottom: 92px; left: 10px; }
+.callout-edit-match::after { left: 100%; top: 18px; width: 24px; }
+.callout-edit-save { bottom: 18px; right: 10px; }
+.callout-edit-save::after { right: 100%; top: 18px; width: 20px; }
+.callout-score-info { top: 108px; left: 6px; }
+.callout-score-info::after { left: 100%; top: 18px; width: 26px; }
+.callout-score-board { top: 146px; right: 8px; }
+.callout-score-board::after { right: 100%; top: 18px; width: 26px; }
+.callout-score-timer { top: 402px; right: 8px; }
+.callout-score-timer::after { right: 100%; top: 18px; width: 26px; }
+.callout-score-log { bottom: 108px; right: 8px; }
+.callout-score-log::after { right: 100%; top: 18px; width: 26px; }
+.callout-score-save { bottom: 24px; left: 10px; }
+.callout-score-save::after { left: 100%; top: 18px; width: 24px; }
+.callout-player-form { top: 96px; right: 8px; }
+.callout-player-form::after { right: 100%; top: 18px; width: 24px; }
+.callout-player-import { top: 322px; left: 10px; }
+.callout-player-import::after { left: 100%; top: 18px; width: 22px; }
+.callout-player-list { bottom: 42px; right: 10px; }
+.callout-player-list::after { right: 100%; top: 18px; width: 24px; }
+.callout-results-month { top: 104px; left: 8px; }
+.callout-results-month::after { left: 100%; top: 18px; width: 22px; }
+.callout-results-filter { top: 208px; right: 8px; }
+.callout-results-filter::after { right: 100%; top: 18px; width: 22px; }
+.callout-results-summary { top: 394px; left: 10px; }
+.callout-results-summary::after { left: 100%; top: 18px; width: 20px; }
+.callout-results-table { bottom: 66px; right: 8px; }
+.callout-results-table::after { right: 100%; top: 18px; width: 22px; }
+.callout-edit-log { top: 124px; right: 8px; }
+.callout-edit-log::after { right: 100%; top: 18px; width: 22px; }
+.callout-edit-remove { top: 346px; left: 10px; }
+.callout-edit-remove::after { left: 100%; top: 18px; width: 22px; }
+.callout-edit-cancel { bottom: 96px; left: 10px; }
+.callout-edit-cancel::after { left: 100%; top: 18px; width: 22px; }
+.callout-edit-update { bottom: 22px; right: 8px; }
+.callout-edit-update::after { right: 100%; top: 18px; width: 22px; }
 button:hover { transform: translateY(-1px); }
 button:active { transform: translateY(0); }
 @media (min-width: 900px) {
@@ -542,5 +652,15 @@ button:active { transform: translateY(0); }
 
   .guide-index-grid {
     grid-template-columns: 1fr;
+  }
+
+  .guide-callout {
+    width: min(150px, 44vw);
+    padding: 8px 10px;
+  }
+
+  .guide-callout p {
+    font-size: 0.66rem;
+    line-height: 1.35;
   }
 }
