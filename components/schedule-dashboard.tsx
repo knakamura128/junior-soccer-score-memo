@@ -230,6 +230,37 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
     }
   }
 
+  async function handleScheduleAuthFailure(message = "セッションが切れました。再度LINEでログインしてください。") {
+    try {
+      const liffId = process.env.NEXT_PUBLIC_LIFF_ID;
+      if (!liffId) {
+        throw new Error("NEXT_PUBLIC_LIFF_ID が未設定です。");
+      }
+      const { default: liff } = await import("@line/liff");
+      await liff.init({ liffId });
+
+      setAuth((current) => ({
+        ...current,
+        status: "error",
+        idToken: "",
+        error: message
+      }));
+      setFeedback(message);
+
+      if (liff.isInClient()) {
+        await loginWithLine();
+      }
+    } catch (error) {
+      setAuth((current) => ({
+        ...current,
+        status: "error",
+        idToken: "",
+        error: buildLiffErrorMessage(error, message)
+      }));
+      setFeedback(buildLiffErrorMessage(error, message));
+    }
+  }
+
   async function logoutFromLine() {
     try {
       const liffId = process.env.NEXT_PUBLIC_LIFF_ID;
@@ -352,7 +383,7 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
       });
       if (!response.ok) {
         if (response.status === 400) {
-          await loginWithLine();
+          await handleScheduleAuthFailure();
           return;
         }
         const detail = await readResponseError(response, "スケジュール削除に失敗しました。");
@@ -388,7 +419,7 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
       });
       if (!response.ok) {
         if (response.status === 400) {
-          await loginWithLine();
+          await handleScheduleAuthFailure();
           return;
         }
         const detail = await readResponseError(response, "出欠保存に失敗しました。");
@@ -425,7 +456,7 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
       });
       if (!response.ok) {
         if (response.status === 400) {
-          await loginWithLine();
+          await handleScheduleAuthFailure();
           return;
         }
         const detail = await readResponseError(response, "当番保存に失敗しました。");
@@ -465,7 +496,7 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
       });
       if (!response.ok) {
         if (response.status === 400) {
-          await loginWithLine();
+          await handleScheduleAuthFailure();
           return;
         }
         const detail = await readResponseError(response, "配車保存に失敗しました。");
@@ -504,7 +535,7 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
         });
         if (!response.ok) {
           if (response.status === 400) {
-            await loginWithLine();
+            await handleScheduleAuthFailure();
             return;
           }
           const detail = await readResponseError(response, `出欠一括登録に失敗しました。`);
