@@ -167,7 +167,8 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
     const session = await fetchLiffSession();
     setAuth(session);
     if (!session.idToken) {
-      throw new Error("保存にはLINEログインが必要です。");
+      await loginWithLine();
+      throw new Error("LINEログインを更新しています。再度操作してください。");
     }
     return session.idToken;
   }
@@ -276,6 +277,10 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
       closeEditor();
       setFeedback(editingId ? "スケジュールを更新しました。" : "スケジュールを追加しました。");
     } catch (error) {
+      if (shouldRefreshLineLogin(error)) {
+        await loginWithLine();
+        return;
+      }
       setFeedback(error instanceof Error ? error.message : "スケジュール保存に失敗しました。");
     }
   }
@@ -304,6 +309,10 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
       }
       setFeedback("スケジュールを削除しました。");
     } catch (error) {
+      if (shouldRefreshLineLogin(error)) {
+        await loginWithLine();
+        return;
+      }
       setFeedback(error instanceof Error ? error.message : "スケジュール削除に失敗しました。");
     }
   }
@@ -329,6 +338,10 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
       upsertSchedule(saved);
       setFeedback("出欠を保存しました。");
     } catch (error) {
+      if (shouldRefreshLineLogin(error)) {
+        await loginWithLine();
+        return;
+      }
       setFeedback(error instanceof Error ? error.message : "出欠保存に失敗しました。");
     }
   }
@@ -357,6 +370,10 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
       upsertSchedule(saved);
       setFeedback("当番を更新しました。");
     } catch (error) {
+      if (shouldRefreshLineLogin(error)) {
+        await loginWithLine();
+        return;
+      }
       setFeedback(error instanceof Error ? error.message : "当番保存に失敗しました。");
     }
   }
@@ -395,6 +412,10 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
       setSchedules((current) => [...current, ...savedRows]);
       setFeedback(`${savedRows.length}件の予定を取り込みました。`);
     } catch (error) {
+      if (shouldRefreshLineLogin(error)) {
+        await loginWithLine();
+        return;
+      }
       setFeedback(error instanceof Error ? error.message : "取り込みに失敗しました。");
     }
   }
@@ -864,6 +885,18 @@ function buildLiffErrorMessage(error: unknown, fallback: string) {
   }
 
   return `${fallback} LINE Developers の LIFF Endpoint URL が現在のURLに一致しているか確認してください。`;
+}
+
+function shouldRefreshLineLogin(error: unknown) {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+
+  return (
+    error.message.includes("LINE認証") ||
+    error.message.includes("LINEログインが必要") ||
+    error.message.includes("LINEログインを更新しています")
+  );
 }
 
 function TagSelector({ value, onChange }: { value: string[]; onChange: (tags: string[]) => void }) {

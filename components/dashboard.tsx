@@ -218,7 +218,8 @@ export function Dashboard({ initialData, initialMatch }: DashboardProps) {
 
   async function requireIdToken() {
     if (!auth.idToken) {
-      throw new Error("保存にはLINEログインが必要です。");
+      await loginWithLine();
+      throw new Error("LINEログインを更新しています。再度操作してください。");
     }
     return auth.idToken;
   }
@@ -244,6 +245,10 @@ export function Dashboard({ initialData, initialMatch }: DashboardProps) {
       setPlayerForm({ number: "", name: "", tags: [] });
       setFeedback("選手を保存しました。");
     } catch (error) {
+      if (shouldRefreshDashboardLineLogin(error)) {
+        await loginWithLine();
+        return;
+      }
       setFeedback(error instanceof Error ? error.message : "選手保存に失敗しました。");
     }
   }
@@ -277,6 +282,10 @@ export function Dashboard({ initialData, initialMatch }: DashboardProps) {
       setPlayers((current) => [...current, ...savedPlayers]);
       setFeedback(`${savedPlayers.length}人の選手を試合結果から登録しました。`);
     } catch (error) {
+      if (shouldRefreshDashboardLineLogin(error)) {
+        await loginWithLine();
+        return;
+      }
       setFeedback(error instanceof Error ? error.message : "試合結果からの選手登録に失敗しました。");
     }
   }
@@ -306,6 +315,10 @@ export function Dashboard({ initialData, initialMatch }: DashboardProps) {
       }
       setFeedback("選手を削除しました。");
     } catch (error) {
+      if (shouldRefreshDashboardLineLogin(error)) {
+        await loginWithLine();
+        return;
+      }
       setFeedback(error instanceof Error ? error.message : "選手削除に失敗しました。");
     }
   }
@@ -367,6 +380,10 @@ export function Dashboard({ initialData, initialMatch }: DashboardProps) {
       setActiveTab("results");
       setFeedback("試合結果を保存しました。");
     } catch (error) {
+      if (shouldRefreshDashboardLineLogin(error)) {
+        await loginWithLine();
+        return;
+      }
       setFeedback(error instanceof Error ? error.message : "保存に失敗しました。");
     }
   }
@@ -396,6 +413,10 @@ export function Dashboard({ initialData, initialMatch }: DashboardProps) {
       }
       setFeedback("試合結果を削除しました。");
     } catch (error) {
+      if (shouldRefreshDashboardLineLogin(error)) {
+        await loginWithLine();
+        return;
+      }
       setFeedback(error instanceof Error ? error.message : "削除に失敗しました。");
     }
   }
@@ -461,6 +482,10 @@ export function Dashboard({ initialData, initialMatch }: DashboardProps) {
       }
       setFeedback("CSVを取り込みました。");
     } catch (error) {
+      if (shouldRefreshDashboardLineLogin(error)) {
+        await loginWithLine();
+        return;
+      }
       setFeedback(error instanceof Error ? error.message : "CSV取り込みに失敗しました。");
     }
   }
@@ -849,4 +874,20 @@ function buildDashboardLiffErrorMessage(error: unknown, fallback: string) {
   }
 
   return `${fallback} LINE Developers の LIFF Endpoint URL が現在のURLに一致しているか確認してください。`;
+}
+
+function shouldRefreshDashboardLineLogin(error: unknown) {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+
+  if (
+    error.message.includes("LINE認証") ||
+    error.message.includes("LINEログインが必要") ||
+    error.message.includes("LINEログインを更新しています")
+  ) {
+    return true;
+  }
+
+  return false;
 }
