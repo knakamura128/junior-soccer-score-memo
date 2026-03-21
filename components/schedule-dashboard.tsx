@@ -906,6 +906,8 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
               </button>
             </div>
 
+            {auth.error ? <p className="error">{auth.error}</p> : null}
+
             {modalTab === "attendance-input" ? (
               <div className="modal-section">
                 <div className="attendance-choice-row">
@@ -1186,6 +1188,7 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
                 閉じる
               </button>
             </div>
+            {auth.error ? <p className="error">{auth.error}</p> : null}
             <div className="modal-section">
               <div className="form-grid schedule-form-grid">
                 <label>
