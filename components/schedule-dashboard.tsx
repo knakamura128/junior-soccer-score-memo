@@ -102,9 +102,14 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
         if (!cancelled) {
           setAuth(session);
         }
-      } catch {
+      } catch (error) {
         if (!cancelled) {
-          setAuth({ status: "error", idToken: "", displayName: "", error: "LIFF 初期化に失敗しました。" });
+          setAuth({
+            status: "error",
+            idToken: "",
+            displayName: "",
+            error: buildLiffErrorMessage(error, "LIFF 初期化に失敗しました。")
+          });
         }
       }
     }
@@ -168,12 +173,23 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
   }
 
   async function loginWithLine() {
-    const liffId = process.env.NEXT_PUBLIC_LIFF_ID;
-    if (!liffId) return;
-    const { default: liff } = await import("@line/liff");
-    await liff.init({ liffId });
-    if (!liff.isLoggedIn()) {
-      liff.login();
+    try {
+      const liffId = process.env.NEXT_PUBLIC_LIFF_ID;
+      if (!liffId) {
+        throw new Error("NEXT_PUBLIC_LIFF_ID が未設定です。");
+      }
+      const { default: liff } = await import("@line/liff");
+      await liff.init({ liffId });
+      if (!liff.isLoggedIn()) {
+        liff.login({ redirectUri: window.location.href });
+      }
+    } catch (error) {
+      setAuth({
+        status: "error",
+        idToken: "",
+        displayName: "",
+        error: buildLiffErrorMessage(error, "LINEログインに失敗しました。")
+      });
     }
   }
 
@@ -809,6 +825,19 @@ async function fetchLiffSession(): Promise<AuthState> {
     pictureUrl: profile.pictureUrl,
     lineUserId: profile.userId
   };
+}
+
+function buildLiffErrorMessage(error: unknown, fallback: string) {
+  const detail =
+    error && typeof error === "object" && "message" in error && typeof error.message === "string"
+      ? error.message
+      : "";
+
+  if (detail) {
+    return `${fallback} ${detail}`;
+  }
+
+  return `${fallback} LINE Developers の LIFF Endpoint URL が現在のURLに一致しているか確認してください。`;
 }
 
 function TagSelector({ value, onChange }: { value: string[]; onChange: (tags: string[]) => void }) {

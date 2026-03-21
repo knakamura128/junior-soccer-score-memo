@@ -9,6 +9,8 @@ type VerifyResponse = {
   name?: string;
   picture?: string;
   aud: string;
+  error?: string;
+  error_description?: string;
 };
 
 export async function verifyLineIdToken(idToken: string): Promise<VerifiedLineProfile> {
@@ -30,12 +32,21 @@ export async function verifyLineIdToken(idToken: string): Promise<VerifiedLinePr
   });
 
   if (!response.ok) {
-    throw new Error("LINE認証の確認に失敗しました。再度LINEでログインしてください。");
+    let detail = "";
+    try {
+      const payload = (await response.json()) as VerifyResponse;
+      detail = payload.error_description || payload.error || JSON.stringify(payload);
+    } catch {
+      detail = await response.text();
+    }
+    throw new Error(
+      `LINE認証の確認に失敗しました。LINE_CHANNEL_ID と LIFF のチャネルが一致しているか確認してください。${detail ? ` (${detail})` : ""}`
+    );
   }
 
   const payload = (await response.json()) as VerifyResponse;
   if (payload.aud !== channelId || !payload.sub) {
-    throw new Error("Invalid LINE token audience.");
+    throw new Error("LINE認証の確認に失敗しました。LINE_CHANNEL_ID と LIFF アプリのチャネル設定を確認してください。");
   }
 
   return {

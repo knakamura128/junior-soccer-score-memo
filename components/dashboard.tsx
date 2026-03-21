@@ -158,7 +158,12 @@ export function Dashboard({ initialData, initialMatch }: DashboardProps) {
         }
       } catch (error) {
         if (!cancelled) {
-          setAuth({ status: "error", idToken: "", displayName: "", error: "LIFF 初期化に失敗しました。" });
+          setAuth({
+            status: "error",
+            idToken: "",
+            displayName: "",
+            error: buildDashboardLiffErrorMessage(error, "LIFF 初期化に失敗しました。")
+          });
         }
       }
     }
@@ -472,12 +477,23 @@ export function Dashboard({ initialData, initialMatch }: DashboardProps) {
   }
 
   async function loginWithLine() {
-    const liffId = process.env.NEXT_PUBLIC_LIFF_ID;
-    if (!liffId) return;
-    const { default: liff } = await import("@line/liff");
-    await liff.init({ liffId });
-    if (!liff.isLoggedIn()) {
-      liff.login();
+    try {
+      const liffId = process.env.NEXT_PUBLIC_LIFF_ID;
+      if (!liffId) {
+        throw new Error("NEXT_PUBLIC_LIFF_ID が未設定です。");
+      }
+      const { default: liff } = await import("@line/liff");
+      await liff.init({ liffId });
+      if (!liff.isLoggedIn()) {
+        liff.login({ redirectUri: window.location.href });
+      }
+    } catch (error) {
+      setAuth({
+        status: "error",
+        idToken: "",
+        displayName: "",
+        error: buildDashboardLiffErrorMessage(error, "LINEログインに失敗しました。")
+      });
     }
   }
 
@@ -794,4 +810,17 @@ function getOutcomeBadgeClass(outcome: string) {
     return "result-loss";
   }
   return "result-draw";
+}
+
+function buildDashboardLiffErrorMessage(error: unknown, fallback: string) {
+  const detail =
+    error && typeof error === "object" && "message" in error && typeof error.message === "string"
+      ? error.message
+      : "";
+
+  if (detail) {
+    return `${fallback} ${detail}`;
+  }
+
+  return `${fallback} LINE Developers の LIFF Endpoint URL が現在のURLに一致しているか確認してください。`;
 }
