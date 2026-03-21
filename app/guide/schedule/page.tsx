@@ -11,7 +11,7 @@ const scheduleRows = [
     content: "練習",
     duty: "未定",
     attendance: { join: 10, absent: 0, undecided: 0 },
-    updatedBy: "中村一尋",
+    updatedBy: "保護者A",
     updatedAt: "3/20 23:59"
   },
   {
@@ -22,7 +22,7 @@ const scheduleRows = [
     content: "練習",
     duty: "未定",
     attendance: { join: 11, absent: 0, undecided: 0 },
-    updatedBy: "中村一尋",
+    updatedBy: "保護者A",
     updatedAt: "3/21 00:14"
   },
   {
@@ -31,9 +31,9 @@ const scheduleRows = [
     time: "08:00 - 14:00",
     location: "仲町地域センター",
     content: "6年生を送る会",
-    duty: "寺島さん",
+    duty: "保護者B",
     attendance: { join: 10, absent: 0, undecided: 0 },
-    updatedBy: "中村一尋",
+    updatedBy: "保護者A",
     updatedAt: "3/21 00:14"
   },
   {
@@ -42,25 +42,25 @@ const scheduleRows = [
     time: "12:00 - 16:00",
     location: "四ツ木橋競技場",
     content: "TOHON CUP卒業大会 集合板五/板七 10:45",
-    duty: "寺島さん",
+    duty: "保護者B",
     attendance: { join: 9, absent: 1, undecided: 1 },
-    updatedBy: "中村一尋",
+    updatedBy: "保護者A",
     updatedAt: "3/21 08:10"
   }
 ];
 
 const attendanceRows = [
-  { name: "10 中村アオイ", status: "参加", note: "現地集合", updatedBy: "中村一尋", updatedAt: "3/21 08:03" },
-  { name: "11 松本ユウト", status: "参加", note: "", updatedBy: "松本由美", updatedAt: "3/21 08:05" },
-  { name: "12 高橋ソウタ", status: "欠席", note: "学校行事", updatedBy: "高橋麻衣", updatedAt: "3/21 08:11" },
-  { name: "13 斉藤ハルト", status: "未定", note: "午後から合流予定", updatedBy: "斉藤舞", updatedAt: "3/21 08:20" }
+  { name: "10 選手A", status: "参加", note: "現地集合", updatedBy: "保護者A", updatedAt: "3/21 08:03" },
+  { name: "11 選手B", status: "参加", note: "", updatedBy: "保護者B", updatedAt: "3/21 08:05" },
+  { name: "12 選手C", status: "欠席", note: "学校行事", updatedBy: "保護者C", updatedAt: "3/21 08:11" },
+  { name: "13 選手D", status: "未定", note: "午後から合流予定", updatedBy: "保護者D", updatedAt: "3/21 08:20" }
 ];
 
 const dutyCandidates = [
-  { name: "中村一尋", status: "参加" },
-  { name: "松本由美", status: "参加" },
-  { name: "高橋麻衣", status: "欠席" },
-  { name: "斉藤舞", status: "未定" }
+  { name: "保護者A", status: "参加" },
+  { name: "保護者B", status: "参加" },
+  { name: "保護者C", status: "欠席" },
+  { name: "保護者D", status: "未定" }
 ];
 
 export default async function GuideSchedulePage({ searchParams }: GuideSchedulePageProps) {
@@ -86,7 +86,7 @@ export default async function GuideSchedulePage({ searchParams }: GuideScheduleP
               N
             </div>
             <div>
-              <strong>中村一尋</strong>
+              <strong>保護者A</strong>
               <div className="auth-meta">出欠入力と修正者として記録されます</div>
             </div>
           </div>
@@ -366,7 +366,7 @@ function DutyScene() {
         <div className="modal-section">
           <label>
             当番担当者
-            <select defaultValue="中村一尋">
+            <select defaultValue="保護者A">
               <option value="">未定</option>
               {dutyCandidates.map((row) => (
                 <option key={row.name} value={row.name}>
@@ -379,7 +379,7 @@ function DutyScene() {
             メモ
             <input defaultValue="10:15 集合、受付対応" />
           </label>
-          <div className="muted duty-meta">決定者: 中村一尋 / 決定日時: 2026/3/21 08:22</div>
+          <div className="muted duty-meta">決定者: 保護者A / 決定日時: 2026/3/21 08:22</div>
           <div className="summary-card">
             <h3>参加者候補</h3>
             <div className="record-table">

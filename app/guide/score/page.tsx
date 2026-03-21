@@ -10,8 +10,8 @@ const resultRows = [
     opponent: "FC西台",
     score: "2-1",
     outcome: "勝ち",
-    scorers: "10 中村アオイ, 11 松本ユウト",
-    audit: "中村一尋 / 中村一尋"
+    scorers: "10 選手A, 11 選手B",
+    audit: "保護者A / 保護者A"
   },
   {
     date: "2026-03-14",
@@ -20,8 +20,8 @@ const resultRows = [
     opponent: "高島平SC",
     score: "1-1(PK3-2)",
     outcome: "引き分け",
-    scorers: "8 佐藤リク",
-    audit: "松本由美 / 中村一尋"
+    scorers: "8 選手C",
+    audit: "保護者B / 保護者A"
   }
 ];
 
@@ -48,7 +48,7 @@ export default async function GuideScorePage({ searchParams }: GuideScorePagePro
               N
             </div>
             <div>
-              <strong>中村一尋</strong>
+              <strong>保護者A</strong>
               <div className="auth-meta">保存・更新者として記録されます</div>
             </div>
           </div>
@@ -164,11 +164,11 @@ function ScoreScoringScene() {
             </div>
             <label>
               得点選手
-              <select defaultValue="10 中村アオイ">
+              <select defaultValue="10 選手A">
                 <option>未選択</option>
-                <option>10 中村アオイ</option>
-                <option>11 松本ユウト</option>
-                <option>12 高橋ソウタ</option>
+                <option>10 選手A</option>
+                <option>11 選手B</option>
+                <option>12 選手C</option>
               </select>
             </label>
             <div className="timer-block">
@@ -195,9 +195,9 @@ function ScoreScoringScene() {
                   <div>
                     <strong>05:12 前半 自チーム得点</strong>
                   </div>
-                  <select defaultValue="10 中村アオイ">
-                    <option>10 中村アオイ</option>
-                    <option>11 松本ユウト</option>
+                  <select defaultValue="10 選手A">
+                    <option>10 選手A</option>
+                    <option>11 選手B</option>
                   </select>
                   <button className="text-button danger" type="button">
                     得点を取り消す
@@ -216,9 +216,9 @@ function ScoreScoringScene() {
                   <div>
                     <strong>18:42 後半 自チーム得点</strong>
                   </div>
-                  <select defaultValue="11 松本ユウト">
-                    <option>10 中村アオイ</option>
-                    <option>11 松本ユウト</option>
+                  <select defaultValue="11 選手B">
+                    <option>10 選手A</option>
+                    <option>11 選手B</option>
                   </select>
                   <button className="text-button danger" type="button">
                     得点を取り消す
@@ -245,7 +245,7 @@ function ScoreScoringScene() {
               </label>
               <label>
                 名前
-                <input defaultValue="中村アオイ" />
+                <input defaultValue="選手A" />
               </label>
               <label>
                 グループ
@@ -286,7 +286,7 @@ function ScorePlayersScene() {
         </label>
         <label>
           名前
-          <input defaultValue="松本ユウト" />
+          <input defaultValue="選手B" />
         </label>
         <label>
           グループ
@@ -310,12 +310,12 @@ function ScorePlayersScene() {
         <summary>登録選手一覧 6人</summary>
         <ul className="player-list">
           {[
-            "10 中村アオイ / 高学年, 5年, 6年",
-            "11 松本ユウト / 高学年, 5年, 6年",
-            "8 佐藤リク / 中学年, 3年, 4年",
-            "7 高橋ソウタ / 中学年, 3年",
-            "6 田中ユウ / 低学年, 2年",
-            "- 小川ハルト / 高学年, 6年"
+            "10 選手A / 高学年, 5年, 6年",
+            "11 選手B / 高学年, 5年, 6年",
+            "8 選手C / 中学年, 3年, 4年",
+            "7 選手D / 中学年, 3年",
+            "6 選手E / 低学年, 2年",
+            "- 選手F / 高学年, 6年"
           ].map((player) => (
             <li key={player} className="player-item">
               <div>
@@ -410,9 +410,9 @@ function ScoreResultsScene({ compact }: { compact: boolean }) {
           <section className="summary-card">
             <h3>最多得点者ランキング</h3>
             <ol className="summary-list">
-              <li>10 中村アオイ 9得点</li>
-              <li>11 松本ユウト 7得点</li>
-              <li>8 佐藤リク 4得点</li>
+              <li>10 選手A 9得点</li>
+              <li>11 選手B 7得点</li>
+              <li>8 選手C 4得点</li>
             </ol>
           </section>
           <section className="summary-card">
@@ -544,9 +544,9 @@ function ScoreEditScene() {
                   <div>
                     <strong>07:24 前半 自チーム得点</strong>
                   </div>
-                  <select defaultValue="8 佐藤リク">
-                    <option>8 佐藤リク</option>
-                    <option>9 田中ユウ</option>
+                  <select defaultValue="8 選手C">
+                    <option>8 選手C</option>
+                    <option>9 選手E</option>
                   </select>
                   <button className="text-button danger" type="button">
                     得点を取り消す
