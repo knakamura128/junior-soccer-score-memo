@@ -120,6 +120,23 @@ input[type="month"] { min-width: 0; }
   background: #d96d2f;
   color: #fff;
 }
+.month-filter {
+  display: grid;
+  gap: 6px;
+}
+.month-filter-label {
+  font-size: .84rem;
+  font-weight: 600;
+}
+.month-chip-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.month-chip {
+  padding: 10px 14px;
+  min-height: 42px;
+}
 .schedule-toolbar { grid-template-columns: 1fr .9fr 1.1fr; }
 .schedule-toolbar .file-input { background: #e6f4ea; color: var(--green-dark); }
 .schedule-table-wrap { margin-top: 12px; }
@@ -321,14 +338,20 @@ button:active { transform: translateY(0); }
     grid-template-columns: 1fr;
   }
 
-  .schedule-toolbar input[type="month"] {
-    width: 100%;
-    min-width: 0;
-    max-width: 100%;
-  }
-
   .compact-toolbar > * {
     width: 100%;
+  }
+
+  .month-chip-row {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .month-chip {
+    width: 100%;
+    padding: 10px 6px;
+    font-size: 0.8rem;
   }
 
   .table-wrap {

@@ -133,6 +133,7 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
         }),
     [filterTag, schedules, selectedMonth]
   );
+  const monthOptions = getMonthOptions(selectedMonth);
 
   const modalEntry = schedules.find((entry) => entry.id === modalEntryId) || null;
   const currentAttendance =
@@ -487,10 +488,21 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
         </div>
 
         <div className="results-toolbar compact-toolbar schedule-toolbar">
-          <label>
-            表示月
-            <input type="month" value={selectedMonth} onChange={(event) => setSelectedMonth(event.target.value)} />
-          </label>
+          <div className="month-filter">
+            <span className="month-filter-label">表示月</span>
+            <div className="month-chip-row">
+              {monthOptions.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  className={`tab month-chip ${selectedMonth === option.value ? "is-active" : ""}`}
+                  onClick={() => setSelectedMonth(option.value)}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </div>
           <label>
             学年
             <select value={filterTag} onChange={(event) => setFilterTag(event.target.value)}>
@@ -1027,4 +1039,17 @@ function renderScheduleDate(value: string) {
       <span className="schedule-date-week">({weekday})</span>
     </span>
   );
+}
+
+function getMonthOptions(selectedMonth: string) {
+  const [yearText = "2026", monthText = "1"] = selectedMonth.split("-");
+  const baseDate = new Date(Number(yearText), Number(monthText) - 1, 1);
+
+  return [-1, 0, 1].map((offset) => {
+    const date = new Date(baseDate.getFullYear(), baseDate.getMonth() + offset, 1);
+    return {
+      value: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`,
+      label: `${date.getMonth() + 1}月`
+    };
+  });
 }
