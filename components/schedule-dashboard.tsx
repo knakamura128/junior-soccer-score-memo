@@ -93,6 +93,7 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
   const [editorOpen, setEditorOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [scheduleForm, setScheduleForm] = useState<SchedulePayload>(() => createEmptySchedule());
+  const [compactView, setCompactView] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
@@ -503,6 +504,25 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
               ))}
             </div>
           </div>
+          <div className="month-filter">
+            <span className="month-filter-label">表示切替</span>
+            <div className="month-chip-row">
+              <button
+                type="button"
+                className={`tab month-chip ${compactView ? "is-active" : ""}`}
+                onClick={() => setCompactView(true)}
+              >
+                短縮
+              </button>
+              <button
+                type="button"
+                className={`tab month-chip ${compactView ? "" : "is-active"}`}
+                onClick={() => setCompactView(false)}
+              >
+                通常
+              </button>
+            </div>
+          </div>
           <label>
             学年
             <select value={filterTag} onChange={(event) => setFilterTag(event.target.value)}>
@@ -530,8 +550,8 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
           </label>
         </div>
 
-        <div className="table-wrap schedule-table-wrap">
-          <table className="results-table schedule-results-table">
+        <div className={`table-wrap schedule-table-wrap ${compactView ? "is-compact" : ""}`}>
+          <table className={`results-table schedule-results-table ${compactView ? "is-compact" : ""}`}>
             <thead>
               <tr>
                 <th>日付</th>
@@ -541,14 +561,14 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
                 <th>内容</th>
                 <th>当番</th>
                 <th>出欠</th>
-                <th>修正</th>
-                <th>操作</th>
+                {!compactView ? <th>修正</th> : null}
+                {!compactView ? <th>操作</th> : null}
               </tr>
             </thead>
             <tbody>
               {visibleSchedules.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="empty-state schedule-empty">
+                  <td colSpan={compactView ? 7 : 9} className="empty-state schedule-empty">
                     この月の予定はまだありません。
                   </td>
                 </tr>
@@ -584,34 +604,38 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
                           <span className="badge result-draw">未 {counts.pending}</span>
                         </div>
                       </td>
-                      <td>
-                        <div>{entry.updatedBy?.displayName || "-"}</div>
-                        <div className="muted">{formatDateTimeCell(entry.updatedAt)}</div>
-                      </td>
-                      <td>
-                        <div className="schedule-actions">
-                          <button className="text-button" type="button" onClick={() => openModal(entry.id, "attendance-input")}>
-                            出欠
-                          </button>
-                          <button className="text-button" type="button" onClick={() => openModal(entry.id, "attendance-list")}>
-                            一覧
-                          </button>
-                          <button className="text-button" type="button" onClick={() => openModal(entry.id, "duty")}>
-                            当番
-                          </button>
-                          <button className="text-button" type="button" onClick={() => openEditEditor(entry)}>
-                            修正
-                          </button>
-                          <button className="text-button danger" type="button" onClick={() => void deleteSchedule(entry.id)}>
-                            削除
-                          </button>
-                          {entry.isMatch ? (
-                            <Link href={buildScoreHref(entry)} className="text-button score-link-inline">
-                              スコア管理
-                            </Link>
-                          ) : null}
-                        </div>
-                      </td>
+                      {!compactView ? (
+                        <td>
+                          <div>{entry.updatedBy?.displayName || "-"}</div>
+                          <div className="muted">{formatDateTimeCell(entry.updatedAt)}</div>
+                        </td>
+                      ) : null}
+                      {!compactView ? (
+                        <td>
+                          <div className="schedule-actions">
+                            <button className="text-button" type="button" onClick={() => openModal(entry.id, "attendance-input")}>
+                              出欠
+                            </button>
+                            <button className="text-button" type="button" onClick={() => openModal(entry.id, "attendance-list")}>
+                              一覧
+                            </button>
+                            <button className="text-button" type="button" onClick={() => openModal(entry.id, "duty")}>
+                              当番
+                            </button>
+                            <button className="text-button" type="button" onClick={() => openEditEditor(entry)}>
+                              修正
+                            </button>
+                            <button className="text-button danger" type="button" onClick={() => void deleteSchedule(entry.id)}>
+                              削除
+                            </button>
+                            {entry.isMatch ? (
+                              <Link href={buildScoreHref(entry)} className="text-button score-link-inline">
+                                スコア管理
+                              </Link>
+                            ) : null}
+                          </div>
+                        </td>
+                      ) : null}
                     </tr>
                   );
                 })
