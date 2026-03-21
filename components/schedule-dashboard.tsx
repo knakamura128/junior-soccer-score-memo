@@ -107,6 +107,9 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [scheduleForm, setScheduleForm] = useState<SchedulePayload>(() => createEmptySchedule());
   const [compactView, setCompactView] = useState(true);
+  const [bulkAttendanceOpen, setBulkAttendanceOpen] = useState(false);
+  const [bulkAttendanceStatus, setBulkAttendanceStatus] = useState<AttendanceStatus>("参加");
+  const [bulkAttendanceNote, setBulkAttendanceNote] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -246,6 +249,17 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
     setModalEntryId(null);
   }
 
+  function openBulkAttendance() {
+    setBulkAttendanceStatus("参加");
+    setBulkAttendanceNote("");
+    setFeedback("");
+    setBulkAttendanceOpen(true);
+  }
+
+  function closeBulkAttendance() {
+    setBulkAttendanceOpen(false);
+  }
+
   function openNewEditor() {
     setEditingId(null);
     setScheduleForm(createEmptySchedule(`${selectedMonth}-01`));
@@ -353,7 +367,8 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
         })
       });
       if (!response.ok) {
-        throw new Error("出欠保存に失敗しました。");
+        const detail = await readResponseError(response, "出欠保存に失敗しました。");
+        throw new Error(detail);
       }
       const saved = (await response.json()) as ScheduleRow;
       upsertSchedule(saved);
@@ -385,7 +400,8 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
         })
       });
       if (!response.ok) {
-        throw new Error("当番保存に失敗しました。");
+        const detail = await readResponseError(response, "当番保存に失敗しました。");
+        throw new Error(detail);
       }
       const saved = (await response.json()) as ScheduleRow;
       upsertSchedule(saved);
@@ -420,7 +436,8 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
         })
       });
       if (!response.ok) {
-        throw new Error("配車保存に失敗しました。");
+        const detail = await readResponseError(response, "配車保存に失敗しました。");
+        throw new Error(detail);
       }
       const saved = (await response.json()) as ScheduleRow;
       upsertSchedule(saved);
@@ -431,6 +448,46 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
         return;
       }
       setFeedback(error instanceof Error ? error.message : "配車保存に失敗しました。");
+    }
+  }
+
+  async function saveBulkAttendance() {
+    if (visibleSchedules.length === 0) {
+      setFeedback("一括登録できる予定がありません。");
+      return;
+    }
+
+    try {
+      const idToken = await requireIdToken();
+      const savedRows: ScheduleRow[] = [];
+
+      for (const entry of visibleSchedules) {
+        const response = await fetch(`/api/schedules/${entry.id}/attendance`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            idToken,
+            attendance: { status: bulkAttendanceStatus, note: bulkAttendanceNote }
+          })
+        });
+        if (!response.ok) {
+          const detail = await readResponseError(response, `出欠一括登録に失敗しました。`);
+          throw new Error(`${entry.eventDate} ${entry.content}: ${detail}`);
+        }
+        savedRows.push((await response.json()) as ScheduleRow);
+      }
+
+      setSchedules((current) =>
+        current.map((entry) => savedRows.find((saved) => saved.id === entry.id) || entry)
+      );
+      setBulkAttendanceOpen(false);
+      setFeedback(`${savedRows.length}件の予定に出欠を一括登録しました。`);
+    } catch (error) {
+      if (shouldRefreshLineLogin(error)) {
+        await loginWithLine();
+        return;
+      }
+      setFeedback(error instanceof Error ? error.message : "出欠一括登録に失敗しました。");
     }
   }
 
@@ -569,9 +626,14 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
               {latestUpdated ? new Date(latestUpdated).toLocaleDateString("ja-JP") : "-"}
             </span>
           </div>
-          <button className="primary" type="button" onClick={openNewEditor}>
-            予定を追加
-          </button>
+          <div className="action-row">
+            <button className="ghost dark-ghost" type="button" onClick={openBulkAttendance}>
+              出欠一括登録
+            </button>
+            <button className="primary" type="button" onClick={openNewEditor}>
+              予定を追加
+            </button>
+          </div>
         </div>
 
         <div className="results-toolbar compact-toolbar schedule-toolbar">
@@ -1042,6 +1104,47 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
           </div>
         </div>
       ) : null}
+
+      {bulkAttendanceOpen ? (
+        <div className="modal-backdrop" role="presentation" onClick={closeBulkAttendance}>
+          <div className="modal-card schedule-modal" role="dialog" aria-modal="true" onClick={(event) => event.stopPropagation()}>
+            <div className="modal-head">
+              <div>
+                <h2>出欠一括登録</h2>
+                <p>
+                  現在の表示月・学年の {visibleSchedules.length} 件に同じ出欠を登録します。
+                </p>
+              </div>
+              <button className="ghost modal-close" type="button" onClick={closeBulkAttendance}>
+                閉じる
+              </button>
+            </div>
+            <div className="modal-section">
+              <div className="attendance-choice-row">
+                {(["参加", "欠席", "未定"] as AttendanceStatus[]).map((status) => (
+                  <button
+                    key={status}
+                    type="button"
+                    className={`status-toggle ${bulkAttendanceStatus === status ? "is-active" : ""}`}
+                    onClick={() => setBulkAttendanceStatus(status)}
+                  >
+                    {status}
+                  </button>
+                ))}
+              </div>
+              <label>
+                備考
+                <input value={bulkAttendanceNote} onChange={(event) => setBulkAttendanceNote(event.target.value)} placeholder="全予定に同じ備考を入れます" />
+              </label>
+              <div className="stack-actions">
+                <button className="primary" type="button" onClick={() => void saveBulkAttendance()}>
+                  一括保存
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -1093,6 +1196,11 @@ function shouldRefreshLineLogin(error: unknown) {
     error.message.includes("LINEログインが必要") ||
     error.message.includes("LINEログインを更新しています")
   );
+}
+
+async function readResponseError(response: Response, fallback: string) {
+  const detail = (await response.text()).trim();
+  return detail || fallback;
 }
 
 function TagSelector({ value, onChange }: { value: string[]; onChange: (tags: string[]) => void }) {
