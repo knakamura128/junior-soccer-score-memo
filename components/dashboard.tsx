@@ -5,6 +5,8 @@ import { useEffect, useState } from "react";
 import { buildMatchesCsv, parseReferenceMatchesCsv } from "@/lib/match-csv";
 import {
   CATEGORY_OPTIONS,
+  getCurrentTokyoDate,
+  getCurrentTokyoMonth,
   type MatchPayload
 } from "@/lib/match-format";
 import { createEmptyMatch } from "@/lib/score-draft";
@@ -70,7 +72,7 @@ export function Dashboard({ initialData, initialMatch }: DashboardProps) {
   const [playerForm, setPlayerForm] = useState({ number: "", name: "", tags: [] as string[] });
   const [editingPlayerId, setEditingPlayerId] = useState<string | null>(null);
   const [filterTag, setFilterTag] = useState("すべて");
-  const [filterMonth, setFilterMonth] = useState(() => new Date().toISOString().slice(0, 7));
+  const [filterMonth, setFilterMonth] = useState(() => getCurrentTokyoMonth());
   const [sortValue, setSortValue] = useState("date-desc");
   const [compactResultsView, setCompactResultsView] = useState(true);
   const [auth, setAuth] = useState<AuthState>({ status: "loading", idToken: "", accessToken: "", displayName: "" });
@@ -532,7 +534,7 @@ export function Dashboard({ initialData, initialMatch }: DashboardProps) {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `match-results-${new Date().toISOString().slice(0, 10)}.csv`;
+    link.download = `match-results-${getCurrentTokyoDate()}.csv`;
     link.click();
     URL.revokeObjectURL(url);
   }

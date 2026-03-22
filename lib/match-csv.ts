@@ -1,6 +1,7 @@
 import { escapeCsvCell, parseCsv } from "@/lib/csv";
 import {
   expandScorers,
+  getCurrentTokyoDate,
   gradeToTags,
   parseScoreText,
   splitTournamentAndTitle,
@@ -94,13 +95,13 @@ function exportDateForCsv(value: string) {
 
 function inferYearFromFileName(fileName: string) {
   const match = fileName.match(/(20\d{2})/);
-  return match ? Number(match[1]) : new Date().getFullYear();
+  return match ? Number(match[1]) : Number(getCurrentTokyoDate().slice(0, 4));
 }
 
 function normalizeImportedDate(value: string, year: number) {
   if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
   const match = value.match(/^(\d{1,2})\/(\d{1,2})$/);
-  if (!match) return new Date().toISOString().slice(0, 10);
+  if (!match) return getCurrentTokyoDate();
   return `${year}-${String(Number(match[1])).padStart(2, "0")}-${String(Number(match[2])).padStart(2, "0")}`;
 }
 

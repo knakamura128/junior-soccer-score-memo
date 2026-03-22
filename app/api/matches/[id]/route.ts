@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { verifyLineSession } from "@/lib/line-auth";
-import { calculateOutcome } from "@/lib/match-format";
+import { calculateOutcome, serializeMatchDate } from "@/lib/match-format";
 import { z } from "zod";
 
 const bodySchema = z.object({
@@ -93,7 +93,7 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
 
   return NextResponse.json({
     ...updated,
-    matchDate: updated.matchDate.toISOString().slice(0, 10)
+    matchDate: serializeMatchDate(updated.matchDate)
   });
 }
 

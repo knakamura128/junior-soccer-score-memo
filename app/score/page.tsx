@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { Dashboard } from "@/components/dashboard";
 import { createEmptyMatch } from "@/lib/score-draft";
-import { type MatchPayload } from "@/lib/match-format";
+import { serializeMatchDate, type MatchPayload } from "@/lib/match-format";
 import { ensureAnnualPlayerPromotion, normalizeExistingPlayers } from "@/lib/player-promotion";
 
 export const dynamic = "force-dynamic";
@@ -29,7 +29,7 @@ async function getInitialData() {
     players,
     matches: matches.map((match) => ({
       ...match,
-      matchDate: match.matchDate.toISOString().slice(0, 10),
+      matchDate: serializeMatchDate(match.matchDate),
       createdAt: match.createdAt.toISOString(),
       updatedAt: match.updatedAt.toISOString()
     }))

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { verifyLineSession } from "@/lib/line-auth";
-import { calculateOutcome } from "@/lib/match-format";
+import { calculateOutcome, serializeMatchDate } from "@/lib/match-format";
 import { z } from "zod";
 
 const goalSchema = z.object({
@@ -47,7 +47,7 @@ export async function GET() {
   return NextResponse.json(
     matches.map((match) => ({
       ...match,
-      matchDate: match.matchDate.toISOString().slice(0, 10)
+      matchDate: serializeMatchDate(match.matchDate)
     }))
   );
 }
@@ -103,6 +103,6 @@ export async function POST(request: Request) {
 
   return NextResponse.json({
     ...saved,
-    matchDate: saved.matchDate.toISOString().slice(0, 10)
+    matchDate: serializeMatchDate(saved.matchDate)
   });
 }

@@ -1,5 +1,22 @@
 export const CATEGORY_OPTIONS = ["キッズ", "低学年", "中学年", "高学年", "1年", "2年", "3年", "4年", "5年", "6年"] as const;
 
+export function serializeMatchDate(date: Date) {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Tokyo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).format(date);
+}
+
+export function getCurrentTokyoDate() {
+  return serializeMatchDate(new Date());
+}
+
+export function getCurrentTokyoMonth() {
+  return getCurrentTokyoDate().slice(0, 7);
+}
+
 export type MatchPayload = {
   id?: string;
   tournament: string;

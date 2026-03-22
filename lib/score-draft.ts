@@ -1,4 +1,4 @@
-import { type MatchPayload } from "@/lib/match-format";
+import { getCurrentTokyoDate, type MatchPayload } from "@/lib/match-format";
 
 export function createEmptyMatch(): MatchPayload {
   return {
@@ -6,7 +6,7 @@ export function createEmptyMatch(): MatchPayload {
     title: "",
     opponent: "",
     tags: [],
-    matchDate: new Date().toISOString().slice(0, 10),
+    matchDate: getCurrentTokyoDate(),
     periodMode: "halves",
     currentPeriod: "前半",
     pkMode: "off",
