@@ -66,8 +66,9 @@ export function Dashboard({ initialData, initialMatch }: DashboardProps) {
   const [matches, setMatches] = useState(initialData.matches);
   const [match, setMatch] = useState<MatchPayload>(() => initialMatch || createEmptyMatch());
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [timerSeconds, setTimerSeconds] = useState(0);
-  const [timerRunning, setTimerRunning] = useState(false);
+  const [timerBaseSeconds, setTimerBaseSeconds] = useState(0);
+  const [timerStartedAt, setTimerStartedAt] = useState<number | null>(null);
+  const [timerNow, setTimerNow] = useState(() => Date.now());
   const [goalPlayer, setGoalPlayer] = useState("");
   const [playerForm, setPlayerForm] = useState({ number: "", name: "", tags: [] as string[] });
   const [editingPlayerId, setEditingPlayerId] = useState<string | null>(null);
@@ -78,13 +79,23 @@ export function Dashboard({ initialData, initialMatch }: DashboardProps) {
   const [auth, setAuth] = useState<AuthState>({ status: "loading", idToken: "", accessToken: "", displayName: "" });
   const [feedback, setFeedback] = useState<string>("");
 
+  const timerSeconds = timerBaseSeconds + (timerStartedAt ? Math.max(0, Math.floor((timerNow - timerStartedAt) / 1000)) : 0);
+
   useEffect(() => {
     const raw = window.localStorage.getItem(DRAFT_STORAGE_KEY);
     if (!raw) return;
     try {
-      const draft = JSON.parse(raw) as { match: MatchPayload; timerSeconds: number; editingId: string | null };
+      const draft = JSON.parse(raw) as {
+        match: MatchPayload;
+        timerSeconds?: number;
+        timerBaseSeconds?: number;
+        timerStartedAt?: number | null;
+        editingId: string | null;
+      };
       setMatch(draft.match);
-      setTimerSeconds(draft.timerSeconds);
+      setTimerBaseSeconds(draft.timerBaseSeconds ?? draft.timerSeconds ?? 0);
+      setTimerStartedAt(draft.timerStartedAt ?? null);
+      setTimerNow(Date.now());
       setEditingId(draft.editingId);
     } catch {
       window.localStorage.removeItem(DRAFT_STORAGE_KEY);
@@ -96,19 +107,31 @@ export function Dashboard({ initialData, initialMatch }: DashboardProps) {
       DRAFT_STORAGE_KEY,
       JSON.stringify({
         match,
-        timerSeconds,
+        timerBaseSeconds,
+        timerStartedAt,
         editingId
       })
     );
-  }, [match, timerSeconds, editingId]);
+  }, [match, timerBaseSeconds, timerStartedAt, editingId]);
 
   useEffect(() => {
-    if (!timerRunning) return;
+    if (!timerStartedAt) return;
     const id = window.setInterval(() => {
-      setTimerSeconds((current) => current + 1);
+      setTimerNow(Date.now());
     }, 1000);
     return () => window.clearInterval(id);
-  }, [timerRunning]);
+  }, [timerStartedAt]);
+
+  useEffect(() => {
+    if (!timerStartedAt) return;
+    const refresh = () => setTimerNow(Date.now());
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", refresh);
+    return () => {
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", refresh);
+    };
+  }, [timerStartedAt]);
 
   useEffect(() => {
     setMatch((current) => ({ ...current, duration: formatClock(timerSeconds) }));
@@ -462,8 +485,9 @@ export function Dashboard({ initialData, initialMatch }: DashboardProps) {
   function resetDraft() {
     setEditingId(null);
     setGoalPlayer("");
-    setTimerRunning(false);
-    setTimerSeconds(0);
+    setTimerStartedAt(null);
+    setTimerBaseSeconds(0);
+    setTimerNow(Date.now());
     setMatch(createEmptyMatch());
     window.localStorage.removeItem(DRAFT_STORAGE_KEY);
   }
@@ -476,8 +500,9 @@ export function Dashboard({ initialData, initialMatch }: DashboardProps) {
 
   function editMatch(entry: MatchRow) {
     setEditingId(entry.id);
-    setTimerRunning(false);
-    setTimerSeconds(parseClockToSeconds(entry.duration));
+    setTimerStartedAt(null);
+    setTimerBaseSeconds(parseClockToSeconds(entry.duration));
+    setTimerNow(Date.now());
     setMatch({
       id: entry.id,
       tournament: entry.tournament,
@@ -672,8 +697,8 @@ export function Dashboard({ initialData, initialMatch }: DashboardProps) {
             <div className="timer-block">
               <div className="timer-display">{formatClock(timerSeconds)}</div>
               <div className="timer-actions">
-                <button type="button" onClick={() => setTimerRunning(true)}>スタート</button>
-                <button type="button" className="ghost" onClick={() => setTimerRunning(false)}>ストップ</button>
+                <button type="button" onClick={startDraftTimer}>スタート</button>
+                <button type="button" className="ghost" onClick={stopDraftTimer}>ストップ</button>
                 <button type="button" className="ghost" onClick={resetDraftTimer}>リセット</button>
               </div>
             </div>
@@ -841,8 +866,28 @@ export function Dashboard({ initialData, initialMatch }: DashboardProps) {
   );
 
   function resetDraftTimer() {
-    setTimerRunning(false);
-    setTimerSeconds(0);
+    setTimerStartedAt(null);
+    setTimerBaseSeconds(0);
+    setTimerNow(Date.now());
+  }
+
+  function startDraftTimer() {
+    if (timerStartedAt) {
+      return;
+    }
+    const now = Date.now();
+    setTimerNow(now);
+    setTimerStartedAt(now);
+  }
+
+  function stopDraftTimer() {
+    if (!timerStartedAt) {
+      return;
+    }
+    const now = Date.now();
+    setTimerBaseSeconds((current) => current + Math.max(0, Math.floor((now - timerStartedAt) / 1000)));
+    setTimerStartedAt(null);
+    setTimerNow(now);
   }
 }
 
