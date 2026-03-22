@@ -461,6 +461,39 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
     }
   }
 
+  async function clearAttendance() {
+    if (!modalEntry || !currentAttendance) {
+      return;
+    }
+    try {
+      const authPayload = await requireLineAuth();
+      const response = await fetch(`/api/schedules/${modalEntry.id}/attendance`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(authPayload)
+      });
+      if (!response.ok) {
+        if (response.status === 400) {
+          await handleScheduleAuthFailure();
+          return;
+        }
+        const detail = await readResponseError(response, "出欠取消に失敗しました。");
+        throw new Error(detail);
+      }
+      const saved = (await response.json()) as ScheduleRow;
+      upsertSchedule(saved);
+      setAttendanceNote("");
+      setAttendanceStatus("参加");
+      setFeedback("出欠を取り消しました。");
+    } catch (error) {
+      if (shouldRefreshLineLogin(error)) {
+        await loginWithLine();
+        return;
+      }
+      setFeedback(error instanceof Error ? error.message : "出欠取消に失敗しました。");
+    }
+  }
+
   async function saveDuty() {
     if (!modalEntry) {
       return;
@@ -974,6 +1007,11 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
                   <button className="primary" type="button" onClick={() => void saveAttendance()}>
                     出欠を保存
                   </button>
+                  {currentAttendance ? (
+                    <button className="ghost" type="button" onClick={() => void clearAttendance()}>
+                      出欠を取り消す
+                    </button>
+                  ) : null}
                 </div>
               </div>
             ) : null}
