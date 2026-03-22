@@ -59,6 +59,7 @@ type AuthState = {
 };
 
 const DRAFT_STORAGE_KEY = "score-mini-app-next-draft";
+const MAX_TIMER_SECONDS = 60 * 60;
 
 export function Dashboard({ initialData, initialMatch }: DashboardProps) {
   const [activeTab, setActiveTab] = useState<"scoring" | "results">("scoring");
@@ -79,7 +80,10 @@ export function Dashboard({ initialData, initialMatch }: DashboardProps) {
   const [auth, setAuth] = useState<AuthState>({ status: "loading", idToken: "", accessToken: "", displayName: "" });
   const [feedback, setFeedback] = useState<string>("");
 
-  const timerSeconds = timerBaseSeconds + (timerStartedAt ? Math.max(0, Math.floor((timerNow - timerStartedAt) / 1000)) : 0);
+  const timerSeconds = Math.min(
+    MAX_TIMER_SECONDS,
+    timerBaseSeconds + (timerStartedAt ? Math.max(0, Math.floor((timerNow - timerStartedAt) / 1000)) : 0)
+  );
 
   useEffect(() => {
     const raw = window.localStorage.getItem(DRAFT_STORAGE_KEY);
@@ -136,6 +140,19 @@ export function Dashboard({ initialData, initialMatch }: DashboardProps) {
   useEffect(() => {
     setMatch((current) => ({ ...current, duration: formatClock(timerSeconds) }));
   }, [timerSeconds]);
+
+  useEffect(() => {
+    if (!timerStartedAt) {
+      return;
+    }
+    if (timerSeconds < MAX_TIMER_SECONDS) {
+      return;
+    }
+    setTimerBaseSeconds(MAX_TIMER_SECONDS);
+    setTimerStartedAt(null);
+    setTimerNow(Date.now());
+    setFeedback("ストップウォッチが60分に達したため、自動で停止しました。");
+  }, [timerSeconds, timerStartedAt]);
 
   const filteredPlayers = players.filter((player) =>
     match.tags.length === 0 ? true : player.tags.some((tag) => match.tags.includes(tag))
@@ -872,7 +889,7 @@ export function Dashboard({ initialData, initialMatch }: DashboardProps) {
   }
 
   function startDraftTimer() {
-    if (timerStartedAt) {
+    if (timerStartedAt || timerSeconds >= MAX_TIMER_SECONDS) {
       return;
     }
     const now = Date.now();
