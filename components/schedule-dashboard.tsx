@@ -6,6 +6,7 @@ import {
   createEmptySchedule,
   extractOpponentFromContent,
   formatTimeRange,
+  getCurrentTokyoMonth,
   inferIsMatch,
   parseScheduleCsv,
   SCHEDULE_TAG_OPTIONS,
@@ -93,7 +94,7 @@ type ModalTab = "attendance-input" | "attendance-list" | "duty" | "carpool";
 
 export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
   const [schedules, setSchedules] = useState(initialData.schedules);
-  const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
+  const [selectedMonth, setSelectedMonth] = useState(getCurrentTokyoMonth());
   const [filterTag, setFilterTag] = useState("すべて");
   const [auth, setAuth] = useState<AuthState>({ status: "loading", idToken: "", accessToken: "", displayName: "" });
   const [feedback, setFeedback] = useState("");

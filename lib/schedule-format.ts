@@ -20,7 +20,7 @@ export type SchedulePayload = {
 
 export function createEmptySchedule(date?: string): SchedulePayload {
   return {
-    eventDate: date || new Date().toISOString().slice(0, 10),
+    eventDate: date || getCurrentTokyoDate(),
     tags: [],
     startTime: "09:00",
     endTime: "11:00",
@@ -41,6 +41,19 @@ export function serializeScheduleDate(date: Date) {
   });
 
   return formatter.format(date);
+}
+
+export function getCurrentTokyoDate() {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Tokyo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).format(new Date());
+}
+
+export function getCurrentTokyoMonth() {
+  return getCurrentTokyoDate().slice(0, 7);
 }
 
 export function formatTimeRange(startTime: string, endTime: string) {
@@ -200,7 +213,7 @@ function normalizeImportedDate(value: string) {
   }
   const slashMatch = value.match(/^(\d{1,2})\/(\d{1,2})$/);
   if (slashMatch) {
-    const year = new Date().getFullYear();
+    const year = Number(getCurrentTokyoDate().slice(0, 4));
     return `${year}-${slashMatch[1].padStart(2, "0")}-${slashMatch[2].padStart(2, "0")}`;
   }
   const fullSlashMatch = value.match(/^(\d{4})\/(\d{1,2})\/(\d{1,2})$/);
