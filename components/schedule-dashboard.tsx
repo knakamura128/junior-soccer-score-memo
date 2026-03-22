@@ -571,6 +571,38 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
     }
   }
 
+  async function clearCarpool() {
+    if (!modalEntry || !currentCarpoolPreference) {
+      return;
+    }
+    try {
+      const authPayload = await requireLineAuth();
+      const response = await fetch(`/api/schedules/${modalEntry.id}/carpool`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(authPayload)
+      });
+      if (!response.ok) {
+        if (response.status === 400) {
+          await handleScheduleAuthFailure();
+          return;
+        }
+        const detail = await readResponseError(response, "配車取消に失敗しました。");
+        throw new Error(detail);
+      }
+      const saved = (await response.json()) as ScheduleRow;
+      upsertSchedule(saved);
+      setCarpoolChoice("");
+      setFeedback("配車入力を取り消しました。");
+    } catch (error) {
+      if (shouldRefreshLineLogin(error)) {
+        await loginWithLine();
+        return;
+      }
+      setFeedback(error instanceof Error ? error.message : "配車取消に失敗しました。");
+    }
+  }
+
   async function saveBulkAttendance() {
     if (bulkAttendanceTargets.length === 0) {
       setFeedback("一括登録できる予定がありません。");
@@ -1008,7 +1040,7 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
                     出欠を保存
                   </button>
                   {currentAttendance ? (
-                    <button className="ghost" type="button" onClick={() => void clearAttendance()}>
+                    <button className="dark-ghost" type="button" onClick={() => void clearAttendance()}>
                       出欠を取り消す
                     </button>
                   ) : null}
@@ -1156,6 +1188,11 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
                   <button className="primary" type="button" onClick={() => void saveCarpool()}>
                     配車を保存
                   </button>
+                  {currentCarpoolPreference ? (
+                    <button className="dark-ghost" type="button" onClick={() => void clearCarpool()}>
+                      配車を取り消す
+                    </button>
+                  ) : null}
                 </div>
               </div>
             ) : null}
