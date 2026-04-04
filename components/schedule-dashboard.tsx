@@ -808,7 +808,7 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
         </aside>
       </header>
 
-      {feedback ? <p className={feedback.includes("失敗") ? "error" : "muted"}>{feedback}</p> : null}
+      <FeedbackNotice message={feedback} />
 
       <section className={`card schedule-card ${isCoachPage ? "schedule-card-coach" : ""}`}>
         <div className="section-title schedule-title">
@@ -1302,7 +1302,7 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
                 <input value={scheduleForm.note} onChange={(event) => setScheduleForm((current) => ({ ...current, note: event.target.value }))} />
               </label>
             </div>
-            {feedback ? <p className={feedback.includes("失敗") ? "error" : "muted"}>{feedback}</p> : null}
+            <FeedbackNotice message={feedback} compact />
             <label className="checkbox-row">
               <input
                 type="checkbox"
@@ -1487,6 +1487,20 @@ function summarizeAttendance(attendances: AttendanceRow[]) {
 
 function filterAttendancesByAudience(attendances: AttendanceRow[], audience: AttendanceAudienceMode) {
   return attendances.filter((attendance) => attendance.audience === ATTENDANCE_AUDIENCES[audience]);
+}
+
+function FeedbackNotice({ message, compact = false }: { message: string; compact?: boolean }) {
+  if (!message) {
+    return null;
+  }
+
+  const isError = message.includes("失敗") || message.includes("エラー") || message.includes("必要") || message.includes("切れました");
+
+  return (
+    <div className={`feedback-notice-wrap ${compact ? "is-compact" : ""}`}>
+      <p className={`feedback-notice ${isError ? "is-error" : "is-success"}`}>{message}</p>
+    </div>
+  );
 }
 
 function tagClassName(tag: string) {
