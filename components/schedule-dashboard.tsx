@@ -423,7 +423,7 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
         body: JSON.stringify(authPayload)
       });
       if (!response.ok) {
-        if (response.status === 400) {
+        if (response.status === 401) {
           await handleScheduleAuthFailure();
           return;
         }
@@ -460,7 +460,7 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
         })
       });
       if (!response.ok) {
-        if (response.status === 400) {
+        if (response.status === 401) {
           await handleScheduleAuthFailure();
           return;
         }
@@ -491,7 +491,7 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
         body: JSON.stringify({ ...authPayload, audience })
       });
       if (!response.ok) {
-        if (response.status === 400) {
+        if (response.status === 401) {
           await handleScheduleAuthFailure();
           return;
         }
@@ -530,7 +530,7 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
         })
       });
       if (!response.ok) {
-        if (response.status === 400) {
+        if (response.status === 401) {
           await handleScheduleAuthFailure();
           return;
         }
@@ -570,7 +570,7 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
         })
       });
       if (!response.ok) {
-        if (response.status === 400) {
+        if (response.status === 401) {
           await handleScheduleAuthFailure();
           return;
         }
@@ -601,7 +601,7 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
         body: JSON.stringify(authPayload)
       });
       if (!response.ok) {
-        if (response.status === 400) {
+        if (response.status === 401) {
           await handleScheduleAuthFailure();
           return;
         }
@@ -642,7 +642,7 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
           })
         });
         if (!response.ok) {
-          if (response.status === 400) {
+          if (response.status === 401) {
             await handleScheduleAuthFailure();
             return;
           }

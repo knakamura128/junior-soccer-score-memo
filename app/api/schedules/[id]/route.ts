@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { scheduleEntryInclude, serializeScheduleEntry } from "@/lib/schedule-entry";
 import { upsertLineUser } from "@/lib/upsert-line-user";
 import { verifyLineSession } from "@/lib/line-auth";
+import { buildApiErrorResponse } from "@/lib/api-error";
 import { z } from "zod";
 
 const schedulePayloadSchema = z.object({
@@ -57,8 +58,7 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
 
     return NextResponse.json(serializeScheduleEntry(updated));
   } catch (error) {
-    const message = error instanceof Error ? error.message : "スケジュール更新に失敗しました。";
-    return new NextResponse(message, { status: 400 });
+    return buildApiErrorResponse(error, "スケジュール更新に失敗しました。");
   }
 }
 
@@ -74,7 +74,6 @@ export async function DELETE(request: Request, context: { params: Promise<{ id: 
 
     return NextResponse.json({ ok: true });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "スケジュール削除に失敗しました。";
-    return new NextResponse(message, { status: 400 });
+    return buildApiErrorResponse(error, "スケジュール削除に失敗しました。");
   }
 }

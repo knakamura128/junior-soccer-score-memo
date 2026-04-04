@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { upsertLineUser } from "@/lib/upsert-line-user";
 import { scheduleEntryInclude, serializeScheduleEntry } from "@/lib/schedule-entry";
+import { buildApiErrorResponse } from "@/lib/api-error";
 import { z } from "zod";
 
 const schedulePayloadSchema = z.object({
@@ -57,7 +58,6 @@ export async function POST(request: Request) {
 
     return NextResponse.json(serializeScheduleEntry(saved));
   } catch (error) {
-    const message = error instanceof Error ? error.message : "スケジュール作成に失敗しました。";
-    return new NextResponse(message, { status: 400 });
+    return buildApiErrorResponse(error, "スケジュール作成に失敗しました。");
   }
 }

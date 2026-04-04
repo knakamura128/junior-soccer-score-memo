@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { scheduleEntryInclude, serializeScheduleEntry } from "@/lib/schedule-entry";
 import { upsertLineUser } from "@/lib/upsert-line-user";
+import { buildApiErrorResponse } from "@/lib/api-error";
 import { z } from "zod";
 
 const authSchemaBase = z.object({
@@ -51,8 +52,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
 
     return NextResponse.json(serializeScheduleEntry(entry));
   } catch (error) {
-    const message = error instanceof Error ? error.message : "配車保存に失敗しました。";
-    return new NextResponse(message, { status: 400 });
+    return buildApiErrorResponse(error, "配車保存に失敗しました。");
   }
 }
 
@@ -76,7 +76,6 @@ export async function DELETE(request: Request, context: { params: Promise<{ id: 
 
     return NextResponse.json(serializeScheduleEntry(entry));
   } catch (error) {
-    const message = error instanceof Error ? error.message : "配車取消に失敗しました。";
-    return new NextResponse(message, { status: 400 });
+    return buildApiErrorResponse(error, "配車取消に失敗しました。");
   }
 }
