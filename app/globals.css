@@ -339,14 +339,14 @@ input[type="month"] { min-width: 0; }
 .schedule-results-table th,
 .schedule-results-table td { white-space: nowrap; }
 .schedule-results-table tr.schedule-date-group-start td {
-  border-top: 4px double rgba(61, 83, 63, 0.28);
+  border-top: 4px double rgba(104, 94, 68, 0.3);
 }
 .schedule-results-table tbody tr:first-child td {
   border-top: 0;
 }
 .schedule-results-table tr.schedule-date-group-start td:first-child {
   background:
-    linear-gradient(90deg, rgba(27, 107, 69, 0.08), rgba(27, 107, 69, 0.02));
+    linear-gradient(90deg, rgba(173, 137, 63, 0.12), rgba(173, 137, 63, 0.03));
 }
 .schedule-results-table tr.schedule-date-group-continue td {
   border-top: 1px solid rgba(88, 104, 88, 0.08);
@@ -395,7 +395,7 @@ input[type="month"] { min-width: 0; }
 }
 .schedule-actions { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
 .score-link-inline { color: var(--green-dark); }
-.schedule-is-match { background: rgba(27,107,69,.03); }
+.schedule-is-match { background: rgba(27,107,69,.045); }
 .modal-backdrop {
   position: fixed;
   inset: 0;
