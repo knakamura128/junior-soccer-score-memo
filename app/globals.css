@@ -338,6 +338,19 @@ input[type="month"] { min-width: 0; }
 .schedule-results-table td { line-height: 1.35; }
 .schedule-results-table th,
 .schedule-results-table td { white-space: nowrap; }
+.schedule-results-table tr.schedule-date-group-start td {
+  border-top: 4px double rgba(61, 83, 63, 0.28);
+}
+.schedule-results-table tbody tr:first-child td {
+  border-top: 0;
+}
+.schedule-results-table tr.schedule-date-group-start td:first-child {
+  background:
+    linear-gradient(90deg, rgba(27, 107, 69, 0.08), rgba(27, 107, 69, 0.02));
+}
+.schedule-results-table tr.schedule-date-group-continue td {
+  border-top: 1px solid rgba(88, 104, 88, 0.08);
+}
 .schedule-results-table td:nth-child(5),
 .schedule-results-table td:nth-child(6),
 .schedule-results-table td:nth-child(8) { white-space: normal; }
@@ -854,6 +867,10 @@ button:active { transform: translateY(0); }
     padding: 7px 5px;
     font-size: 0.68rem;
     white-space: normal;
+  }
+
+  .schedule-results-table tr.schedule-date-group-start td {
+    border-top-width: 3px;
   }
 
   .schedule-results-table th:nth-child(8),

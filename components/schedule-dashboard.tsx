@@ -940,11 +940,21 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
                   </td>
                 </tr>
               ) : (
-                visibleSchedules.map((entry) => {
+                visibleSchedules.map((entry, index) => {
                   const counts = summarizeAttendance(filterAttendancesByAudience(entry.attendances, audience));
                   const assignedName = entry.dutyAssignment?.assignedUser?.displayName || entry.dutyLabel || "未定";
+                  const previousEntry = visibleSchedules[index - 1];
+                  const isDateGroupStart = !previousEntry || previousEntry.eventDate !== entry.eventDate;
                   return (
-                    <tr key={entry.id} className={entry.isMatch ? "schedule-is-match" : ""}>
+                    <tr
+                      key={entry.id}
+                      className={[
+                        entry.isMatch ? "schedule-is-match" : "",
+                        isDateGroupStart ? "schedule-date-group-start" : "schedule-date-group-continue"
+                      ]
+                        .filter(Boolean)
+                        .join(" ")}
+                    >
                       <td>{renderScheduleDate(entry.eventDate)}</td>
                       <td>
                         <div className="badge-row">
