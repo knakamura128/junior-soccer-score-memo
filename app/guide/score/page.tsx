@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 type GuideScorePageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
@@ -29,19 +31,20 @@ export default async function GuideScorePage({ searchParams }: GuideScorePagePro
   const params = searchParams ? await searchParams : {};
   const view = typeof params.view === "string" ? params.view : "scoring";
   const device = typeof params.device === "string" ? params.device : "mobile";
+  const exitHref = "/guide";
 
   return (
     <div className={`app-shell guide-shell guide-device-${device}`}>
-      {view === "scoring" ? <ScoreScoringScene /> : null}
-      {view === "players" ? <ScorePlayersScene /> : null}
-      {view === "results" ? <ScoreResultsScene compact={true} /> : null}
-      {view === "results-normal" ? <ScoreResultsScene compact={false} /> : null}
-      {view === "edit" ? <ScoreEditScene /> : null}
+      {view === "scoring" ? <ScoreScoringScene exitHref={exitHref} /> : null}
+      {view === "players" ? <ScorePlayersScene exitHref={exitHref} /> : null}
+      {view === "results" ? <ScoreResultsScene compact={true} exitHref={exitHref} /> : null}
+      {view === "results-normal" ? <ScoreResultsScene compact={false} exitHref={exitHref} /> : null}
+      {view === "edit" ? <ScoreEditScene exitHref={exitHref} /> : null}
     </div>
   );
 }
 
-function ScoreScoringScene() {
+function ScoreScoringScene({ exitHref }: { exitHref: string }) {
   return (
     <>
       <nav className="tab-bar" aria-label="ページ切り替え">
@@ -57,7 +60,12 @@ function ScoreScoringScene() {
           <section className="card">
             <div className="section-title">
               <h2>試合情報</h2>
-              <span>基本設定</span>
+              <div className="action-row">
+                <span>基本設定</span>
+                <Link href={exitHref} className="ghost modal-close">
+                  閉じる
+                </Link>
+              </div>
             </div>
             <div className="form-grid">
               <label>
@@ -250,12 +258,17 @@ function ScoreScoringScene() {
   );
 }
 
-function ScorePlayersScene() {
+function ScorePlayersScene({ exitHref }: { exitHref: string }) {
   return (
     <section className="card guide-scene-card guide-annotated">
       <div className="section-title">
         <h2>選手登録</h2>
-        <span>登録済み選手</span>
+        <div className="action-row">
+          <span>登録済み選手</span>
+          <Link href={exitHref} className="ghost modal-close">
+            閉じる
+          </Link>
+        </div>
       </div>
       <div className="player-form">
         <label>
@@ -319,7 +332,7 @@ function ScorePlayersScene() {
   );
 }
 
-function ScoreResultsScene({ compact }: { compact: boolean }) {
+function ScoreResultsScene({ compact, exitHref }: { compact: boolean; exitHref: string }) {
   return (
     <>
       <nav className="tab-bar" aria-label="ページ切り替え">
@@ -333,7 +346,12 @@ function ScoreResultsScene({ compact }: { compact: boolean }) {
       <section className="card guide-annotated">
         <div className="section-title">
           <h2>試合結果一覧</h2>
-          <span>短縮表示と通常表示を切替可能</span>
+          <div className="action-row">
+            <span>短縮表示と通常表示を切替可能</span>
+            <Link href={exitHref} className="ghost modal-close">
+              閉じる
+            </Link>
+          </div>
         </div>
         <div className="results-toolbar compact-toolbar score-results-toolbar">
           <div className="month-filter">
@@ -487,7 +505,7 @@ function ScoreResultsScene({ compact }: { compact: boolean }) {
   );
 }
 
-function ScoreEditScene() {
+function ScoreEditScene({ exitHref }: { exitHref: string }) {
   return (
     <>
       <nav className="tab-bar" aria-label="ページ切り替え">
@@ -503,7 +521,12 @@ function ScoreEditScene() {
           <section className="card score-card guide-scene-card">
             <div className="section-title">
               <h2>スコア</h2>
-              <span>修正中</span>
+              <div className="action-row">
+                <span>修正中</span>
+                <Link href={exitHref} className="ghost modal-close">
+                  閉じる
+                </Link>
+              </div>
             </div>
             <div className="scoreboard">
               <div className="team-panel">
