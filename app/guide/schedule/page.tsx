@@ -194,17 +194,17 @@ function ScheduleTopScene({ exitHref }: { exitHref: string }) {
             <input type="file" />
           </label>
           <button className="ghost calendar-export" type="button">
-            Googleカレンダー取込
+            カレンダーに取り込む
           </button>
         </div>
         <p className="calendar-note">予定表取込では、日付 / 開始 / 終了 / 場所 / 内容 / タグが完全一致する予定は自動でスキップします。</p>
-        <p className="calendar-note">Googleカレンダーへ取り込み後、このアプリとは同期されません。</p>
+        <p className="calendar-note">カレンダーへ取り込み後、このアプリとは同期されません。</p>
       </div>
       <GuideCallout className="callout-top-month" number="1" text="表示月を切り替えると、その月の予定だけを表示します。" />
       <GuideCallout className="callout-top-compact" number="2" text="短縮は月全体を見やすくする表示です。修正や操作は通常で確認します。" />
-      <GuideCallout className="callout-top-import" number="3" text="予定表の取込と Googleカレンダー取込は下部にまとめています。完全一致の予定は取込時にスキップします。" />
+      <GuideCallout className="callout-top-import" number="3" text="予定表の取込と カレンダーに取り込む は下部にまとめています。完全一致の予定は取込時にスキップします。" />
       <GuideCallout className="callout-top-row" number="4" text="通常表示の操作では、出欠、一覧、配車、当番、修正、削除を使えます。" />
-      <GuideCallout className="callout-top-calendar" number="5" text="下部の Googleカレンダー取込は、今見えている月と学年の内容だけを書き出します。" />
+      <GuideCallout className="callout-top-calendar" number="5" text="下部の カレンダーに取り込む は、今見えている月と学年の内容だけを書き出します。" />
     </section>
   );
 }

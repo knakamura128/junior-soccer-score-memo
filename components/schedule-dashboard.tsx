@@ -1036,14 +1036,14 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
               />
             </label>
             <button className="ghost calendar-export" type="button" onClick={exportGoogleCalendar}>
-              Googleカレンダー取込
+              カレンダーに取り込む
             </button>
           </div>
           <p className="calendar-note">
             予定表取込では、`日付 / 開始 / 終了 / 場所 / 内容 / タグ` が完全一致する予定は自動でスキップします。
           </p>
           <p className="calendar-note">
-            Googleカレンダーへは、現在の表示月と担当学年で絞り込まれた予定だけを書き出します。LINEミニアプリ内では外部ブラウザを開く場合があります。取り込み後も同期はされません。
+            カレンダー取り込みでは、現在の表示月と担当学年で絞り込まれた予定だけを書き出します。LINEミニアプリ内では外部ブラウザを開く場合があります。取り込み後も同期はされません。
           </p>
           {auth.isInClient ? (
             <a
