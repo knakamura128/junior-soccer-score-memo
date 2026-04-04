@@ -928,6 +928,7 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
                 <th>内容</th>
                 {!isCoachPage ? <th>当番</th> : null}
                 <th>{audienceLabel}出欠</th>
+                {!compactView && !isCoachPage ? <th>修正</th> : null}
                 {!compactView ? <th>操作</th> : null}
               </tr>
             </thead>
