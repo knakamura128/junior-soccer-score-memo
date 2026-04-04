@@ -70,10 +70,11 @@ export default async function GuideSchedulePage({ searchParams }: GuideScheduleP
   const view = typeof params.view === "string" ? params.view : "top";
   const device = typeof params.device === "string" ? params.device : "mobile";
   const closeHref = `/guide/schedule?view=top&device=${device}`;
+  const exitHref = "/guide";
 
   return (
     <div className={`app-shell schedule-shell guide-shell guide-device-${device}`}>
-      {view === "top" ? <ScheduleTopScene /> : null}
+      {view === "top" ? <ScheduleTopScene exitHref={exitHref} /> : null}
       {view === "attendance-input" ? <AttendanceInputScene closeHref={closeHref} /> : null}
       {view === "attendance-list" ? <AttendanceListScene closeHref={closeHref} /> : null}
       {view === "bulk-attendance" ? <BulkAttendanceScene closeHref={closeHref} /> : null}
@@ -84,7 +85,7 @@ export default async function GuideSchedulePage({ searchParams }: GuideScheduleP
   );
 }
 
-function ScheduleTopScene() {
+function ScheduleTopScene({ exitHref }: { exitHref: string }) {
   return (
     <section className="card schedule-card guide-scene-card guide-annotated">
       <div className="section-title schedule-title">
@@ -93,6 +94,9 @@ function ScheduleTopScene() {
           <span>当番調整あり 2件 / 最新更新 2026/3/21</span>
         </div>
         <div className="action-row">
+          <Link href={exitHref} className="ghost modal-close">
+            閉じる
+          </Link>
           <button className="ghost dark-ghost" type="button">
             出欠一括登録
           </button>
