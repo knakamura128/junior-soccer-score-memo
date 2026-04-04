@@ -22,6 +22,7 @@ const ATTENDANCE_AUDIENCES = {
   parent: "PARENT",
   coach: "COACH"
 } as const;
+const SCHEDULE_VIEW_STORAGE_KEY_PREFIX = "schedule-dashboard-view";
 
 type AttendanceAudienceMode = keyof typeof ATTENDANCE_AUDIENCES;
 
@@ -110,6 +111,7 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
   const authMeta = isCoachPage ? "コーチ用の出欠入力者として記録されます" : "出欠入力と修正者として記録されます";
   const alternateHref = isCoachPage ? "/" : "/coaches";
   const alternateLabel = isCoachPage ? "保護者用へ" : "コーチ用へ";
+  const viewStorageKey = `${SCHEDULE_VIEW_STORAGE_KEY_PREFIX}:${audience}`;
   const [schedules, setSchedules] = useState(initialData.schedules);
   const [selectedMonth, setSelectedMonth] = useState(getCurrentTokyoMonth());
   const [filterTag, setFilterTag] = useState("すべて");
@@ -157,6 +159,42 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(viewStorageKey);
+      if (!raw) {
+        return;
+      }
+      const saved = JSON.parse(raw) as {
+        selectedMonth?: string;
+        compactView?: boolean;
+        filterTag?: string;
+      };
+      if (saved.selectedMonth) {
+        setSelectedMonth(saved.selectedMonth);
+      }
+      if (typeof saved.compactView === "boolean") {
+        setCompactView(saved.compactView);
+      }
+      if (saved.filterTag) {
+        setFilterTag(saved.filterTag);
+      }
+    } catch {
+      window.localStorage.removeItem(viewStorageKey);
+    }
+  }, [viewStorageKey]);
+
+  useEffect(() => {
+    window.localStorage.setItem(
+      viewStorageKey,
+      JSON.stringify({
+        selectedMonth,
+        compactView,
+        filterTag
+      })
+    );
+  }, [compactView, filterTag, selectedMonth, viewStorageKey]);
 
   const visibleSchedules = useMemo(
     () =>
