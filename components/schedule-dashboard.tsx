@@ -780,11 +780,13 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
       query.set("tag", filterTag);
     }
     const exportPath = `/calendar-export?${query.toString()}`;
-    const exportUrl = `${window.location.origin}${exportPath}`;
+    const externalQuery = new URLSearchParams(query);
+    externalQuery.set("openExternalBrowser", "1");
+    const externalExportUrl = `${window.location.origin}/calendar-export?${externalQuery.toString()}`;
 
     if (auth.isInClient) {
       const link = document.createElement("a");
-      link.href = exportUrl;
+      link.href = externalExportUrl;
       link.target = "_blank";
       link.rel = "noopener noreferrer";
       link.click();
@@ -1045,7 +1047,7 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
           {auth.isInClient ? (
             <a
               className="calendar-note text-button"
-              href={`/calendar-export?month=${selectedMonth}${filterTag === "すべて" ? "" : `&tag=${encodeURIComponent(filterTag)}`}`}
+              href={`/calendar-export?month=${selectedMonth}${filterTag === "すべて" ? "" : `&tag=${encodeURIComponent(filterTag)}`}&openExternalBrowser=1`}
               target="_blank"
               rel="noreferrer"
             >
