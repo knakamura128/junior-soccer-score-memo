@@ -13,8 +13,6 @@ import {
   type AttendanceStatus,
   type SchedulePayload
 } from "@/lib/schedule-format";
-import { buildScheduleIcs } from "@/lib/schedule-ics";
-
 const SCHEDULE_ROW_TAG_ORDER = ["キッズ", "1年", "2年", "3年", "4年", "5年", "6年"] as const;
 const SCHEDULE_BADGE_ORDER = ["低学年", "中学年", "高学年", "キッズ", "1年", "2年", "3年", "4年", "5年", "6年"] as const;
 const CARPOOL_CHOICES = ["配車希望", "現地集合", "自家用車同乗可"] as const;
@@ -766,33 +764,36 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
     .map((entry) => entry.updatedAt)
     .sort((left, right) => right.localeCompare(left))[0];
 
-  function exportGoogleCalendar() {
+  async function exportGoogleCalendar() {
     if (visibleSchedules.length === 0) {
       setFeedback("現在の絞り込み条件で書き出せる予定がありません。");
       return;
     }
 
-    const ics = buildScheduleIcs(
-      visibleSchedules.map((entry) => ({
-        id: entry.id,
-        eventDate: entry.eventDate,
-        startTime: entry.startTime,
-        endTime: entry.endTime,
-        location: entry.location,
-        content: entry.content,
-        tags: entry.tags,
-        note: entry.note
-      }))
-    );
+    const query = new URLSearchParams();
+    query.set("month", selectedMonth);
+    if (filterTag !== "すべて") {
+      query.set("tag", filterTag);
+    }
+    const exportPath = `/calendar-export?${query.toString()}`;
+    const exportUrl = `${window.location.origin}${exportPath}`;
 
-    const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `fc-kumano-schedule-${selectedMonth}${filterTag === "すべて" ? "" : `-${filterTag}`}.ics`;
-    link.click();
-    URL.revokeObjectURL(url);
-    setFeedback("Googleカレンダー取り込み用ファイルを書き出しました。同期はされません。");
+    try {
+      const liffId = process.env.NEXT_PUBLIC_LIFF_ID;
+      if (liffId) {
+        const { default: liff } = await import("@line/liff");
+        await liff.init({ liffId });
+        if (liff.isInClient()) {
+          liff.openWindow({ url: exportUrl, external: true });
+          setFeedback("外部ブラウザでカレンダー取り込みを開きました。取り込み後も同期はされません。");
+          return;
+        }
+      }
+    } catch {
+      // Fall back to the in-browser export page below.
+    }
+
+    window.location.href = exportPath;
   }
 
   return (
@@ -1039,7 +1040,9 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
           <p className="calendar-note">
             予定表取込では、`日付 / 開始 / 終了 / 場所 / 内容 / タグ` が完全一致する予定は自動でスキップします。
           </p>
-          <p className="calendar-note">Googleカレンダーへは現在の絞り込み結果だけを書き出します。取り込み後も同期はされません。</p>
+          <p className="calendar-note">
+            Googleカレンダーへは、現在の表示月と担当学年で絞り込まれた予定だけを書き出します。LINEミニアプリ内では外部ブラウザを開く場合があります。取り込み後も同期はされません。
+          </p>
         </div>
       </section>
 
