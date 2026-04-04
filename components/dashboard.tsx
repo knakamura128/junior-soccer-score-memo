@@ -670,6 +670,9 @@ export function Dashboard({ initialData, initialMatch }: DashboardProps) {
             <Link href="/" className="ghost link-chip">
               スケジュール管理へ
             </Link>
+            <Link href="/coaches" className="ghost link-chip coach-link-chip">
+              コーチ出欠表へ
+            </Link>
           </div>
         </aside>
       </header>

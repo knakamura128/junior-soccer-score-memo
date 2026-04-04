@@ -15,7 +15,7 @@ async function getInitialData() {
   };
 }
 
-export default async function Page() {
+export default async function CoachesPage() {
   const initialData = await getInitialData();
-  return <ScheduleDashboard initialData={initialData} audience="parent" />;
+  return <ScheduleDashboard initialData={initialData} audience="coach" />;
 }

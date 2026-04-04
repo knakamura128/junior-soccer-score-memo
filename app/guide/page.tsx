@@ -14,6 +14,14 @@ export default function GuideIndexPage() {
             </div>
           </div>
         </div>
+        <div className="schedule-hero-actions">
+          <Link href="/" className="ghost link-chip">
+            保護者用へ
+          </Link>
+          <Link href="/coaches" className="ghost link-chip coach-link-chip">
+            コーチ用へ
+          </Link>
+        </div>
       </header>
 
       <div className="summary-grid guide-index-grid">
@@ -32,6 +40,21 @@ export default function GuideIndexPage() {
             </Link>
             <Link href="/guide/schedule?view=bulk-attendance" className="ghost link-chip">
               一括登録例
+            </Link>
+          </div>
+        </section>
+
+        <section className="card audience-switch-card">
+          <div className="section-title">
+            <h2>コーチ用出欠表</h2>
+            <span>保護者用とは別ページ</span>
+          </div>
+          <p className="muted">
+            コーチ陣の出欠は専用ページで管理します。背景色も切り替わるため、保護者用と見分けやすくなっています。
+          </p>
+          <div className="schedule-hero-actions">
+            <Link href="/coaches" className="primary coach-primary">
+              コーチ出欠表を開く
             </Link>
           </div>
         </section>

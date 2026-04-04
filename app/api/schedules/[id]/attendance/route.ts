@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { AttendanceAudience } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { scheduleEntryInclude, serializeScheduleEntry } from "@/lib/schedule-entry";
 import { upsertLineUser } from "@/lib/upsert-line-user";
@@ -13,7 +14,14 @@ const authSchema = authSchemaBase.refine((value) => value.idToken || value.acces
   message: "LINEログインが必要です。"
 });
 
+const deleteSchema = authSchemaBase.extend({
+  audience: z.enum(["parent", "coach"]).default("parent")
+}).refine((value) => value.idToken || value.accessToken, {
+  message: "LINEログインが必要です。"
+});
+
 const bodySchema = authSchemaBase.extend({
+  audience: z.enum(["parent", "coach"]).default("parent"),
   attendance: z.object({
     status: z.enum(["参加", "欠席", "未定"]),
     note: z.string()
@@ -21,6 +29,10 @@ const bodySchema = authSchemaBase.extend({
 }).refine((value) => value.idToken || value.accessToken, {
   message: "LINEログインが必要です。"
 });
+
+function toAttendanceAudience(value: "parent" | "coach") {
+  return value === "coach" ? AttendanceAudience.COACH : AttendanceAudience.PARENT;
+}
 
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
@@ -30,9 +42,10 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
 
     await prisma.attendance.upsert({
       where: {
-        scheduleEntryId_userId: {
+        scheduleEntryId_userId_audience: {
           scheduleEntryId: id,
-          userId: user.id
+          userId: user.id,
+          audience: toAttendanceAudience(parsed.audience)
         }
       },
       update: {
@@ -42,6 +55,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       create: {
         scheduleEntryId: id,
         userId: user.id,
+        audience: toAttendanceAudience(parsed.audience),
         status: parsed.attendance.status,
         note: parsed.attendance.note || null
       }
@@ -62,13 +76,14 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
 export async function DELETE(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await context.params;
-    const parsed = authSchema.parse(await request.json());
+    const parsed = deleteSchema.parse(await request.json());
     const user = await upsertLineUser({ idToken: parsed.idToken, accessToken: parsed.accessToken });
 
     await prisma.attendance.deleteMany({
       where: {
         scheduleEntryId: id,
-        userId: user.id
+        userId: user.id,
+        audience: toAttendanceAudience(parsed.audience)
       }
     });
 

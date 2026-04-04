@@ -18,6 +18,12 @@ import { buildScheduleIcs } from "@/lib/schedule-ics";
 const SCHEDULE_ROW_TAG_ORDER = ["キッズ", "1年", "2年", "3年", "4年", "5年", "6年"] as const;
 const SCHEDULE_BADGE_ORDER = ["低学年", "中学年", "高学年", "キッズ", "1年", "2年", "3年", "4年", "5年", "6年"] as const;
 const CARPOOL_CHOICES = ["配車希望", "現地集合", "自家用車同乗可"] as const;
+const ATTENDANCE_AUDIENCES = {
+  parent: "PARENT",
+  coach: "COACH"
+} as const;
+
+type AttendanceAudienceMode = keyof typeof ATTENDANCE_AUDIENCES;
 
 type AuthState = {
   status: "loading" | "ready" | "error";
@@ -39,6 +45,7 @@ type UserLite = {
 type AttendanceRow = {
   id: string;
   userId: string;
+  audience: (typeof ATTENDANCE_AUDIENCES)[AttendanceAudienceMode];
   status: string;
   note: string | null;
   updatedAt: string;
@@ -88,11 +95,21 @@ type ScheduleDashboardProps = {
   initialData: {
     schedules: ScheduleRow[];
   };
+  audience?: AttendanceAudienceMode;
 };
 
 type ModalTab = "attendance-input" | "attendance-list" | "duty" | "carpool";
 
-export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
+export function ScheduleDashboard({ initialData, audience = "parent" }: ScheduleDashboardProps) {
+  const isCoachPage = audience === "coach";
+  const audienceLabel = isCoachPage ? "コーチ" : "保護者";
+  const pageTitle = isCoachPage ? "FC KUMANO コーチ出欠表" : "FC KUMANO 保護者出欠表";
+  const pageCopy = isCoachPage
+    ? "コーチ陣の参加可否をまとめて確認し、当日の運営体制を揃えるための出欠ページです。"
+    : "月間予定、出欠、当番、試合日のスコア連携をトップで扱います。";
+  const authMeta = isCoachPage ? "コーチ用の出欠入力者として記録されます" : "出欠入力と修正者として記録されます";
+  const alternateHref = isCoachPage ? "/" : "/coaches";
+  const alternateLabel = isCoachPage ? "保護者用へ" : "コーチ用へ";
   const [schedules, setSchedules] = useState(initialData.schedules);
   const [selectedMonth, setSelectedMonth] = useState(getCurrentTokyoMonth());
   const [filterTag, setFilterTag] = useState("すべて");
@@ -171,10 +188,10 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
   const modalEntry = schedules.find((entry) => entry.id === modalEntryId) || null;
   const currentAttendance =
     modalEntry && auth.lineUserId
-      ? modalEntry.attendances.find((attendance) => attendance.user.lineUserId === auth.lineUserId) || null
+      ? filterAttendancesByAudience(modalEntry.attendances, audience).find((attendance) => attendance.user.lineUserId === auth.lineUserId) || null
       : null;
-  const participatingUsers = modalEntry
-    ? modalEntry.attendances.filter((attendance) => attendance.status === "参加")
+  const participatingUsers = modalEntry && !isCoachPage
+    ? filterAttendancesByAudience(modalEntry.attendances, "parent").filter((attendance) => attendance.status === "参加")
     : [];
   const currentCarpoolPreference =
     modalEntry && auth.lineUserId
@@ -438,6 +455,7 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...authPayload,
+          audience,
           attendance: { status: attendanceStatus, note: attendanceNote }
         })
       });
@@ -470,7 +488,7 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
       const response = await fetch(`/api/schedules/${modalEntry.id}/attendance`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(authPayload)
+        body: JSON.stringify({ ...authPayload, audience })
       });
       if (!response.ok) {
         if (response.status === 400) {
@@ -619,6 +637,7 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             ...authPayload,
+            audience,
             attendance: { status: bulkAttendanceStatus, note: bulkAttendanceNote }
           })
         });
@@ -739,15 +758,15 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
   }
 
   return (
-    <div className="app-shell schedule-shell">
-      <header className="hero schedule-hero">
+    <div className={`app-shell schedule-shell ${isCoachPage ? "schedule-shell-coach" : "schedule-shell-parent"}`}>
+      <header className={`hero schedule-hero ${isCoachPage ? "schedule-hero-coach" : ""}`}>
         <div>
           <p className="eyebrow">LINE Mini App</p>
           <div className="brand-lockup">
             <img src="/fc-kumano-logo.png" alt="FC KUMANO logo" className="brand-logo" />
             <div>
-              <h1>FC KUMANO スケジュール管理</h1>
-              <p className="hero-copy">月間予定、出欠、当番、試合日のスコア連携をトップで扱います。</p>
+              <h1>{pageTitle}</h1>
+              <p className="hero-copy">{pageCopy}</p>
             </div>
           </div>
         </div>
@@ -757,7 +776,7 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
               <img src={auth.pictureUrl} alt={auth.displayName} />
               <div>
                 <strong>{auth.displayName}</strong>
-                <div className="auth-meta">出欠入力と修正者として記録されます</div>
+                <div className="auth-meta">{authMeta}</div>
               </div>
             </div>
           ) : (
@@ -779,6 +798,9 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
             <Link href="/guide" className="ghost link-chip">
               使い方ガイド
             </Link>
+            <Link href={alternateHref} className={`ghost link-chip ${isCoachPage ? "coach-link-chip" : ""}`}>
+              {alternateLabel}
+            </Link>
             <Link href="/score" className="ghost link-chip">
               スコア管理へ
             </Link>
@@ -788,20 +810,37 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
 
       {feedback ? <p className={feedback.includes("失敗") ? "error" : "muted"}>{feedback}</p> : null}
 
-      <section className="card schedule-card">
+      {!isCoachPage ? (
+        <section className="card audience-switch-card">
+          <div>
+            <p className="eyebrow">Coach Attendance</p>
+            <h2>コーチ用の出欠表はこちら</h2>
+            <p className="muted">
+              コーチ陣の参加可否は保護者用と別管理です。運営確認用ページへ直接移動できます。
+            </p>
+          </div>
+          <div className="action-row">
+            <Link href="/coaches" className="primary coach-primary">
+              コーチ出欠表を開く
+            </Link>
+          </div>
+        </section>
+      ) : null}
+
+      <section className={`card schedule-card ${isCoachPage ? "schedule-card-coach" : ""}`}>
         <div className="section-title schedule-title">
           <div>
-            <h2>月間スケジュール</h2>
+            <h2>{isCoachPage ? "コーチ出欠スケジュール" : "月間スケジュール"}</h2>
             <span>
-              当番調整あり {totalDutyPending}件 / 最新更新{" "}
+              {isCoachPage ? `コーチ出欠対象 ${visibleSchedules.length}件` : `当番調整あり ${totalDutyPending}件`} / 最新更新{" "}
               {latestUpdated ? new Date(latestUpdated).toLocaleDateString("ja-JP") : "-"}
             </span>
           </div>
           <div className="action-row">
-            <button className="ghost dark-ghost" type="button" onClick={openBulkAttendance}>
-              出欠一括登録
+            <button className={`ghost dark-ghost ${isCoachPage ? "coach-ghost" : ""}`} type="button" onClick={openBulkAttendance}>
+              {audienceLabel}出欠を一括登録
             </button>
-            <button className="primary" type="button" onClick={openNewEditor}>
+            <button className={`primary ${isCoachPage ? "coach-primary" : ""}`} type="button" onClick={openNewEditor}>
               予定を追加
             </button>
           </div>
@@ -843,7 +882,7 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
             </div>
           </div>
           <label>
-            学年
+            {isCoachPage ? "担当学年" : "学年"}
             <select value={filterTag} onChange={(event) => setFilterTag(event.target.value)}>
               <option value="すべて">すべて</option>
               {SCHEDULE_TAG_OPTIONS.map((tag) => (
@@ -864,22 +903,22 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
                 <th>時間</th>
                 <th>場所</th>
                 <th>内容</th>
-                <th>当番</th>
-                <th>出欠</th>
-                {!compactView ? <th>修正</th> : null}
+                {!isCoachPage ? <th>当番</th> : null}
+                <th>{audienceLabel}出欠</th>
+                {!compactView ? <th>{isCoachPage ? "更新" : "修正"}</th> : null}
                 {!compactView ? <th>操作</th> : null}
               </tr>
             </thead>
             <tbody>
               {visibleSchedules.length === 0 ? (
                 <tr>
-                  <td colSpan={compactView ? 7 : 9} className="empty-state schedule-empty">
+                  <td colSpan={compactView ? (isCoachPage ? 6 : 7) : (isCoachPage ? 8 : 9)} className="empty-state schedule-empty">
                     この月の予定はまだありません。
                   </td>
                 </tr>
               ) : (
                 visibleSchedules.map((entry) => {
-                  const counts = summarizeAttendance(entry.attendances);
+                  const counts = summarizeAttendance(filterAttendancesByAudience(entry.attendances, audience));
                   const assignedName = entry.dutyAssignment?.assignedUser?.displayName || entry.dutyLabel || "未定";
                   return (
                     <tr key={entry.id} className={entry.isMatch ? "schedule-is-match" : ""}>
@@ -899,9 +938,11 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
                         <div>{entry.content}</div>
                         {entry.note ? <div className="muted">{entry.note}</div> : null}
                       </td>
-                      <td>
-                        <div>{assignedName}</div>
-                      </td>
+                      {!isCoachPage ? (
+                        <td>
+                          <div>{assignedName}</div>
+                        </td>
+                      ) : null}
                       <td>
                         <div className="badge-row">
                           <span className="badge result-win">参 {counts.present}</span>
@@ -924,14 +965,16 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
                             <button className="text-button" type="button" onClick={() => openModal(entry.id, "attendance-list")}>
                               一覧
                             </button>
-                            {!shouldHideCarpool(entry.location) ? (
+                            {!isCoachPage && !shouldHideCarpool(entry.location) ? (
                               <button className="text-button" type="button" onClick={() => openModal(entry.id, "carpool")}>
                                 配車
                               </button>
                             ) : null}
-                            <button className="text-button" type="button" onClick={() => openModal(entry.id, "duty")}>
-                              当番
-                            </button>
+                            {!isCoachPage ? (
+                              <button className="text-button" type="button" onClick={() => openModal(entry.id, "duty")}>
+                                当番
+                              </button>
+                            ) : null}
                             <button className="text-button" type="button" onClick={() => openEditEditor(entry)}>
                               修正
                             </button>
@@ -1000,19 +1043,21 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
 
             <div className="modal-tabs schedule-modal-tabs">
               <button className={`tab ${modalTab === "attendance-input" ? "is-active" : ""}`} type="button" onClick={() => setModalTab("attendance-input")}>
-                出欠入力
+                {audienceLabel}出欠入力
               </button>
               <button className={`tab ${modalTab === "attendance-list" ? "is-active" : ""}`} type="button" onClick={() => setModalTab("attendance-list")}>
-                出欠一覧
+                {audienceLabel}出欠一覧
               </button>
-              {!shouldHideCarpool(modalEntry.location) ? (
+              {!isCoachPage && !shouldHideCarpool(modalEntry.location) ? (
                 <button className={`tab ${modalTab === "carpool" ? "is-active" : ""}`} type="button" onClick={() => setModalTab("carpool")}>
                   配車管理
                 </button>
               ) : null}
-              <button className={`tab ${modalTab === "duty" ? "is-active" : ""}`} type="button" onClick={() => setModalTab("duty")}>
-                当番管理
-              </button>
+              {!isCoachPage ? (
+                <button className={`tab ${modalTab === "duty" ? "is-active" : ""}`} type="button" onClick={() => setModalTab("duty")}>
+                  当番管理
+                </button>
+              ) : null}
             </div>
 
             {auth.error ? <p className="error">{auth.error}</p> : null}
@@ -1037,11 +1082,11 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
                 </label>
                 <div className="stack-actions">
                   <button className="primary" type="button" onClick={() => void saveAttendance()}>
-                    出欠を保存
+                    {audienceLabel}出欠を保存
                   </button>
                   {currentAttendance ? (
                     <button className="dark-ghost" type="button" onClick={() => void clearAttendance()}>
-                      出欠を取り消す
+                      {audienceLabel}出欠を取り消す
                     </button>
                   ) : null}
                 </div>
@@ -1053,15 +1098,15 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
                 <div className="summary-grid schedule-summary-grid">
                   <div className="summary-card">
                     <h3>参加</h3>
-                    <strong>{summarizeAttendance(modalEntry.attendances).present}</strong>
+                    <strong>{summarizeAttendance(filterAttendancesByAudience(modalEntry.attendances, audience)).present}</strong>
                   </div>
                   <div className="summary-card">
                     <h3>欠席</h3>
-                    <strong>{summarizeAttendance(modalEntry.attendances).absent}</strong>
+                    <strong>{summarizeAttendance(filterAttendancesByAudience(modalEntry.attendances, audience)).absent}</strong>
                   </div>
                   <div className="summary-card">
                     <h3>未定</h3>
-                    <strong>{summarizeAttendance(modalEntry.attendances).pending}</strong>
+                    <strong>{summarizeAttendance(filterAttendancesByAudience(modalEntry.attendances, audience)).pending}</strong>
                   </div>
                 </div>
                 <div className="table-wrap">
@@ -1069,20 +1114,20 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
                     <thead>
                       <tr>
                         <th>入力者</th>
-                        <th>出欠</th>
+                        <th>{audienceLabel}出欠</th>
                         <th>備考</th>
                         <th>更新</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {modalEntry.attendances.length === 0 ? (
+                      {filterAttendancesByAudience(modalEntry.attendances, audience).length === 0 ? (
                         <tr>
                           <td colSpan={4} className="empty-state schedule-empty">
-                            まだ出欠入力はありません。
+                            まだ{audienceLabel}出欠の入力はありません。
                           </td>
                         </tr>
                       ) : (
-                        modalEntry.attendances.map((attendance) => (
+                        filterAttendancesByAudience(modalEntry.attendances, audience).map((attendance) => (
                           <tr key={attendance.id}>
                             <td>{attendance.user.displayName}</td>
                             <td>
@@ -1099,7 +1144,7 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
               </div>
             ) : null}
 
-            {modalTab === "duty" ? (
+            {!isCoachPage && modalTab === "duty" ? (
               <div className="modal-section">
                 <label>
                   参加者から当番を選択
@@ -1134,7 +1179,7 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
               </div>
             ) : null}
 
-            {modalTab === "carpool" ? (
+            {!isCoachPage && modalTab === "carpool" ? (
               <div className="modal-section">
                 <div className="attendance-choice-row">
                   {CARPOOL_CHOICES.map((choice) => (
@@ -1300,7 +1345,7 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
               <div>
                 <h2>出欠一括登録</h2>
                 <p>
-                  現在の表示月・学年から、日付と対象タグを選んでまとめて登録します。
+                  現在の表示月・{isCoachPage ? "担当学年" : "学年"}から、日付と対象タグを選んで{audienceLabel}出欠をまとめて登録します。
                 </p>
               </div>
               <button className="ghost modal-close" type="button" onClick={closeBulkAttendance}>
@@ -1354,7 +1399,7 @@ export function ScheduleDashboard({ initialData }: ScheduleDashboardProps) {
               <p className="muted">対象件数: {bulkAttendanceTargets.length}件</p>
               <div className="stack-actions">
                 <button className="primary" type="button" onClick={() => void saveBulkAttendance()}>
-                  一括保存
+                  {audienceLabel}出欠を一括保存
                 </button>
               </div>
             </div>
@@ -1456,6 +1501,10 @@ function summarizeAttendance(attendances: AttendanceRow[]) {
     },
     { present: 0, absent: 0, pending: 0 }
   );
+}
+
+function filterAttendancesByAudience(attendances: AttendanceRow[], audience: AttendanceAudienceMode) {
+  return attendances.filter((attendance) => attendance.audience === ATTENDANCE_AUDIENCES[audience]);
 }
 
 function tagClassName(tag: string) {

@@ -7,6 +7,11 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum AttendanceAudience {
+  PARENT
+  COACH
+}
+
 model User {
   id          String      @id @default(cuid())
   lineUserId  String      @unique
@@ -94,6 +99,7 @@ model Attendance {
   id              String        @id @default(cuid())
   scheduleEntryId String
   userId          String
+  audience        AttendanceAudience @default(PARENT)
   status          String
   note            String?
   createdAt       DateTime      @default(now())
@@ -101,7 +107,7 @@ model Attendance {
   scheduleEntry   ScheduleEntry @relation(fields: [scheduleEntryId], references: [id], onDelete: Cascade)
   user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([scheduleEntryId, userId])
+  @@unique([scheduleEntryId, userId, audience])
 }
 
 model DutyAssignment {
