@@ -779,10 +779,10 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
     if (filterTag !== "すべて") {
       query.set("tag", filterTag);
     }
-    const exportPath = `/calendar-export?${query.toString()}`;
     const externalQuery = new URLSearchParams(query);
     externalQuery.set("openExternalBrowser", "1");
-    const externalExportUrl = `${window.location.origin}/calendar-export?${externalQuery.toString()}`;
+    const externalExportPath = `/calendar-export?${externalQuery.toString()}`;
+    const externalExportUrl = `${window.location.origin}${externalExportPath}`;
 
     if (auth.isInClient) {
       const link = document.createElement("a");
@@ -794,7 +794,7 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
       return;
     }
 
-    window.location.href = exportPath;
+    window.location.href = externalExportPath;
   }
 
   return (
