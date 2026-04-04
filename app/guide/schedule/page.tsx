@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 type GuideSchedulePageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
@@ -67,16 +69,17 @@ export default async function GuideSchedulePage({ searchParams }: GuideScheduleP
   const params = searchParams ? await searchParams : {};
   const view = typeof params.view === "string" ? params.view : "top";
   const device = typeof params.device === "string" ? params.device : "mobile";
+  const closeHref = `/guide/schedule?view=top&device=${device}`;
 
   return (
     <div className={`app-shell schedule-shell guide-shell guide-device-${device}`}>
       {view === "top" ? <ScheduleTopScene /> : null}
-      {view === "attendance-input" ? <AttendanceInputScene /> : null}
-      {view === "attendance-list" ? <AttendanceListScene /> : null}
-      {view === "bulk-attendance" ? <BulkAttendanceScene /> : null}
-      {view === "carpool" ? <CarpoolScene /> : null}
-      {view === "duty" ? <DutyScene /> : null}
-      {view === "edit" ? <EditScene /> : null}
+      {view === "attendance-input" ? <AttendanceInputScene closeHref={closeHref} /> : null}
+      {view === "attendance-list" ? <AttendanceListScene closeHref={closeHref} /> : null}
+      {view === "bulk-attendance" ? <BulkAttendanceScene closeHref={closeHref} /> : null}
+      {view === "carpool" ? <CarpoolScene closeHref={closeHref} /> : null}
+      {view === "duty" ? <DutyScene closeHref={closeHref} /> : null}
+      {view === "edit" ? <EditScene closeHref={closeHref} /> : null}
     </div>
   );
 }
@@ -202,7 +205,7 @@ function ScheduleTopScene() {
   );
 }
 
-function AttendanceInputScene() {
+function AttendanceInputScene({ closeHref }: { closeHref: string }) {
   return (
     <div className="modal-backdrop guide-modal-backdrop">
       <div className="modal-card schedule-modal guide-annotated" role="dialog" aria-modal="true">
@@ -211,9 +214,9 @@ function AttendanceInputScene() {
             <h2>出欠を入力</h2>
             <span>2026/3/21 四ツ木橋競技場 / TOHON CUP卒業大会</span>
           </div>
-          <button className="ghost modal-close" type="button">
+          <Link href={closeHref} className="ghost modal-close">
             閉じる
-          </button>
+          </Link>
         </div>
         <div className="schedule-modal-tabs tab-bar">
           <button className="tab is-active" type="button">
@@ -258,7 +261,7 @@ function AttendanceInputScene() {
   );
 }
 
-function BulkAttendanceScene() {
+function BulkAttendanceScene({ closeHref }: { closeHref: string }) {
   return (
     <div className="modal-backdrop guide-modal-backdrop">
       <div className="modal-card schedule-modal guide-annotated" role="dialog" aria-modal="true">
@@ -267,9 +270,9 @@ function BulkAttendanceScene() {
             <h2>出欠一括登録</h2>
             <span>表示中の月と学年から、さらに日付と対象タグを絞って一括登録します。</span>
           </div>
-          <button className="ghost modal-close" type="button">
+          <Link href={closeHref} className="ghost modal-close">
             閉じる
-          </button>
+          </Link>
         </div>
         <div className="modal-section">
           <div className="bulk-filter-grid">
@@ -338,7 +341,7 @@ function BulkAttendanceScene() {
   );
 }
 
-function CarpoolScene() {
+function CarpoolScene({ closeHref }: { closeHref: string }) {
   return (
     <div className="modal-backdrop guide-modal-backdrop">
       <div className="modal-card schedule-modal guide-annotated" role="dialog" aria-modal="true">
@@ -347,9 +350,9 @@ function CarpoolScene() {
             <h2>配車管理</h2>
             <span>2026/3/21 四ツ木橋競技場 / TOHON CUP卒業大会</span>
           </div>
-          <button className="ghost modal-close" type="button">
+          <Link href={closeHref} className="ghost modal-close">
             閉じる
-          </button>
+          </Link>
         </div>
         <div className="schedule-modal-tabs tab-bar">
           <button className="tab" type="button">
@@ -402,7 +405,7 @@ function CarpoolScene() {
   );
 }
 
-function AttendanceListScene() {
+function AttendanceListScene({ closeHref }: { closeHref: string }) {
   return (
     <div className="modal-backdrop guide-modal-backdrop">
       <div className="modal-card schedule-modal guide-annotated" role="dialog" aria-modal="true">
@@ -411,9 +414,9 @@ function AttendanceListScene() {
             <h2>出欠一覧</h2>
             <span>2026/3/21 四ツ木橋競技場 / TOHON CUP卒業大会</span>
           </div>
-          <button className="ghost modal-close" type="button">
+          <Link href={closeHref} className="ghost modal-close">
             閉じる
-          </button>
+          </Link>
         </div>
         <div className="schedule-modal-tabs tab-bar">
           <button className="tab" type="button">
@@ -481,7 +484,7 @@ function AttendanceListScene() {
   );
 }
 
-function DutyScene() {
+function DutyScene({ closeHref }: { closeHref: string }) {
   return (
     <div className="modal-backdrop guide-modal-backdrop">
       <div className="modal-card schedule-modal guide-annotated" role="dialog" aria-modal="true">
@@ -490,9 +493,9 @@ function DutyScene() {
             <h2>当番管理</h2>
             <span>2026/3/21 四ツ木橋競技場 / TOHON CUP卒業大会</span>
           </div>
-          <button className="ghost modal-close" type="button">
+          <Link href={closeHref} className="ghost modal-close">
             閉じる
-          </button>
+          </Link>
         </div>
         <div className="schedule-modal-tabs tab-bar">
           <button className="tab" type="button">
@@ -545,7 +548,7 @@ function DutyScene() {
   );
 }
 
-function EditScene() {
+function EditScene({ closeHref }: { closeHref: string }) {
   return (
     <div className="modal-backdrop guide-modal-backdrop">
       <div className="modal-card schedule-modal editor-modal guide-annotated" role="dialog" aria-modal="true">
@@ -554,9 +557,9 @@ function EditScene() {
             <h2>予定を修正</h2>
             <span>修正者はLINEログイン名で記録されます。</span>
           </div>
-          <button className="ghost modal-close" type="button">
+          <Link href={closeHref} className="ghost modal-close">
             閉じる
-          </button>
+          </Link>
         </div>
         <div className="form-grid schedule-form-grid">
           <label>
