@@ -428,7 +428,7 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
       const response = await fetch(editingId ? `/api/schedules/${editingId}` : "/api/schedules", {
         method: editingId ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...authPayload, schedule: scheduleForm })
+        body: JSON.stringify({ ...authPayload, schedule: scheduleForm, markAsNew: !editingId })
       });
       if (!response.ok) {
         const detail = await response.text();

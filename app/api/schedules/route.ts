@@ -20,6 +20,7 @@ const schedulePayloadSchema = z.object({
 const createSchema = z.object({
   idToken: z.string().optional(),
   accessToken: z.string().optional(),
+  markAsNew: z.boolean().optional(),
   schedule: schedulePayloadSchema
 }).refine((value) => value.idToken || value.accessToken, {
   message: "LINEログインが必要です。"
@@ -43,7 +44,9 @@ export async function POST(request: Request) {
       data: {
         eventDate: new Date(`${parsed.schedule.eventDate}T00:00:00+09:00`),
         tags: parsed.schedule.tags,
-        editedFields: [],
+        editedFields: parsed.markAsNew
+          ? ["eventDate", "tags", "startTime", "endTime", "location", "content", "dutyLabel", "isMatch", "note"]
+          : [],
         startTime: parsed.schedule.startTime,
         endTime: parsed.schedule.endTime,
         location: parsed.schedule.location,
