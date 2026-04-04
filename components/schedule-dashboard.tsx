@@ -75,6 +75,7 @@ type ScheduleRow = {
   id: string;
   eventDate: string;
   tags: string[];
+  editedFields: string[];
   startTime: string;
   endTime: string;
   location: string;
@@ -945,6 +946,7 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
                   const assignedName = entry.dutyAssignment?.assignedUser?.displayName || entry.dutyLabel || "未定";
                   const previousEntry = visibleSchedules[index - 1];
                   const isDateGroupStart = !previousEntry || previousEntry.eventDate !== entry.eventDate;
+                  const editedFields = new Set(entry.editedFields || []);
                   return (
                     <tr
                       key={entry.id}
@@ -955,8 +957,8 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
                         .filter(Boolean)
                         .join(" ")}
                     >
-                      <td>{renderScheduleDate(entry.eventDate)}</td>
-                      <td>
+                      <td className={editedFields.has("eventDate") ? "edited-cell" : ""}>{renderScheduleDate(entry.eventDate)}</td>
+                      <td className={editedFields.has("tags") ? "edited-cell" : ""}>
                         <div className="badge-row">
                           {sortTagsForDisplay(entry.tags).map((tag) => (
                             <span key={tag} className={`badge ${tagClassName(tag)}`}>
@@ -965,14 +967,16 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
                           ))}
                         </div>
                       </td>
-                      <td>{renderScheduleTime(entry.startTime, entry.endTime)}</td>
-                      <td>{entry.location}</td>
-                      <td>
+                      <td className={editedFields.has("startTime") || editedFields.has("endTime") ? "edited-cell" : ""}>
+                        {renderScheduleTime(entry.startTime, entry.endTime)}
+                      </td>
+                      <td className={editedFields.has("location") ? "edited-cell" : ""}>{entry.location}</td>
+                      <td className={editedFields.has("content") || editedFields.has("note") || editedFields.has("isMatch") ? "edited-cell" : ""}>
                         <div>{entry.content}</div>
                         {entry.note ? <div className="muted">{entry.note}</div> : null}
                       </td>
                       {!isCoachPage ? (
-                        <td>
+                        <td className={editedFields.has("dutyLabel") ? "edited-cell" : ""}>
                           <div>{assignedName}</div>
                         </td>
                       ) : null}

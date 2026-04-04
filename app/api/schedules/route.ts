@@ -43,6 +43,7 @@ export async function POST(request: Request) {
       data: {
         eventDate: new Date(`${parsed.schedule.eventDate}T00:00:00+09:00`),
         tags: parsed.schedule.tags,
+        editedFields: [],
         startTime: parsed.schedule.startTime,
         endTime: parsed.schedule.endTime,
         location: parsed.schedule.location,

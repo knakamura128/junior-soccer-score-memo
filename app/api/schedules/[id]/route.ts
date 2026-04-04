@@ -4,6 +4,7 @@ import { scheduleEntryInclude, serializeScheduleEntry } from "@/lib/schedule-ent
 import { upsertLineUser } from "@/lib/upsert-line-user";
 import { verifyLineSession } from "@/lib/line-auth";
 import { buildApiErrorResponse } from "@/lib/api-error";
+import { serializeScheduleDate } from "@/lib/schedule-format";
 import { z } from "zod";
 
 const schedulePayloadSchema = z.object({
@@ -38,12 +39,17 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
     const { id } = await context.params;
     const parsed = updateSchema.parse(await request.json());
     const user = await upsertLineUser({ idToken: parsed.idToken, accessToken: parsed.accessToken });
+    const existing = await prisma.scheduleEntry.findUniqueOrThrow({
+      where: { id }
+    });
+    const nextEditedFields = collectEditedFields(existing, parsed.schedule);
 
     const updated = await prisma.scheduleEntry.update({
       where: { id },
       data: {
         eventDate: new Date(`${parsed.schedule.eventDate}T00:00:00+09:00`),
         tags: parsed.schedule.tags,
+        editedFields: nextEditedFields,
         startTime: parsed.schedule.startTime,
         endTime: parsed.schedule.endTime,
         location: parsed.schedule.location,
@@ -60,6 +66,56 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
   } catch (error) {
     return buildApiErrorResponse(error, "スケジュール更新に失敗しました。");
   }
+}
+
+function collectEditedFields(
+  existing: {
+    eventDate: Date;
+    tags: string[];
+    startTime: string;
+    endTime: string;
+    location: string;
+    content: string;
+    dutyLabel: string | null;
+    isMatch: boolean;
+    note: string | null;
+  },
+  next: {
+    eventDate: string;
+    tags: string[];
+    startTime: string;
+    endTime: string;
+    location: string;
+    content: string;
+    dutyLabel: string;
+    isMatch: boolean;
+    note: string;
+  }
+) {
+  const editedFields: string[] = [];
+  const existingDate = serializeScheduleDate(existing.eventDate);
+
+  if (existingDate !== next.eventDate) editedFields.push("eventDate");
+  if (!sameStringArray(existing.tags, next.tags)) editedFields.push("tags");
+  if (existing.startTime !== next.startTime) editedFields.push("startTime");
+  if (existing.endTime !== next.endTime) editedFields.push("endTime");
+  if (existing.location !== next.location) editedFields.push("location");
+  if (existing.content !== next.content) editedFields.push("content");
+  if ((existing.dutyLabel || "") !== next.dutyLabel) editedFields.push("dutyLabel");
+  if (existing.isMatch !== next.isMatch) editedFields.push("isMatch");
+  if ((existing.note || "") !== next.note) editedFields.push("note");
+
+  return editedFields;
+}
+
+function sameStringArray(left: string[], right: string[]) {
+  if (left.length !== right.length) {
+    return false;
+  }
+
+  const sortedLeft = [...left].sort();
+  const sortedRight = [...right].sort();
+  return sortedLeft.every((value, index) => value === sortedRight[index]);
 }
 
 export async function DELETE(request: Request, context: { params: Promise<{ id: string }> }) {

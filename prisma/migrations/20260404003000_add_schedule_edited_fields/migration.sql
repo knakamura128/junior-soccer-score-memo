@@ -1,0 +1,2 @@
+ALTER TABLE "ScheduleEntry"
+ADD COLUMN "editedFields" TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[];

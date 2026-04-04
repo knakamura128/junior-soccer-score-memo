@@ -351,6 +351,13 @@ input[type="month"] { min-width: 0; }
 .schedule-results-table tr.schedule-date-group-continue td {
   border-top: 1px solid rgba(88, 104, 88, 0.08);
 }
+.schedule-results-table td.edited-cell {
+  color: #a33f2a;
+  background: rgba(201, 88, 50, 0.09);
+}
+.schedule-results-table td.edited-cell .muted {
+  color: #8b4a3b;
+}
 .schedule-results-table td:nth-child(5),
 .schedule-results-table td:nth-child(6),
 .schedule-results-table td:nth-child(8) { white-space: normal; }
