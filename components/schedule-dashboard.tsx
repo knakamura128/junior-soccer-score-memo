@@ -105,7 +105,7 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
   const audienceLabel = isCoachPage ? "コーチ" : "保護者";
   const pageTitle = isCoachPage ? "FC KUMANO コーチ出欠表" : "FC KUMANO 保護者出欠表";
   const pageCopy = isCoachPage
-    ? "コーチ陣の参加可否をまとめて確認し、当日の運営体制を揃えるための出欠ページです。"
+    ? "月間予定の中でコーチ陣の出欠を確認します。保護者用とは別管理です。"
     : "月間予定、出欠、当番、試合日のスコア連携をトップで扱います。";
   const authMeta = isCoachPage ? "コーチ用の出欠入力者として記録されます" : "出欠入力と修正者として記録されます";
   const alternateHref = isCoachPage ? "/" : "/coaches";
@@ -758,8 +758,8 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
   }
 
   return (
-    <div className={`app-shell schedule-shell ${isCoachPage ? "schedule-shell-coach" : "schedule-shell-parent"}`}>
-      <header className={`hero schedule-hero ${isCoachPage ? "schedule-hero-coach" : ""}`}>
+    <div className="app-shell schedule-shell">
+      <header className="hero schedule-hero">
         <div>
           <p className="eyebrow">LINE Mini App</p>
           <div className="brand-lockup">
@@ -810,24 +810,7 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
 
       {feedback ? <p className={feedback.includes("失敗") ? "error" : "muted"}>{feedback}</p> : null}
 
-      {!isCoachPage ? (
-        <section className="card audience-switch-card">
-          <div>
-            <p className="eyebrow">Coach Attendance</p>
-            <h2>コーチ用の出欠表はこちら</h2>
-            <p className="muted">
-              コーチ陣の参加可否は保護者用と別管理です。運営確認用ページへ直接移動できます。
-            </p>
-          </div>
-          <div className="action-row">
-            <Link href="/coaches" className="primary coach-primary">
-              コーチ出欠表を開く
-            </Link>
-          </div>
-        </section>
-      ) : null}
-
-      <section className={`card schedule-card ${isCoachPage ? "schedule-card-coach" : ""}`}>
+      <section className="card schedule-card">
         <div className="section-title schedule-title">
           <div>
             <h2>{isCoachPage ? "コーチ出欠スケジュール" : "月間スケジュール"}</h2>
@@ -837,10 +820,10 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
             </span>
           </div>
           <div className="action-row">
-            <button className={`ghost dark-ghost ${isCoachPage ? "coach-ghost" : ""}`} type="button" onClick={openBulkAttendance}>
+            <button className="ghost dark-ghost" type="button" onClick={openBulkAttendance}>
               {audienceLabel}出欠を一括登録
             </button>
-            <button className={`primary ${isCoachPage ? "coach-primary" : ""}`} type="button" onClick={openNewEditor}>
+            <button className="primary" type="button" onClick={openNewEditor}>
               予定を追加
             </button>
           </div>
@@ -905,14 +888,13 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
                 <th>内容</th>
                 {!isCoachPage ? <th>当番</th> : null}
                 <th>{audienceLabel}出欠</th>
-                {!compactView ? <th>{isCoachPage ? "更新" : "修正"}</th> : null}
                 {!compactView ? <th>操作</th> : null}
               </tr>
             </thead>
             <tbody>
               {visibleSchedules.length === 0 ? (
                 <tr>
-                  <td colSpan={compactView ? (isCoachPage ? 6 : 7) : (isCoachPage ? 8 : 9)} className="empty-state schedule-empty">
+                  <td colSpan={compactView ? (isCoachPage ? 6 : 7) : (isCoachPage ? 7 : 9)} className="empty-state schedule-empty">
                     この月の予定はまだありません。
                   </td>
                 </tr>
@@ -950,7 +932,7 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
                           <span className="badge result-draw">未 {counts.pending}</span>
                         </div>
                       </td>
-                      {!compactView ? (
+                      {!compactView && !isCoachPage ? (
                         <td>
                           <div>{entry.updatedBy?.displayName || "-"}</div>
                           <div className="muted">{formatDateTimeCell(entry.updatedAt)}</div>
@@ -981,7 +963,7 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
                             <button className="text-button danger" type="button" onClick={() => void deleteSchedule(entry.id)}>
                               削除
                             </button>
-                            {entry.isMatch ? (
+                            {!isCoachPage && entry.isMatch ? (
                               <Link href={buildScoreHref(entry)} className="text-button score-link-inline">
                                 スコア管理
                               </Link>

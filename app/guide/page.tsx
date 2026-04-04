@@ -44,21 +44,6 @@ export default function GuideIndexPage() {
           </div>
         </section>
 
-        <section className="card audience-switch-card">
-          <div className="section-title">
-            <h2>コーチ用出欠表</h2>
-            <span>保護者用とは別ページ</span>
-          </div>
-          <p className="muted">
-            コーチ陣の出欠は専用ページで管理します。背景色も切り替わるため、保護者用と見分けやすくなっています。
-          </p>
-          <div className="schedule-hero-actions">
-            <Link href="/coaches" className="primary coach-primary">
-              コーチ出欠表を開く
-            </Link>
-          </div>
-        </section>
-
         <section className="card">
           <div className="section-title">
             <h2>スコア管理</h2>

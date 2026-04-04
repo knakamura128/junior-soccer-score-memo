@@ -122,54 +122,13 @@ input[type="month"] { min-width: 0; }
   border: 1px solid rgba(17,72,47,.12);
 }
 .schedule-shell { padding-bottom: 48px; }
-.schedule-shell-coach {
-  background:
-    radial-gradient(circle at top right, rgba(32, 86, 158, 0.16), transparent 34%),
-    linear-gradient(180deg, #eef6ff 0%, #f8fbff 28%, #f5f7fb 100%);
-}
 .schedule-hero { padding-bottom: 14px; }
-.schedule-hero-coach {
-  background: linear-gradient(135deg, rgba(25, 78, 145, 0.94), rgba(43, 118, 179, 0.88));
-  color: #f8fbff;
-  border-color: rgba(27, 71, 122, 0.28);
-}
-.schedule-hero-coach .eyebrow,
-.schedule-hero-coach .hero-copy,
-.schedule-hero-coach .auth-meta,
-.schedule-hero-coach .muted {
-  color: rgba(248, 251, 255, 0.82);
-}
-.schedule-hero-coach .brand-logo {
-  background: rgba(255, 255, 255, 0.14);
-  border-radius: 18px;
-  padding: 6px;
-}
 .schedule-hero-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
 .schedule-card { padding-top: 16px; }
-.audience-switch-card {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 16px;
-  background: linear-gradient(135deg, rgba(243, 248, 255, 0.98), rgba(231, 241, 255, 0.92));
-  border-color: rgba(46, 104, 171, 0.16);
-}
-.schedule-card-coach {
-  background: rgba(255, 255, 255, 0.9);
-  border-color: rgba(46, 104, 171, 0.14);
-}
 .schedule-title { align-items: center; }
 .schedule-title .primary {
   background: #d96d2f;
   color: #fff;
-}
-.coach-primary {
-  background: linear-gradient(135deg, #1d5ea6, #2f82ca) !important;
-}
-.coach-ghost {
-  border-color: rgba(29, 94, 166, 0.16);
-  color: #1d5ea6;
 }
 .coach-link-chip {
   background: rgba(23, 91, 161, 0.1);
@@ -812,11 +771,6 @@ button:active { transform: translateY(0); }
 
   .guide-index-grid {
     grid-template-columns: 1fr;
-  }
-
-  .audience-switch-card {
-    flex-direction: column;
-    align-items: flex-start;
   }
 
   .guide-callout {
