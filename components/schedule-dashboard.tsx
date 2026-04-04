@@ -29,6 +29,7 @@ type AuthState = {
   idToken: string;
   accessToken: string;
   displayName: string;
+  isInClient: boolean;
   pictureUrl?: string;
   lineUserId?: string;
   error?: string;
@@ -113,7 +114,7 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
   const [schedules, setSchedules] = useState(initialData.schedules);
   const [selectedMonth, setSelectedMonth] = useState(getCurrentTokyoMonth());
   const [filterTag, setFilterTag] = useState("すべて");
-  const [auth, setAuth] = useState<AuthState>({ status: "loading", idToken: "", accessToken: "", displayName: "" });
+  const [auth, setAuth] = useState<AuthState>({ status: "loading", idToken: "", accessToken: "", displayName: "", isInClient: false });
   const [feedback, setFeedback] = useState("");
   const [modalEntryId, setModalEntryId] = useState<string | null>(null);
   const [modalTab, setModalTab] = useState<ModalTab>("attendance-input");
@@ -147,6 +148,7 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
             idToken: "",
             accessToken: "",
             displayName: "",
+            isInClient: false,
             error: buildLiffErrorMessage(error, "LIFF 初期化に失敗しました。")
           });
         }
@@ -291,6 +293,7 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
         idToken: "",
         accessToken: "",
         displayName: "",
+        isInClient: auth.isInClient,
         error: buildLiffErrorMessage(error, "LINEログインに失敗しました。")
       });
     }
@@ -347,6 +350,7 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
         idToken: "",
         accessToken: "",
         displayName: "",
+        isInClient: auth.isInClient,
         error: buildLiffErrorMessage(error, "LINEログアウトに失敗しました。")
       });
     }
@@ -764,7 +768,7 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
     .map((entry) => entry.updatedAt)
     .sort((left, right) => right.localeCompare(left))[0];
 
-  async function exportGoogleCalendar() {
+  function exportGoogleCalendar() {
     if (visibleSchedules.length === 0) {
       setFeedback("現在の絞り込み条件で書き出せる予定がありません。");
       return;
@@ -778,19 +782,14 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
     const exportPath = `/calendar-export?${query.toString()}`;
     const exportUrl = `${window.location.origin}${exportPath}`;
 
-    try {
-      const liffId = process.env.NEXT_PUBLIC_LIFF_ID;
-      if (liffId) {
-        const { default: liff } = await import("@line/liff");
-        await liff.init({ liffId });
-        if (liff.isInClient()) {
-          liff.openWindow({ url: exportUrl, external: true });
-          setFeedback("外部ブラウザでカレンダー取り込みを開きました。取り込み後も同期はされません。");
-          return;
-        }
-      }
-    } catch {
-      // Fall back to the in-browser export page below.
+    if (auth.isInClient) {
+      const link = document.createElement("a");
+      link.href = exportUrl;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      link.click();
+      setFeedback("外部ブラウザでカレンダー取り込みを開きます。取り込み後も同期はされません。");
+      return;
     }
 
     window.location.href = exportPath;
@@ -1043,6 +1042,16 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
           <p className="calendar-note">
             Googleカレンダーへは、現在の表示月と担当学年で絞り込まれた予定だけを書き出します。LINEミニアプリ内では外部ブラウザを開く場合があります。取り込み後も同期はされません。
           </p>
+          {auth.isInClient ? (
+            <a
+              className="calendar-note text-button"
+              href={`/calendar-export?month=${selectedMonth}${filterTag === "すべて" ? "" : `&tag=${encodeURIComponent(filterTag)}`}`}
+              target="_blank"
+              rel="noreferrer"
+            >
+              外部ブラウザで開かない場合はこちら
+            </a>
+          ) : null}
         </div>
       </section>
 
@@ -1436,14 +1445,15 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
 async function fetchLiffSession(): Promise<AuthState> {
   const liffId = process.env.NEXT_PUBLIC_LIFF_ID;
   if (!liffId) {
-    return { status: "error", idToken: "", accessToken: "", displayName: "", error: "NEXT_PUBLIC_LIFF_ID が未設定です。" };
+    return { status: "error", idToken: "", accessToken: "", displayName: "", isInClient: false, error: "NEXT_PUBLIC_LIFF_ID が未設定です。" };
   }
 
   const { default: liff } = await import("@line/liff");
   await liff.init({ liffId });
+  const isInClient = liff.isInClient();
 
   if (!liff.isLoggedIn()) {
-    return { status: "ready", idToken: "", accessToken: "", displayName: "未ログイン" };
+    return { status: "ready", idToken: "", accessToken: "", displayName: "未ログイン", isInClient };
   }
 
   const [profile, idToken, accessToken] = await Promise.all([
@@ -1457,6 +1467,7 @@ async function fetchLiffSession(): Promise<AuthState> {
     idToken,
     accessToken,
     displayName: profile.displayName,
+    isInClient,
     pictureUrl: profile.pictureUrl,
     lineUserId: profile.userId
   };
