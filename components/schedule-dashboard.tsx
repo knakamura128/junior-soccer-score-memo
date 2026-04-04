@@ -758,7 +758,7 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
   }
 
   return (
-    <div className="app-shell schedule-shell">
+    <div className={`app-shell schedule-shell ${isCoachPage ? "schedule-shell-coach" : ""}`}>
       <header className="hero schedule-hero">
         <div>
           <p className="eyebrow">LINE Mini App</p>
@@ -810,7 +810,7 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
 
       {feedback ? <p className={feedback.includes("失敗") ? "error" : "muted"}>{feedback}</p> : null}
 
-      <section className="card schedule-card">
+      <section className={`card schedule-card ${isCoachPage ? "schedule-card-coach" : ""}`}>
         <div className="section-title schedule-title">
           <div>
             <h2>{isCoachPage ? "コーチ出欠スケジュール" : "月間スケジュール"}</h2>

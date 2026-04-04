@@ -122,9 +122,18 @@ input[type="month"] { min-width: 0; }
   border: 1px solid rgba(17,72,47,.12);
 }
 .schedule-shell { padding-bottom: 48px; }
+.schedule-shell-coach {
+  background:
+    radial-gradient(circle at top right, rgba(32, 86, 158, 0.12), transparent 32%),
+    linear-gradient(180deg, #f4f8ff 0%, #f9fbff 24%, #f7f8fb 100%);
+}
 .schedule-hero { padding-bottom: 14px; }
 .schedule-hero-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
 .schedule-card { padding-top: 16px; }
+.schedule-card-coach {
+  border-color: rgba(46, 104, 171, 0.16);
+  box-shadow: 0 16px 40px rgba(35, 72, 120, 0.08);
+}
 .schedule-title { align-items: center; }
 .schedule-title .primary {
   background: #d96d2f;
