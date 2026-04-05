@@ -62,6 +62,7 @@ flowchart TD
 - `日付 / 開始 / 終了 / 場所 / 内容 / タグ` が完全一致する予定は重複としてスキップされます。
 - `1年` のような表記からは `低学年` などの帯タグも自動補完されます。
 - `4/18` のように年がない日付は、その年の日本時間の今年として扱います。
+- サンプルCSV: [schedule-import-sample.csv](/Users/kazuhiro/Documents/score-manager/public/schedule-import-sample.csv)
 
 ## 2. 出欠を入力する
 

@@ -357,6 +357,11 @@ function ImportGuideScene({ closeHref }: { closeHref: string }) {
 
       <article className="summary-card">
         <h3>CSV サンプル</h3>
+        <div className="action-row">
+          <a className="ghost link-chip" href="/schedule-import-sample.csv" download>
+            サンプルCSVをダウンロード
+          </a>
+        </div>
         <pre className="guide-code-block">{`日付,学年,時間,場所,内容
 2026-04-18,キッズ・1年・2年,09:00 - 11:00,西が丘FS/A,練習
 2026-04-18,3年・4年,13:00 - 16:00,板七小,練習試合
