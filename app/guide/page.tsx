@@ -35,6 +35,9 @@ export default function GuideIndexPage() {
             <Link href="/guide/schedule?view=top" className="primary">
               使い方を見る
             </Link>
+            <Link href="/guide/schedule?view=import" className="ghost link-chip">
+              取込ガイド
+            </Link>
             <Link href="/guide/schedule?view=attendance-list" className="ghost link-chip">
               出欠一覧例
             </Link>

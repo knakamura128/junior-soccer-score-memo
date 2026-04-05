@@ -75,6 +75,7 @@ export default async function GuideSchedulePage({ searchParams }: GuideScheduleP
   return (
     <div className={`app-shell schedule-shell guide-shell guide-device-${device}`}>
       {view === "top" ? <ScheduleTopScene exitHref={exitHref} /> : null}
+      {view === "import" ? <ImportGuideScene closeHref={closeHref} /> : null}
       {view === "attendance-input" ? <AttendanceInputScene closeHref={closeHref} /> : null}
       {view === "attendance-list" ? <AttendanceListScene closeHref={closeHref} /> : null}
       {view === "bulk-attendance" ? <BulkAttendanceScene closeHref={closeHref} /> : null}
@@ -262,6 +263,106 @@ function AttendanceInputScene({ closeHref }: { closeHref: string }) {
         <GuideCallout className="callout-attend-save" number="4" text="保存すると、その保護者の LINE 名で更新者が記録されます。" />
       </div>
     </div>
+  );
+}
+
+function ImportGuideScene({ closeHref }: { closeHref: string }) {
+  return (
+    <section className="card schedule-card guide-scene-card">
+      <div className="section-title schedule-title">
+        <div>
+          <h2>予定表を取り込む</h2>
+          <span>CSV の作り方と取り込み時の注意点</span>
+        </div>
+        <Link href={closeHref} className="ghost modal-close">
+          閉じる
+        </Link>
+      </div>
+
+      <div className="summary-grid">
+        <article className="summary-card">
+          <h3>基本手順</h3>
+          <ol className="guide-list">
+            <li>スケジュール管理の下部にある `予定表を取り込む` を押します。</li>
+            <li>CSV ファイルを選ぶと、そのまま予定が取り込まれます。</li>
+            <li>取込後は一覧に追加され、完全一致の予定は自動でスキップされます。</li>
+          </ol>
+        </article>
+
+        <article className="summary-card">
+          <h3>必要な列</h3>
+          <p className="muted">最低限、次の 5 列があれば取り込めます。</p>
+          <div className="badge-row">
+            <span className="badge">日付</span>
+            <span className="badge">学年</span>
+            <span className="badge">時間</span>
+            <span className="badge">場所</span>
+            <span className="badge">内容</span>
+          </div>
+          <p className="muted">`登板 / 当番`、`備考`、`試合` は入っていれば取り込みます。</p>
+        </article>
+      </div>
+
+      <div className="table-wrap">
+        <table className="results-table">
+          <thead>
+            <tr>
+              <th>列名</th>
+              <th>書き方</th>
+              <th>例</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>日付</td>
+              <td>`YYYY-MM-DD` または `YYYY/MM/DD`。`4/18` 形式も可。</td>
+              <td>`2026-04-18`, `2026/04/18`, `4/18`</td>
+            </tr>
+            <tr>
+              <td>学年</td>
+              <td>タグを自由に書けます。範囲や複数年も解釈します。</td>
+              <td>`キッズ`, `低学年`, `3年`, `2・3年`, `2〜6年`</td>
+            </tr>
+            <tr>
+              <td>時間</td>
+              <td>`開始 - 終了`。未定なら `-`。</td>
+              <td>`09:00 - 11:00`, `12:30-16:00`, `-`</td>
+            </tr>
+            <tr>
+              <td>場所</td>
+              <td>空欄不可です。</td>
+              <td>`西が丘FS/A`</td>
+            </tr>
+            <tr>
+              <td>内容</td>
+              <td>空欄不可です。試合関連の文言があると自動で試合扱いになります。</td>
+              <td>`練習`, `TOHON CUP`, `vs FC KUMANO`</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <article className="summary-card">
+        <h3>CSV の注意点</h3>
+        <ul className="guide-list">
+          <li>ヘッダ名は `日付 / 学年 / 時間 / 場所 / 内容` を推奨します。</li>
+          <li>英字ヘッダでも `date / grade / time / location / content` なら読み取れます。</li>
+          <li>場所が空欄の行は取り込めません。</li>
+          <li>内容が空欄の行は無視されます。</li>
+          <li>`日付 / 開始 / 終了 / 場所 / 内容 / タグ` が完全一致する予定は重複としてスキップされます。</li>
+          <li>学年は自動補完されるので、`1年` と書くと `低学年` も一緒に付きます。</li>
+          <li>`4/18` のように年がない日付は、その年の日本時間の今年として扱います。</li>
+        </ul>
+      </article>
+
+      <article className="summary-card">
+        <h3>CSV サンプル</h3>
+        <pre className="guide-code-block">{`日付,学年,時間,場所,内容
+2026-04-18,キッズ・1年・2年,09:00 - 11:00,西が丘FS/A,練習
+2026-04-18,3年・4年,13:00 - 16:00,板七小,練習試合
+2026-04-19,5年・6年,-,四ツ木橋競技場,TOHON CUP`}</pre>
+      </article>
+    </section>
   );
 }
 
