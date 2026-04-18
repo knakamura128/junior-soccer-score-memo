@@ -38,8 +38,55 @@ a {
 .brand-lockup { display: flex; align-items: center; gap: 14px; }
 .brand-logo { width: 74px; height: 96px; object-fit: contain; flex: 0 0 auto; }
 .auth-box { padding: 14px 16px; border: 1px solid var(--line); border-radius: 20px; background: var(--surface); min-width: 260px; }
+.auth-box-logged-in {
+  border-color: rgba(27, 107, 69, 0.16);
+  background: linear-gradient(180deg, rgba(247, 252, 248, 0.96), rgba(255, 252, 247, 0.94));
+}
+.auth-box-logged-out {
+  border-color: rgba(181, 84, 32, 0.22);
+  background: linear-gradient(180deg, rgba(255, 246, 238, 0.98), rgba(255, 250, 245, 0.95));
+}
 .auth-box img { width: 40px; height: 40px; border-radius: 999px; object-fit: cover; }
 .auth-row { display: flex; gap: 10px; align-items: center; }
+.auth-status-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  margin-bottom: 10px;
+}
+.auth-status-pill.is-success {
+  background: rgba(27, 107, 69, 0.12);
+  color: #165336;
+}
+.auth-status-pill.is-warning {
+  background: rgba(181, 84, 32, 0.14);
+  color: #9d4311;
+}
+.auth-status-pill.is-pending {
+  background: rgba(83, 111, 95, 0.12);
+  color: #445649;
+}
+.auth-warning {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(181, 84, 32, 0.12);
+  border: 1px solid rgba(181, 84, 32, 0.18);
+  color: #8c3a17;
+  font-size: 0.84rem;
+  line-height: 1.5;
+  font-weight: 700;
+}
+.auth-login-button {
+  background: linear-gradient(135deg, #d85a24, #b84319);
+  color: #fff;
+  box-shadow: 0 10px 22px rgba(184, 67, 25, 0.22);
+}
 .tab-bar { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 16px; }
 .tab,.primary,.ghost,.text-button,.score-btn { border: 0; border-radius: 16px; cursor: pointer; transition: transform 160ms ease, background 160ms ease, opacity 160ms ease; }
 .tab { padding: 14px 16px; font-weight: 700; background: rgba(255,255,255,.55); color: var(--muted); }

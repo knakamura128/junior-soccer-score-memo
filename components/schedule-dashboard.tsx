@@ -105,9 +105,6 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
   const isCoachPage = audience === "coach";
   const audienceLabel = isCoachPage ? "コーチ" : "保護者";
   const pageTitle = isCoachPage ? "FC KUMANO コーチ出欠表" : "FC KUMANO 保護者出欠表";
-  const pageCopy = isCoachPage
-    ? "月間予定の中でコーチ陣の出欠を確認します。保護者用とは別管理です。"
-    : "月間予定、出欠、当番、試合日のスコア連携をトップで扱います。";
   const authMeta = isCoachPage ? "コーチ用の出欠入力者として記録されます" : "出欠入力と修正者として記録されます";
   const alternateHref = isCoachPage ? "/" : "/coaches";
   const alternateLabel = isCoachPage ? "保護者用へ" : "コーチ用へ";
@@ -133,6 +130,10 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
   const [bulkAttendanceNote, setBulkAttendanceNote] = useState("");
   const [bulkAttendanceDates, setBulkAttendanceDates] = useState<string[]>([]);
   const [bulkAttendanceTags, setBulkAttendanceTags] = useState<string[]>([]);
+  const isLoggedIn = Boolean(auth.idToken || auth.accessToken);
+  const loginWarning = isCoachPage
+    ? "未ログインです。出欠入力、当番、予定修正や削除は LINE ログイン後に利用できます。"
+    : "未ログインです。出欠、配車、当番、予定修正や削除は LINE ログイン後に利用できます。";
 
   useEffect(() => {
     let cancelled = false;
@@ -807,12 +808,14 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
             <img src="/fc-kumano-logo.png" alt="FC KUMANO logo" className="brand-logo" />
             <div>
               <h1>{pageTitle}</h1>
-              <p className="hero-copy">{pageCopy}</p>
             </div>
           </div>
         </div>
-        <aside className="auth-box">
-          {auth.pictureUrl ? (
+        <aside className={`auth-box ${isLoggedIn ? "auth-box-logged-in" : "auth-box-logged-out"}`}>
+          <div className={`auth-status-pill ${isLoggedIn ? "is-success" : auth.status === "loading" ? "is-pending" : "is-warning"}`}>
+            {auth.status === "loading" ? "LINE認証を確認中" : isLoggedIn ? "LINEログイン済み" : "LINE未ログイン"}
+          </div>
+          {auth.pictureUrl && isLoggedIn ? (
             <div className="auth-row">
               <img src={auth.pictureUrl} alt={auth.displayName} />
               <div>
@@ -826,9 +829,10 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
               <div className={`auth-meta ${auth.error ? "error" : ""}`}>{auth.error || "保存前にログイン状態を確認します"}</div>
             </div>
           )}
+          {!isLoggedIn && auth.status !== "loading" ? <p className="auth-warning">{auth.error || loginWarning}</p> : null}
           <div className="schedule-hero-actions">
-            {!auth.idToken && !auth.accessToken ? (
-              <button className="primary" type="button" onClick={() => void loginWithLine()}>
+            {!isLoggedIn ? (
+              <button className="primary auth-login-button" type="button" onClick={() => void loginWithLine()}>
                 LINEでログイン
               </button>
             ) : (

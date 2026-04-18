@@ -78,6 +78,7 @@ export function Dashboard({ initialData, initialMatch }: DashboardProps) {
   const [sortValue, setSortValue] = useState("date-desc");
   const [compactResultsView, setCompactResultsView] = useState(true);
   const [auth, setAuth] = useState<AuthState>({ status: "loading", idToken: "", accessToken: "", displayName: "" });
+  const isLoggedIn = Boolean(auth.idToken || auth.accessToken);
   const [feedback, setFeedback] = useState<string>("");
 
   const timerSeconds = Math.min(
@@ -639,8 +640,11 @@ export function Dashboard({ initialData, initialMatch }: DashboardProps) {
             </div>
           </div>
         </div>
-        <aside className="auth-box">
-          {auth.pictureUrl ? (
+        <aside className={`auth-box ${isLoggedIn ? "auth-box-logged-in" : "auth-box-logged-out"}`}>
+          <div className={`auth-status-pill ${isLoggedIn ? "is-success" : auth.status === "loading" ? "is-pending" : "is-warning"}`}>
+            {auth.status === "loading" ? "LINE認証を確認中" : isLoggedIn ? "LINEログイン済み" : "LINE未ログイン"}
+          </div>
+          {auth.pictureUrl && isLoggedIn ? (
             <div className="auth-row">
               <img src={auth.pictureUrl} alt={auth.displayName} />
               <div>
@@ -654,8 +658,13 @@ export function Dashboard({ initialData, initialMatch }: DashboardProps) {
               <div className={`auth-meta ${auth.error ? "error" : ""}`}>{auth.error || "保存前にログイン状態を確認します"}</div>
             </div>
           )}
-          {!auth.idToken && !auth.accessToken ? (
-            <button className="primary" type="button" onClick={() => void loginWithLine()} style={{ marginTop: 12 }}>
+          {!isLoggedIn && auth.status !== "loading" ? (
+            <p className="auth-warning">
+              {auth.error || "未ログインです。スコア保存、試合修正、結果削除、選手登録は LINE ログイン後に利用できます。"}
+            </p>
+          ) : null}
+          {!isLoggedIn ? (
+            <button className="primary auth-login-button" type="button" onClick={() => void loginWithLine()} style={{ marginTop: 12 }}>
               LINEでログイン
             </button>
           ) : (
