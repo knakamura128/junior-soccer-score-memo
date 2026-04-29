@@ -1596,7 +1596,12 @@ function compareScheduleStartTime(left: string, right: string) {
     if (!value || value === "-") {
       return "99:99";
     }
-    return value;
+    const match = value.trim().match(/^(\d{1,2}):(\d{1,2})$/);
+    if (!match) {
+      return value;
+    }
+    const [, hours, minutes] = match;
+    return `${hours.padStart(2, "0")}:${minutes.padStart(2, "0")}`;
   };
 
   return normalize(left).localeCompare(normalize(right));
