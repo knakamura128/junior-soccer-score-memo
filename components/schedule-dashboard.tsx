@@ -206,9 +206,11 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
         .sort((left, right) => {
           const dateCompare = left.eventDate.localeCompare(right.eventDate);
           if (dateCompare !== 0) return dateCompare;
+          const timeCompare = compareScheduleStartTime(left.startTime, right.startTime);
+          if (timeCompare !== 0) return timeCompare;
           const tagCompare = primaryTagRank(left.tags) - primaryTagRank(right.tags);
           if (tagCompare !== 0) return tagCompare;
-          return left.startTime.localeCompare(right.startTime);
+          return left.content.localeCompare(right.content, "ja");
         }),
     [filterTag, schedules, selectedMonth]
   );
@@ -1587,6 +1589,17 @@ function primaryTagRank(tags: string[]) {
   const sorted = [...tags].sort((left, right) => scheduleRowTagRank(left) - scheduleRowTagRank(right));
   const first = sorted[0];
   return scheduleRowTagRank(first || "");
+}
+
+function compareScheduleStartTime(left: string, right: string) {
+  const normalize = (value: string) => {
+    if (!value || value === "-") {
+      return "99:99";
+    }
+    return value;
+  };
+
+  return normalize(left).localeCompare(normalize(right));
 }
 
 function scheduleRowTagRank(tag: string) {
