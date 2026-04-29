@@ -1087,7 +1087,7 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
                   {formatDateCell(modalEntry.eventDate)} {modalEntry.content}
                 </h2>
                 <p>
-                  {modalEntry.location} / {formatTimeRange(modalEntry.startTime, modalEntry.endTime)} / 修正者:{" "}
+                  {modalEntry.location} / {formatScheduleRange(modalEntry.startTime, modalEntry.endTime)} / 修正者:{" "}
                   {modalEntry.updatedBy?.displayName || "-"}
                 </p>
               </div>
@@ -1596,12 +1596,7 @@ function compareScheduleStartTime(left: string, right: string) {
     if (!value || value === "-") {
       return "99:99";
     }
-    const match = value.trim().match(/^(\d{1,2}):(\d{1,2})$/);
-    if (!match) {
-      return value;
-    }
-    const [, hours, minutes] = match;
-    return `${hours.padStart(2, "0")}:${minutes.padStart(2, "0")}`;
+    return normalizeScheduleClock(value);
   };
 
   return normalize(left).localeCompare(normalize(right));
@@ -1667,18 +1662,34 @@ function buildScoreHref(entry: ScheduleRow) {
 }
 
 function renderScheduleTime(startTime: string, endTime: string) {
-  const label = formatTimeRange(startTime, endTime);
+  const label = formatScheduleRange(startTime, endTime);
   if (label === "-" || !endTime || startTime === endTime) {
     return <span className="schedule-time"><span className="schedule-time-part">{label}</span></span>;
   }
 
   return (
     <span className="schedule-time">
-      <span className="schedule-time-part">{startTime}</span>
+      <span className="schedule-time-part">{normalizeScheduleClock(startTime)}</span>
       <span className="schedule-time-dash">-</span>
-      <span className="schedule-time-part">{endTime}</span>
+      <span className="schedule-time-part">{normalizeScheduleClock(endTime)}</span>
     </span>
   );
+}
+
+function formatScheduleRange(startTime: string, endTime: string) {
+  return formatTimeRange(normalizeScheduleClock(startTime), normalizeScheduleClock(endTime));
+}
+
+function normalizeScheduleClock(value: string) {
+  if (!value || value === "-") {
+    return value;
+  }
+  const match = value.trim().match(/^(\d{1,2}):(\d{1,2})$/);
+  if (!match) {
+    return value;
+  }
+  const [, hours, minutes] = match;
+  return `${hours.padStart(2, "0")}:${minutes.padStart(2, "0")}`;
 }
 
 function renderScheduleDate(value: string) {
