@@ -80,6 +80,7 @@ export function Dashboard({ initialData, initialMatch }: DashboardProps) {
   const [auth, setAuth] = useState<AuthState>({ status: "loading", idToken: "", accessToken: "", displayName: "" });
   const isLoggedIn = Boolean(auth.idToken || auth.accessToken);
   const [feedback, setFeedback] = useState<string>("");
+  const [detailMatchId, setDetailMatchId] = useState<string | null>(null);
 
   const timerSeconds = Math.min(
     MAX_TIMER_SECONDS,
@@ -162,6 +163,7 @@ export function Dashboard({ initialData, initialMatch }: DashboardProps) {
     counts[player.name] = (counts[player.name] || 0) + 1;
     return counts;
   }, {});
+  const detailMatch = detailMatchId ? matches.find((entry) => entry.id === detailMatchId) || null : null;
 
   useEffect(() => {
     if (!goalPlayer) {
@@ -874,7 +876,14 @@ export function Dashboard({ initialData, initialMatch }: DashboardProps) {
                     <td>{joinTournamentAndTitle(entry)}</td>
                     <td><div className="badge-row">{entry.tags.map((tag) => <span key={tag} className={`badge ${getTagBadgeClass(tag)}`}>{tag}</span>)}</div></td>
                     <td>{entry.opponent}</td>
-                    <td>{formatScore(entry)}</td>
+                    <td>
+                      <div className="score-result-cell">
+                        <strong>{formatScore(entry)}</strong>
+                        <button className="text-button score-detail-button" type="button" onClick={() => setDetailMatchId(entry.id)}>
+                          詳細
+                        </button>
+                      </div>
+                    </td>
                     <td><span className={`badge ${getOutcomeBadgeClass(entry.outcome)}`}>{entry.outcome}</span></td>
                     <td>{entry.goals.filter((goal) => goal.side === "home" && goal.player).map((goal) => resolveGoalPlayerName(goal.player as string, players, entry.tags, playerNameCounts)).join(", ") || "なし"}</td>
                     {!compactResultsView ? <td><div>{entry.createdBy?.displayName || "不明"} / {entry.updatedBy?.displayName || "不明"}</div></td> : null}
@@ -891,6 +900,60 @@ export function Dashboard({ initialData, initialMatch }: DashboardProps) {
           </div>
         </section>
       </section>
+      {detailMatch ? (
+        <div className="modal-backdrop" role="presentation" onClick={() => setDetailMatchId(null)}>
+          <div className="modal-card score-detail-modal" role="dialog" aria-modal="true" onClick={(event) => event.stopPropagation()}>
+            <div className="section-title">
+              <div>
+                <h2>スコア詳細</h2>
+                <span>
+                  {detailMatch.matchDate} {joinTournamentAndTitle(detailMatch)} / vs {detailMatch.opponent}
+                </span>
+              </div>
+              <button className="ghost modal-close" type="button" onClick={() => setDetailMatchId(null)}>
+                閉じる
+              </button>
+            </div>
+            <div className="score-detail-total">
+              <span>合計</span>
+              <strong>{formatScore(detailMatch)}</strong>
+            </div>
+            <div className="score-detail-grid">
+              {buildScoreBreakdown(detailMatch).map((row) => (
+                <div className="score-detail-row" key={row.label}>
+                  <span>{row.label}</span>
+                  <strong>{row.home}-{row.away}</strong>
+                </div>
+              ))}
+              {detailMatch.pkMode === "on" ? (
+                <div className="score-detail-row">
+                  <span>PK</span>
+                  <strong>{detailMatch.homePkScore}-{detailMatch.awayPkScore}</strong>
+                </div>
+              ) : null}
+            </div>
+            <div className="score-detail-log">
+              <h3>得点ログ</h3>
+              {detailMatch.goals.length === 0 ? (
+                <p className="empty-state">得点ログはありません。</p>
+              ) : (
+                <ul>
+                  {detailMatch.goals.map((goal, index) => (
+                    <li key={`${goal.time}-${goal.period}-${index}`}>
+                      <span>{goal.time}</span>
+                      <strong>{goal.period}</strong>
+                      <span>{goal.side === "home" ? "自チーム" : "相手"}</span>
+                      {goal.side === "home" && goal.player ? (
+                        <span>{resolveGoalPlayerName(goal.player, players, detailMatch.tags, playerNameCounts)}</span>
+                      ) : null}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 
@@ -965,6 +1028,32 @@ function parseClockToSeconds(value: string) {
 function formatScore(entry: { homeScore: number; awayScore: number; pkMode: string; homePkScore: number; awayPkScore: number }) {
   const base = `${entry.homeScore}-${entry.awayScore}`;
   return entry.pkMode === "on" ? `${base}(PK${entry.homePkScore}-${entry.awayPkScore})` : base;
+}
+
+function buildScoreBreakdown(entry: MatchRow) {
+  const periods = entry.periodMode === "halves" ? ["前半", "後半"] : ["試合中"];
+  const rows = periods.map((period) => countGoalsByPeriod(entry.goals, period));
+  const knownPeriods = new Set(periods);
+  const otherGoals = entry.goals.filter((goal) => !knownPeriods.has(goal.period));
+
+  if (otherGoals.length > 0) {
+    rows.push({
+      label: "その他",
+      home: otherGoals.filter((goal) => goal.side === "home").length,
+      away: otherGoals.filter((goal) => goal.side === "away").length
+    });
+  }
+
+  return rows;
+}
+
+function countGoalsByPeriod(goals: MatchRow["goals"], period: string) {
+  const periodGoals = goals.filter((goal) => goal.period === period);
+  return {
+    label: period,
+    home: periodGoals.filter((goal) => goal.side === "home").length,
+    away: periodGoals.filter((goal) => goal.side === "away").length
+  };
 }
 
 function joinTournamentAndTitle(entry: { tournament: string; title: string }) {

@@ -380,6 +380,16 @@ input[type="month"] { min-width: 0; }
 .score-results-table.is-compact .badge-row {
   gap: 3px;
 }
+.score-result-cell {
+  display: grid;
+  gap: 4px;
+  justify-items: start;
+}
+.score-detail-button {
+  font-size: 0.72rem;
+  color: var(--green-dark);
+  opacity: 0.9;
+}
 .schedule-table-wrap { margin-top: 12px; }
 .schedule-results-table { min-width: 1120px; }
 .schedule-results-table td { line-height: 1.35; }
@@ -472,6 +482,7 @@ input[type="month"] { min-width: 0; }
 }
 .schedule-modal { width: min(820px, 100%); }
 .editor-modal { width: min(760px, 100%); }
+.score-detail-modal { width: min(560px, 100%); }
 .modal-close { color: var(--text); background: rgba(17,72,47,.08); }
 .schedule-modal-tabs { margin-top: 12px; }
 .schedule-modal-tabs .tab { min-width: 0; }
@@ -508,6 +519,53 @@ input[type="month"] { min-width: 0; }
 .schedule-form-grid { margin-top: 12px; }
 .checkbox-row { display: flex; align-items: center; gap: 10px; margin-top: 14px; }
 .checkbox-row input { width: auto; }
+.score-detail-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: rgba(27, 107, 69, 0.1);
+  color: var(--green-dark);
+}
+.score-detail-total strong { font-size: 1.45rem; }
+.score-detail-grid {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+.score-detail-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: var(--surface-strong);
+  border: 1px solid var(--line);
+}
+.score-detail-log { margin-top: 16px; }
+.score-detail-log h3 {
+  margin: 0 0 10px;
+  font-size: 1rem;
+}
+.score-detail-log ul {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.score-detail-log li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid var(--line);
+}
 .compact-toolbar {
   grid-template-columns: 1.05fr .95fr 1.1fr auto auto;
   align-items: end;
