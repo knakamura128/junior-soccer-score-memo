@@ -100,6 +100,7 @@ type ScheduleDashboardProps = {
 };
 
 type ModalTab = "attendance-input" | "attendance-list" | "duty" | "carpool";
+type ScheduleViewMode = "short" | "actions" | "image";
 
 export function ScheduleDashboard({ initialData, audience = "parent" }: ScheduleDashboardProps) {
   const isCoachPage = audience === "coach";
@@ -124,7 +125,7 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
   const [editorOpen, setEditorOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [scheduleForm, setScheduleForm] = useState<SchedulePayload>(() => createEmptySchedule());
-  const [compactView, setCompactView] = useState(true);
+  const [scheduleViewMode, setScheduleViewMode] = useState<ScheduleViewMode>("short");
   const [bulkAttendanceOpen, setBulkAttendanceOpen] = useState(false);
   const [bulkAttendanceStatus, setBulkAttendanceStatus] = useState<AttendanceStatus>("参加");
   const [bulkAttendanceNote, setBulkAttendanceNote] = useState("");
@@ -171,13 +172,16 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
       const saved = JSON.parse(raw) as {
         selectedMonth?: string;
         compactView?: boolean;
+        scheduleViewMode?: ScheduleViewMode;
         filterTag?: string;
       };
       if (saved.selectedMonth) {
         setSelectedMonth(saved.selectedMonth);
       }
-      if (typeof saved.compactView === "boolean") {
-        setCompactView(saved.compactView);
+      if (saved.scheduleViewMode) {
+        setScheduleViewMode(saved.scheduleViewMode);
+      } else if (typeof saved.compactView === "boolean") {
+        setScheduleViewMode(saved.compactView ? "short" : "actions");
       }
       if (saved.filterTag) {
         setFilterTag(saved.filterTag);
@@ -192,11 +196,12 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
       viewStorageKey,
       JSON.stringify({
         selectedMonth,
-        compactView,
+        compactView: scheduleViewMode !== "actions",
+        scheduleViewMode,
         filterTag
       })
     );
-  }, [compactView, filterTag, selectedMonth, viewStorageKey]);
+  }, [filterTag, scheduleViewMode, selectedMonth, viewStorageKey]);
 
   const visibleSchedules = useMemo(
     () =>
@@ -226,6 +231,8 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
     const matchesTag = bulkAttendanceTags.length === 0 ? true : bulkAttendanceTags.some((tag) => entry.tags.includes(tag));
     return matchesDate && matchesTag;
   });
+  const compactView = scheduleViewMode !== "actions";
+  const imageView = scheduleViewMode === "image";
 
   const modalEntry = schedules.find((entry) => entry.id === modalEntryId) || null;
   const currentAttendance =
@@ -897,17 +904,24 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
             <div className="month-chip-row">
               <button
                 type="button"
-                className={`tab month-chip ${compactView ? "is-active" : ""}`}
-                onClick={() => setCompactView(true)}
+                className={`tab month-chip ${scheduleViewMode === "short" ? "is-active" : ""}`}
+                onClick={() => setScheduleViewMode("short")}
               >
                 短縮
               </button>
               <button
                 type="button"
-                className={`tab month-chip ${compactView ? "" : "is-active"}`}
-                onClick={() => setCompactView(false)}
+                className={`tab month-chip ${scheduleViewMode === "actions" ? "is-active" : ""}`}
+                onClick={() => setScheduleViewMode("actions")}
               >
-                通常
+                操作
+              </button>
+              <button
+                type="button"
+                className={`tab month-chip ${scheduleViewMode === "image" ? "is-active" : ""}`}
+                onClick={() => setScheduleViewMode("image")}
+              >
+                画像
               </button>
             </div>
           </div>
@@ -924,8 +938,8 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
           </label>
         </div>
 
-        <div className={`table-wrap schedule-table-wrap ${compactView ? "is-compact" : ""}`}>
-          <table className={`results-table schedule-results-table ${compactView ? "is-compact" : ""}`}>
+        <div className={`table-wrap schedule-table-wrap ${compactView ? "is-compact" : ""} ${imageView ? "is-image" : ""}`}>
+          <table className={`results-table schedule-results-table ${compactView ? "is-compact" : ""} ${imageView ? "is-image" : ""}`}>
             <thead>
               <tr>
                 <th>日付</th>
@@ -933,8 +947,8 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
                 <th>時間</th>
                 <th>場所</th>
                 <th>内容</th>
-                {!isCoachPage ? <th>当番</th> : null}
-                <th>{audienceLabel}出欠</th>
+                {!isCoachPage && !imageView ? <th>当番</th> : null}
+                {!imageView ? <th>{audienceLabel}出欠</th> : null}
                 {!compactView && !isCoachPage ? <th>修正</th> : null}
                 {!compactView ? <th>操作</th> : null}
               </tr>
@@ -942,7 +956,7 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
             <tbody>
               {visibleSchedules.length === 0 ? (
                 <tr>
-                  <td colSpan={compactView ? (isCoachPage ? 6 : 7) : (isCoachPage ? 7 : 9)} className="empty-state schedule-empty">
+                  <td colSpan={imageView ? 5 : compactView ? (isCoachPage ? 6 : 7) : (isCoachPage ? 7 : 9)} className="empty-state schedule-empty">
                     この月の予定はまだありません。
                   </td>
                 </tr>
@@ -981,18 +995,18 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
                         <div>{entry.content}</div>
                         {entry.note ? <div className="muted">{entry.note}</div> : null}
                       </td>
-                      {!isCoachPage ? (
+                      {!isCoachPage && !imageView ? (
                         <td className={editedFields.has("dutyLabel") ? "edited-cell" : ""}>
                           <div>{assignedName}</div>
                         </td>
                       ) : null}
-                      <td>
+                      {!imageView ? <td>
                         <div className="badge-row">
                           <span className="badge result-win">参 {counts.present}</span>
                           <span className="badge result-loss">欠 {counts.absent}</span>
                           <span className="badge result-draw">未 {counts.pending}</span>
                         </div>
-                      </td>
+                      </td> : null}
                       {!compactView && !isCoachPage ? (
                         <td>
                           <div>{entry.updatedBy?.displayName || "-"}</div>
