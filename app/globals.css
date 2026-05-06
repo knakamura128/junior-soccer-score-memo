@@ -536,6 +536,64 @@ input[type="month"] { min-width: 0; }
 .schedule-actions { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
 .score-link-inline { color: var(--green-dark); }
 .schedule-is-match { background: rgba(27,107,69,.045); }
+.schedule-row-open-image {
+  cursor: zoom-in;
+}
+.schedule-row-open-image:hover td,
+.schedule-row-open-image:focus-visible td {
+  background: rgba(35, 87, 58, 0.08);
+}
+.schedule-image-page {
+  min-height: 100vh;
+  padding: 8px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.9), rgba(246,242,233,.92)),
+    var(--bg);
+  color: #111;
+}
+.schedule-image-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 0 0 6px;
+}
+.schedule-image-header p {
+  margin: 0;
+  color: #333;
+  font-size: .68rem;
+  font-weight: 800;
+  letter-spacing: .08em;
+}
+.schedule-image-header h1 {
+  margin: 0;
+  color: #111;
+  font-size: 1rem;
+  letter-spacing: .02em;
+}
+.schedule-image-note {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  margin: 0 0 6px;
+  color: #333;
+  font-size: .66rem;
+  font-weight: 700;
+}
+.schedule-image-note-inline {
+  color: #a93623;
+  font-weight: 800;
+}
+.schedule-image-table-wrap {
+  margin: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+.schedule-image-page .link-chip {
+  padding: 7px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
 .modal-backdrop {
   position: fixed;
   inset: 0;
@@ -1040,6 +1098,30 @@ button:active { transform: translateY(0); }
     padding: 2px 2px;
     font-size: 0.46rem;
     line-height: 1.08;
+  }
+
+  .schedule-image-page {
+    padding: 4px;
+  }
+
+  .schedule-image-header {
+    align-items: flex-end;
+    gap: 6px;
+    margin-bottom: 4px;
+  }
+
+  .schedule-image-header h1 {
+    font-size: .84rem;
+  }
+
+  .schedule-image-header p,
+  .schedule-image-note {
+    font-size: .52rem;
+  }
+
+  .schedule-image-page .link-chip {
+    padding: 5px 8px;
+    font-size: .58rem;
   }
 
   .score-results-table.is-compact th,

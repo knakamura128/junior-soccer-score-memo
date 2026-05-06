@@ -205,7 +205,7 @@ function ScheduleTopScene({ exitHref }: { exitHref: string }) {
         <p className="calendar-note">カレンダーへ取り込み後、このアプリとは同期されません。</p>
       </div>
       <GuideCallout className="callout-top-month" number="1" text="表示月を切り替えると、その月の予定だけを表示します。" />
-      <GuideCallout className="callout-top-compact" number="2" text="短縮は普段の確認用、操作は出欠や修正用、画像は月全体を一画面で見やすくする表示です。" />
+      <GuideCallout className="callout-top-compact" number="2" text="短縮は普段の確認用、操作は出欠や修正用、画像は月全体を見やすい専用ページで開きます。" />
       <GuideCallout className="callout-top-import" number="3" text="予定表の取込と カレンダーに取り込む は下部にまとめています。完全一致の予定は取込時にスキップします。" />
       <GuideCallout className="callout-top-row" number="4" text="操作表示では、出欠、一覧、配車、当番、修正、削除を使えます。" />
       <GuideCallout className="callout-top-calendar" number="5" text="下部の カレンダーに取り込む は、今見えている月と学年の内容だけを書き出します。" />

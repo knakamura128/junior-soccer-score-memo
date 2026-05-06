@@ -100,7 +100,7 @@ type ScheduleDashboardProps = {
 };
 
 type ModalTab = "attendance-input" | "attendance-list" | "duty" | "carpool";
-type ScheduleViewMode = "short" | "actions" | "image";
+type ScheduleViewMode = "short" | "actions";
 
 export function ScheduleDashboard({ initialData, audience = "parent" }: ScheduleDashboardProps) {
   const isCoachPage = audience === "coach";
@@ -178,7 +178,7 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
       if (saved.selectedMonth) {
         setSelectedMonth(saved.selectedMonth);
       }
-      if (saved.scheduleViewMode) {
+      if (saved.scheduleViewMode === "short" || saved.scheduleViewMode === "actions") {
         setScheduleViewMode(saved.scheduleViewMode);
       } else if (typeof saved.compactView === "boolean") {
         setScheduleViewMode(saved.compactView ? "short" : "actions");
@@ -232,7 +232,10 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
     return matchesDate && matchesTag;
   });
   const compactView = scheduleViewMode !== "actions";
-  const imageView = scheduleViewMode === "image";
+  const imageViewHref = buildScheduleImageHref(selectedMonth, filterTag, audience);
+  const openScheduleImageView = () => {
+    window.open(imageViewHref, "_blank", "noopener,noreferrer");
+  };
 
   const modalEntry = schedules.find((entry) => entry.id === modalEntryId) || null;
   const currentAttendance =
@@ -916,13 +919,9 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
               >
                 操作
               </button>
-              <button
-                type="button"
-                className={`tab month-chip ${scheduleViewMode === "image" ? "is-active" : ""}`}
-                onClick={() => setScheduleViewMode("image")}
-              >
+              <a className="tab month-chip" href={imageViewHref} target="_blank" rel="noreferrer">
                 画像
-              </button>
+              </a>
             </div>
           </div>
           <label>
@@ -938,8 +937,8 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
           </label>
         </div>
 
-        <div className={`table-wrap schedule-table-wrap ${compactView ? "is-compact" : ""} ${imageView ? "is-image" : ""}`}>
-          <table className={`results-table schedule-results-table ${compactView ? "is-compact" : ""} ${imageView ? "is-image" : ""}`}>
+        <div className={`table-wrap schedule-table-wrap ${compactView ? "is-compact" : ""}`}>
+          <table className={`results-table schedule-results-table ${compactView ? "is-compact" : ""}`}>
             <thead>
               <tr>
                 <th>日付</th>
@@ -947,8 +946,8 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
                 <th>時間</th>
                 <th>場所</th>
                 <th>内容</th>
-                {!isCoachPage && !imageView ? <th>当番</th> : null}
-                {!imageView ? <th>{audienceLabel}出欠</th> : null}
+                {!isCoachPage ? <th>当番</th> : null}
+                <th>{audienceLabel}出欠</th>
                 {!compactView && !isCoachPage ? <th>修正</th> : null}
                 {!compactView ? <th>操作</th> : null}
               </tr>
@@ -956,7 +955,7 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
             <tbody>
               {visibleSchedules.length === 0 ? (
                 <tr>
-                  <td colSpan={imageView ? 5 : compactView ? (isCoachPage ? 6 : 7) : (isCoachPage ? 7 : 9)} className="empty-state schedule-empty">
+                  <td colSpan={compactView ? (isCoachPage ? 6 : 7) : (isCoachPage ? 7 : 9)} className="empty-state schedule-empty">
                     この月の予定はまだありません。
                   </td>
                 </tr>
@@ -972,10 +971,24 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
                       key={entry.id}
                       className={[
                         entry.isMatch ? "schedule-is-match" : "",
-                        isDateGroupStart ? "schedule-date-group-start" : "schedule-date-group-continue"
+                        isDateGroupStart ? "schedule-date-group-start" : "schedule-date-group-continue",
+                        compactView ? "schedule-row-open-image" : ""
                       ]
                         .filter(Boolean)
                         .join(" ")}
+                      role={compactView ? "link" : undefined}
+                      tabIndex={compactView ? 0 : undefined}
+                      onClick={compactView ? openScheduleImageView : undefined}
+                      onKeyDown={
+                        compactView
+                          ? (event) => {
+                              if (event.key === "Enter" || event.key === " ") {
+                                event.preventDefault();
+                                openScheduleImageView();
+                              }
+                            }
+                          : undefined
+                      }
                     >
                       <td className={editedFields.has("eventDate") ? "edited-cell" : ""}>{renderScheduleDate(entry.eventDate)}</td>
                       <td className={editedFields.has("tags") ? "edited-cell" : ""}>
@@ -995,18 +1008,18 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
                         <div>{entry.content}</div>
                         {entry.note ? <div className="muted">{entry.note}</div> : null}
                       </td>
-                      {!isCoachPage && !imageView ? (
+                      {!isCoachPage ? (
                         <td className={editedFields.has("dutyLabel") ? "edited-cell" : ""}>
                           <div>{assignedName}</div>
                         </td>
                       ) : null}
-                      {!imageView ? <td>
+                      <td>
                         <div className="badge-row">
                           <span className="badge result-win">参 {counts.present}</span>
                           <span className="badge result-loss">欠 {counts.absent}</span>
                           <span className="badge result-draw">未 {counts.pending}</span>
                         </div>
-                      </td> : null}
+                      </td>
                       {!compactView && !isCoachPage ? (
                         <td>
                           <div>{entry.updatedBy?.displayName || "-"}</div>
@@ -1673,6 +1686,18 @@ function buildScoreHref(entry: ScheduleRow) {
     opponent: extractOpponentFromContent(entry.content)
   });
   return `/score?${params.toString()}`;
+}
+
+function buildScheduleImageHref(month: string, tag: string, audience: AttendanceAudienceMode) {
+  const params = new URLSearchParams({
+    month,
+    audience,
+    openExternalBrowser: "1"
+  });
+  if (tag !== "すべて") {
+    params.set("tag", tag);
+  }
+  return `/schedule-image?${params.toString()}`;
 }
 
 function renderScheduleTime(startTime: string, endTime: string) {
