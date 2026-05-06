@@ -1,0 +1,52 @@
+import { prisma } from "@/lib/prisma";
+import { createEmptyMatch } from "@/lib/score-draft";
+import { serializeMatchDate, type MatchPayload } from "@/lib/match-format";
+import { ensureAnnualPlayerPromotion, normalizeExistingPlayers } from "@/lib/player-promotion";
+
+export async function getScoreInitialData() {
+  await normalizeExistingPlayers();
+  await ensureAnnualPlayerPromotion();
+  const [players, matches] = await Promise.all([
+    prisma.player.findMany({ orderBy: [{ createdAt: "asc" }] }),
+    prisma.match.findMany({
+      include: {
+        goals: { orderBy: { createdAt: "asc" } },
+        createdBy: true,
+        updatedBy: true
+      },
+      orderBy: [{ matchDate: "desc" }, { createdAt: "desc" }]
+    })
+  ]);
+
+  return {
+    players,
+    matches: matches.map((match) => ({
+      ...match,
+      matchDate: serializeMatchDate(match.matchDate),
+      createdAt: match.createdAt.toISOString(),
+      updatedAt: match.updatedAt.toISOString()
+    }))
+  };
+}
+
+export function buildPrefill(params: Record<string, string | string[] | undefined>): MatchPayload | undefined {
+  const match = createEmptyMatch();
+  const date = typeof params.date === "string" ? params.date : undefined;
+  const title = typeof params.title === "string" ? params.title : undefined;
+  const tournament = typeof params.tournament === "string" ? params.tournament : undefined;
+  const opponent = typeof params.opponent === "string" ? params.opponent : undefined;
+  const tags = typeof params.tags === "string" ? params.tags.split(",").filter(Boolean) : [];
+
+  if (!date && !title && !tournament && !opponent && tags.length === 0) {
+    return undefined;
+  }
+
+  return {
+    ...match,
+    matchDate: date || match.matchDate,
+    title: title || match.title,
+    tournament: tournament || match.tournament,
+    opponent: opponent || match.opponent,
+    tags
+  };
+}

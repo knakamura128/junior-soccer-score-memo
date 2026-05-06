@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { buildMatchesCsv, parseReferenceMatchesCsv } from "@/lib/match-csv";
 import {
@@ -46,6 +47,7 @@ type DashboardProps = {
     matches: MatchRow[];
   };
   initialMatch?: MatchPayload;
+  initialView?: "scoring" | "results";
 };
 
 type AuthState = {
@@ -61,8 +63,9 @@ type AuthState = {
 const DRAFT_STORAGE_KEY = "score-mini-app-next-draft";
 const MAX_TIMER_SECONDS = 60 * 60;
 
-export function Dashboard({ initialData, initialMatch }: DashboardProps) {
-  const [activeTab, setActiveTab] = useState<"scoring" | "results">("scoring");
+export function Dashboard({ initialData, initialMatch, initialView = "scoring" }: DashboardProps) {
+  const router = useRouter();
+  const activeTab = initialView;
   const [players, setPlayers] = useState(initialData.players);
   const [matches, setMatches] = useState(initialData.matches);
   const [match, setMatch] = useState<MatchPayload>(() => initialMatch || createEmptyMatch());
@@ -457,8 +460,8 @@ export function Dashboard({ initialData, initialMatch }: DashboardProps) {
         editingId ? current.map((entry) => (entry.id === editingId ? saved : entry)) : [saved, ...current]
       );
       resetDraft();
-      setActiveTab("results");
       setFeedback("試合結果を保存しました。");
+      router.push("/score/results");
     } catch (error) {
       if (shouldRefreshDashboardLineLogin(error)) {
         await loginWithLine();
@@ -514,8 +517,8 @@ export function Dashboard({ initialData, initialMatch }: DashboardProps) {
 
   function cancelEditing() {
     resetDraft();
-    setActiveTab("results");
     setFeedback("試合修正を取り消しました。");
+    router.push("/score/results");
   }
 
   function editMatch(entry: MatchRow) {
@@ -545,7 +548,7 @@ export function Dashboard({ initialData, initialMatch }: DashboardProps) {
         time: goal.time
       }))
     });
-    setActiveTab("scoring");
+    router.push("/score");
   }
 
   async function importReferenceCsv(file: File) {
@@ -691,8 +694,8 @@ export function Dashboard({ initialData, initialMatch }: DashboardProps) {
       {feedback ? <p className={feedback.includes("失敗") ? "error" : "muted"}>{feedback}</p> : null}
 
       <nav className="tab-bar" aria-label="ページ切り替え">
-        <button className={`tab ${activeTab === "scoring" ? "is-active" : ""}`} onClick={() => setActiveTab("scoring")} type="button">スコア付け</button>
-        <button className={`tab ${activeTab === "results" ? "is-active" : ""}`} onClick={() => setActiveTab("results")} type="button">試合結果一覧</button>
+        <Link className={`tab ${activeTab === "scoring" ? "is-active" : ""}`} href="/score">スコア付け</Link>
+        <Link className={`tab ${activeTab === "results" ? "is-active" : ""}`} href="/score/results">試合結果一覧</Link>
       </nav>
 
       <section className={`tab-panel ${activeTab === "scoring" ? "is-active" : ""}`}>
