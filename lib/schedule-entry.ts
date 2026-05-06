@@ -24,10 +24,14 @@ type ScheduleEntryWithRelations = Prisma.ScheduleEntryGetPayload<{
   include: typeof scheduleEntryInclude;
 }>;
 
+const EDITED_FIELD_HIGHLIGHT_DAYS = 10;
+const EDITED_FIELD_HIGHLIGHT_MS = EDITED_FIELD_HIGHLIGHT_DAYS * 24 * 60 * 60 * 1000;
+
 export function serializeScheduleEntry(entry: ScheduleEntryWithRelations) {
   return {
     ...entry,
     eventDate: serializeScheduleDate(entry.eventDate),
+    editedFields: shouldHighlightEditedFields(entry.updatedAt) ? entry.editedFields : [],
     createdAt: entry.createdAt.toISOString(),
     updatedAt: entry.updatedAt.toISOString(),
     dutyAssignment: entry.dutyAssignment
@@ -49,4 +53,8 @@ export function serializeScheduleEntry(entry: ScheduleEntryWithRelations) {
       updatedAt: preference.updatedAt.toISOString()
     }))
   };
+}
+
+function shouldHighlightEditedFields(updatedAt: Date) {
+  return Date.now() - updatedAt.getTime() < EDITED_FIELD_HIGHLIGHT_MS;
 }
