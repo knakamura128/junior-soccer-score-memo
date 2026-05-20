@@ -243,8 +243,14 @@ input[type="month"] { min-width: 0; }
   flex-wrap: wrap;
 }
 .month-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: 10px 14px;
   min-height: 42px;
+  text-align: center;
+  line-height: 1.15;
+  white-space: nowrap;
 }
 .schedule-toolbar { grid-template-columns: 1fr .85fr .85fr; }
 .feedback-notice-wrap {
@@ -1059,7 +1065,8 @@ button:active { transform: translateY(0); }
 
   .month-chip {
     width: 100%;
-    padding: 8px 6px;
+    min-height: 46px;
+    padding: 10px 6px;
     font-size: 0.76rem;
   }
 
