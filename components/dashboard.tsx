@@ -286,8 +286,14 @@ export function Dashboard({ initialData, initialMatch, initialView = "scoring" }
   }
 
   async function savePlayer() {
-    if (!playerForm.number || !playerForm.name || playerForm.tags.length === 0) {
-      setFeedback("選手登録には背番号、名前、タグが必要です。");
+    const normalizedPlayer = {
+      number: playerForm.number.trim(),
+      name: playerForm.name.trim(),
+      tags: playerForm.tags
+    };
+
+    if (!normalizedPlayer.name || normalizedPlayer.tags.length === 0) {
+      setFeedback("選手登録には選手名とタグが必要です。");
       return;
     }
     try {
@@ -297,10 +303,13 @@ export function Dashboard({ initialData, initialMatch, initialView = "scoring" }
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...authPayload,
-          player: playerForm
+          player: normalizedPlayer
         })
       });
-      if (!response.ok) throw new Error();
+      if (!response.ok) {
+        const detail = await response.text();
+        throw new Error(detail || "選手保存に失敗しました。");
+      }
       const saved = (await response.json()) as Player;
       setPlayers((current) =>
         editingPlayerId ? current.map((entry) => (entry.id === editingPlayerId ? saved : entry)) : [...current, saved]
@@ -691,7 +700,7 @@ export function Dashboard({ initialData, initialMatch, initialView = "scoring" }
         </aside>
       </header>
 
-      {feedback ? <p className={feedback.includes("失敗") ? "error" : "muted"}>{feedback}</p> : null}
+      <FeedbackToast message={feedback} onClose={() => setFeedback("")} />
 
       <nav className="tab-bar" aria-label="ページ切り替え">
         <Link className={`tab ${activeTab === "scoring" ? "is-active" : ""}`} href="/score">スコア付け</Link>
@@ -780,7 +789,7 @@ export function Dashboard({ initialData, initialMatch, initialView = "scoring" }
             <div className="section-title"><h2>選手登録</h2><span>DB保存</span></div>
             <div className="player-form">
               <label>背番号<input value={playerForm.number} onChange={(event) => setPlayerForm({ ...playerForm, number: event.target.value })} /></label>
-              <label>名前<input value={playerForm.name} onChange={(event) => setPlayerForm({ ...playerForm, name: event.target.value })} /></label>
+              <label>選手名<input value={playerForm.name} aria-required="true" onChange={(event) => setPlayerForm({ ...playerForm, name: event.target.value })} /></label>
               <label>グループ<TagSelector compact value={playerForm.tags} onChange={(tags) => setPlayerForm({ ...playerForm, tags })} /></label>
               <button className="primary" type="button" onClick={() => void savePlayer()}>{editingPlayerId ? "選手を更新" : "選手を追加"}</button>
               <button className="ghost dark-ghost" type="button" onClick={() => void registerPlayersFromMatches()}>試合結果から登録</button>
@@ -1014,6 +1023,29 @@ function TagSelector({
         </label>
       ))}
     </div>
+  );
+}
+
+function FeedbackToast({ message, onClose }: { message: string; onClose: () => void }) {
+  if (!message) {
+    return null;
+  }
+
+  const isError = isFeedbackError(message);
+
+  return (
+    <div className="feedback-toast" role={isError ? "alert" : "status"} aria-live={isError ? "assertive" : "polite"}>
+      <p className={`feedback-notice ${isError ? "is-error" : "is-success"}`}>{message}</p>
+      <button className="feedback-toast-close" type="button" onClick={onClose} aria-label="通知を閉じる">
+        閉じる
+      </button>
+    </div>
+  );
+}
+
+function isFeedbackError(message: string) {
+  return ["失敗", "エラー", "必要", "未設定", "切れました", "ログインを更新しています"].some((keyword) =>
+    message.includes(keyword)
   );
 }
 

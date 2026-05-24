@@ -325,7 +325,7 @@ function ScorePlayersScene({ exitHref }: { exitHref: string }) {
           ))}
         </ul>
       </details>
-      <GuideCallout className="callout-player-form" number="1" text="背番号、名前、タグを入れて選手を追加します。" />
+      <GuideCallout className="callout-player-form" number="1" text="選手名とタグを入れて選手を追加します。背番号は任意です。" />
       <GuideCallout className="callout-player-import" number="2" text="試合結果から登録を押すと、既存得点者をまとめて選手登録できます。" />
       <GuideCallout className="callout-player-list" number="3" text="登録選手一覧は開閉でき、不要な選手は削除できます。" />
     </section>

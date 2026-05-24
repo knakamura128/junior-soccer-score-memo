@@ -281,6 +281,38 @@ input[type="month"] { min-width: 0; }
   border-color: rgba(177, 61, 32, 0.18);
   color: #8b2e28;
 }
+.feedback-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 18px;
+  z-index: 80;
+  width: min(680px, calc(100vw - 24px));
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(17,72,47,.12);
+  box-shadow: 0 18px 42px rgba(35, 49, 35, 0.18);
+  backdrop-filter: blur(12px);
+}
+.feedback-toast .feedback-notice {
+  flex: 1;
+  width: auto;
+}
+.feedback-toast-close {
+  flex: 0 0 auto;
+  min-height: 42px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--green-dark);
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
 .schedule-card-coach .feedback-notice.is-success {
   background: rgba(231, 241, 255, 0.98);
   border-color: rgba(33, 97, 173, 0.18);

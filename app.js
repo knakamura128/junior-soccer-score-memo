@@ -294,8 +294,8 @@ function addPlayer() {
   const name = elements.playerName.value.trim();
   const groups = getCheckedValues(elements.playerGroupTags);
 
-  if (!number || !name || groups.length === 0) {
-    window.alert("背番号、名前、グループタグを入力してください。");
+  if (!name || groups.length === 0) {
+    window.alert("選手名とグループタグを入力してください。");
     return;
   }
 
@@ -304,7 +304,7 @@ function addPlayer() {
     number,
     name,
     groups,
-    label: `${number} ${name}`,
+    label: number ? `${number} ${name}` : name,
   });
   persist(PLAYER_STORAGE_KEY, state.players);
 
@@ -327,7 +327,7 @@ function renderPlayers() {
 
   state.players.forEach((player) => {
     const fragment = elements.playerTemplate.content.cloneNode(true);
-    fragment.querySelector(".player-summary").textContent = `${player.number} ${player.name}`;
+    fragment.querySelector(".player-summary").textContent = player.number ? `${player.number} ${player.name}` : player.name;
     fragment.querySelector(".player-meta").textContent = `タグ: ${player.groups.join(", ")}`;
     fragment.querySelector(".player-remove").addEventListener("click", () => {
       state.players = state.players.filter((entry) => entry.id !== player.id);
@@ -756,7 +756,7 @@ function normalizePlayers(players) {
   return players.map((player) => ({
     ...player,
     groups: Array.isArray(player.groups) ? player.groups : player.group ? [player.group] : [],
-    label: player.label || `${player.number} ${player.name}`,
+    label: player.label || (player.number ? `${player.number} ${player.name}` : player.name),
   }));
 }
 
