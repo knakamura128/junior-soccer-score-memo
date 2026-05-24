@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { buildMatchesCsv, parseReferenceMatchesCsv } from "@/lib/match-csv";
 import {
@@ -167,16 +168,6 @@ export function Dashboard({ initialData, initialMatch, initialView = "scoring" }
     return counts;
   }, {});
   const detailMatch = detailMatchId ? matches.find((entry) => entry.id === detailMatchId) || null : null;
-
-  useEffect(() => {
-    if (!goalPlayer) {
-      return;
-    }
-    const stillVisible = filteredPlayers.some((player) => player.id === goalPlayer);
-    if (!stillVisible) {
-      setGoalPlayer("");
-    }
-  }, [goalPlayer, filteredPlayers]);
 
   useEffect(() => {
     let cancelled = false;
@@ -424,7 +415,7 @@ export function Dashboard({ initialData, initialMatch, initialView = "scoring" }
         ...current.events,
         {
           side,
-          player: side === "home" ? playerIdToStoredValue(goalPlayer, players, playerNameCounts) : "",
+          player: side === "home" ? scorerInputToStoredValue(goalPlayer, players, playerNameCounts) : "",
           period: current.periodMode === "halves" ? current.currentPeriod : "試合中",
           time: formatClock(timerSeconds)
         }
@@ -714,8 +705,8 @@ export function Dashboard({ initialData, initialMatch, initialView = "scoring" }
             <div className="form-grid">
               <label>大会名<input value={match.tournament} onChange={(event) => setMatch({ ...match, tournament: event.target.value })} /></label>
               <label>試合タイトル<input value={match.title} onChange={(event) => setMatch({ ...match, title: event.target.value })} /></label>
-              <label>相手チーム<input value={match.opponent} onChange={(event) => setMatch({ ...match, opponent: event.target.value })} /></label>
-              <label>年代タグ<TagSelector value={match.tags} onChange={(tags) => setMatch({ ...match, tags })} /></label>
+              <label><RequiredLabel>相手チーム</RequiredLabel><input value={match.opponent} onChange={(event) => setMatch({ ...match, opponent: event.target.value })} /></label>
+              <label><RequiredLabel>年代タグ</RequiredLabel><TagSelector value={match.tags} onChange={(tags) => setMatch({ ...match, tags })} /></label>
               <label>日付<input type="date" value={match.matchDate} onChange={(event) => setMatch({ ...match, matchDate: event.target.value })} /></label>
               <label>前後半<select value={match.periodMode} onChange={(event) => setMatch({ ...match, periodMode: event.target.value as "halves" | "single" })}><option value="halves">前後半あり</option><option value="single">前後半なし</option></select></label>
               {match.periodMode === "halves" ? <label>現在の区分<select value={match.currentPeriod} onChange={(event) => setMatch({ ...match, currentPeriod: event.target.value })}><option value="前半">前半</option><option value="後半">後半</option></select></label> : null}
@@ -736,7 +727,16 @@ export function Dashboard({ initialData, initialMatch, initialView = "scoring" }
               <div className="score-separator"><p className="period-indicator">{match.periodMode === "halves" ? match.currentPeriod : "試合中"}</p><span>vs</span></div>
               <div className="team-panel"><p className="team-label">相手チーム</p><p className="score">{match.awayScore}</p><button className="score-btn away" type="button" onClick={() => addGoal("away")}>失点を追加</button></div>
             </div>
-            <label>得点選手<select value={goalPlayer} onChange={(event) => setGoalPlayer(event.target.value)}><option value="">未選択</option>{filteredPlayers.map((player) => <option key={player.id} value={player.id}>{formatPlayerDisplay(player, playerNameCounts)}</option>)}</select></label>
+            <label>
+              得点選手
+              <input
+                list="goal-player-options"
+                value={goalPlayer}
+                placeholder="未選択"
+                onChange={(event) => setGoalPlayer(event.target.value)}
+              />
+              <PlayerOptions id="goal-player-options" players={filteredPlayers} counts={playerNameCounts} />
+            </label>
             <div className="timer-block">
               <div className="timer-display">{formatClock(timerSeconds)}</div>
               <div className="timer-actions">
@@ -757,17 +757,15 @@ export function Dashboard({ initialData, initialMatch, initialView = "scoring" }
                         <strong>{event.time} {event.period} {event.side === "home" ? "自チーム得点" : "相手チーム得点"}</strong>
                       </div>
                       {event.side === "home" ? (
-                        <select
-                          value={resolveStoredPlayerId(event.player, players, match.tags)}
-                          onChange={(e) => updateEventPlayer(index, playerIdToStoredValue(e.target.value, players, playerNameCounts))}
-                        >
-                          <option value="">未選択</option>
-                          {filteredPlayers.map((player) => (
-                            <option key={player.id} value={player.id}>
-                              {formatPlayerDisplay(player, playerNameCounts)}
-                            </option>
-                          ))}
-                        </select>
+                        <>
+                          <input
+                            list={`event-player-options-${index}`}
+                            value={resolveGoalPlayerName(event.player, players, match.tags, playerNameCounts)}
+                            placeholder="未選択"
+                            onChange={(e) => updateEventPlayer(index, e.target.value)}
+                          />
+                          <PlayerOptions id={`event-player-options-${index}`} players={filteredPlayers} counts={playerNameCounts} />
+                        </>
                       ) : (
                         <div className="muted">得点選手なし</div>
                       )}
@@ -789,8 +787,8 @@ export function Dashboard({ initialData, initialMatch, initialView = "scoring" }
             <div className="section-title"><h2>選手登録</h2><span>DB保存</span></div>
             <div className="player-form">
               <label>背番号<input value={playerForm.number} onChange={(event) => setPlayerForm({ ...playerForm, number: event.target.value })} /></label>
-              <label>選手名<input value={playerForm.name} aria-required="true" onChange={(event) => setPlayerForm({ ...playerForm, name: event.target.value })} /></label>
-              <label>グループ<TagSelector compact value={playerForm.tags} onChange={(tags) => setPlayerForm({ ...playerForm, tags })} /></label>
+              <label><RequiredLabel>選手名</RequiredLabel><input value={playerForm.name} aria-required="true" onChange={(event) => setPlayerForm({ ...playerForm, name: event.target.value })} /></label>
+              <label><RequiredLabel>グループ</RequiredLabel><TagSelector compact value={playerForm.tags} onChange={(tags) => setPlayerForm({ ...playerForm, tags })} /></label>
               <button className="primary" type="button" onClick={() => void savePlayer()}>{editingPlayerId ? "選手を更新" : "選手を追加"}</button>
               <button className="ghost dark-ghost" type="button" onClick={() => void registerPlayersFromMatches()}>試合結果から登録</button>
               {editingPlayerId ? <button className="ghost" type="button" onClick={cancelPlayerEditing}>編集を取り消す</button> : null}
@@ -1023,6 +1021,27 @@ function TagSelector({
         </label>
       ))}
     </div>
+  );
+}
+
+function RequiredLabel({ children }: { children: ReactNode }) {
+  return (
+    <span className="required-label">
+      {children}
+      <span className="required-mark" aria-label="必須">
+        ※
+      </span>
+    </span>
+  );
+}
+
+function PlayerOptions({ id, players, counts }: { id: string; players: Player[]; counts: Record<string, number> }) {
+  return (
+    <datalist id={id}>
+      {players.map((player) => (
+        <option key={player.id} value={formatPlayerDisplay(player, counts)} />
+      ))}
+    </datalist>
   );
 }
 
@@ -1262,6 +1281,19 @@ function playerIdToStoredValue(playerId: string, players: Player[], counts: Reco
     return "";
   }
   return formatPlayerDisplay(player, counts);
+}
+
+function scorerInputToStoredValue(value: string, players: Player[], counts: Record<string, number>) {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return "";
+  }
+  const playerById = playerIdToStoredValue(trimmed, players, counts);
+  if (playerById) {
+    return playerById;
+  }
+  const playerByDisplay = players.find((player) => formatPlayerDisplay(player, counts) === trimmed);
+  return playerByDisplay ? formatPlayerDisplay(playerByDisplay, counts) : trimmed;
 }
 
 function resolveGoalPlayerName(

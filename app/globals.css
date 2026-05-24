@@ -109,6 +109,15 @@ a {
 .pk-grid,.summary-grid { display: grid; gap: 10px; margin-top: 10px; }
 label { display: grid; gap: 8px; font-size: .95rem; font-weight: 500; }
 .form-grid label { gap: 5px; }
+.required-label {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+}
+.required-mark {
+  color: #c73722;
+  font-weight: 900;
+}
 input,select { width: 100%; min-width: 0; max-width: 100%; padding: 12px 14px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface-strong); color: var(--text); }
 input[type="date"],
 input[type="month"] { min-width: 0; }
