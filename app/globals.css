@@ -476,6 +476,19 @@ input[type="month"] { min-width: 0; }
   gap: 4px;
   justify-items: start;
 }
+.scorer-summary {
+  display: grid;
+  gap: 4px;
+  justify-items: start;
+  max-width: 28rem;
+}
+.scorer-summary-text {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .score-detail-button {
   font-size: 0.72rem;
   color: var(--green-dark);

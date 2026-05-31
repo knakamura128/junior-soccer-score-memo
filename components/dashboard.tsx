@@ -936,7 +936,14 @@ export function Dashboard({ initialData, initialMatch, initialView = "scoring" }
                       </div>
                     </td>
                     <td><span className={`badge ${getOutcomeBadgeClass(entry.outcome)}`}>{entry.outcome}</span></td>
-                    <td>{entry.goals.filter((goal) => goal.side === "home" && goal.player).map((goal) => resolveGoalPlayerName(goal.player as string, players, entry.tags, playerNameCounts)).join(", ") || "なし"}</td>
+                    <td>
+                      <ScorerSummary
+                        names={entry.goals
+                          .filter((goal) => goal.side === "home" && goal.player)
+                          .map((goal) => resolveGoalPlayerName(goal.player as string, players, entry.tags, playerNameCounts))}
+                        onDetail={() => setDetailMatchId(entry.id)}
+                      />
+                    </td>
                     {!compactResultsView ? <td><div>{entry.createdBy?.displayName || "不明"} / {entry.updatedBy?.displayName || "不明"}</div></td> : null}
                     {!compactResultsView ? <td>
                       <div className="action-row">
@@ -1144,6 +1151,27 @@ function GoalEventPlayerEditor({
   );
 }
 
+function ScorerSummary({ names, onDetail }: { names: string[]; onDetail: () => void }) {
+  const summary = buildScorerSummary(names);
+
+  if (names.length === 0) {
+    return <span>なし</span>;
+  }
+
+  return (
+    <div className="scorer-summary">
+      <span className="scorer-summary-text" title={summary.isTruncated ? names.join(", ") : undefined}>
+        {summary.text}
+      </span>
+      {summary.isTruncated ? (
+        <button className="text-button score-detail-button" type="button" onClick={onDetail}>
+          詳細
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
 function FeedbackToast({ message, onClose }: { message: string; onClose: () => void }) {
   if (!message) {
     return null;
@@ -1207,6 +1235,24 @@ function countGoalsByPeriod(goals: MatchRow["goals"], period: string) {
     home: periodGoals.filter((goal) => goal.side === "home").length,
     away: periodGoals.filter((goal) => goal.side === "away").length
   };
+}
+
+function buildScorerSummary(names: string[]) {
+  const fullText = names.join(", ");
+  if (names.length <= 4 && fullText.length <= 42) {
+    return { text: fullText, isTruncated: false };
+  }
+
+  const visibleText = names.slice(0, 4).join(", ");
+  const suffix = names.length > 4 ? ` 他${names.length - 4}人` : "";
+  return {
+    text: truncateText(`${visibleText}${suffix}`, 42),
+    isTruncated: true
+  };
+}
+
+function truncateText(value: string, maxLength: number) {
+  return value.length > maxLength ? `${value.slice(0, maxLength)}...` : value;
 }
 
 function joinTournamentAndTitle(entry: { tournament: string; title: string }) {
