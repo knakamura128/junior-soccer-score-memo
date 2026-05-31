@@ -718,8 +718,8 @@ export function Dashboard({ initialData, initialMatch, initialView = "scoring" }
               <label><RequiredLabel>相手チーム</RequiredLabel><input value={match.opponent} onChange={(event) => setMatch({ ...match, opponent: event.target.value })} /></label>
               <label><RequiredLabel>年代タグ</RequiredLabel><TagSelector value={match.tags} onChange={(tags) => setMatch({ ...match, tags })} /></label>
               <label>日付<input type="date" value={match.matchDate} onChange={(event) => setMatch({ ...match, matchDate: event.target.value })} /></label>
-              <label>
-                前後半
+              <div className="control-field">
+                <span className="control-label">前後半</span>
                 <SegmentedControl
                   ariaLabel="前後半"
                   options={[
@@ -735,10 +735,10 @@ export function Dashboard({ initialData, initialMatch, initialView = "scoring" }
                     }))
                   }
                 />
-              </label>
+              </div>
               {match.periodMode === "halves" ? (
-                <label>
-                  現在の区分
+                <div className="control-field">
+                  <span className="control-label">現在の区分</span>
                   <SegmentedControl
                     ariaLabel="現在の区分"
                     options={[
@@ -748,9 +748,20 @@ export function Dashboard({ initialData, initialMatch, initialView = "scoring" }
                     value={match.currentPeriod === "後半" ? "後半" : "前半"}
                     onChange={(currentPeriod) => setMatch((current) => ({ ...current, currentPeriod }))}
                   />
-                </label>
+                </div>
               ) : null}
-              <label>PK戦<select value={match.pkMode} onChange={(event) => setMatch({ ...match, pkMode: event.target.value as "off" | "on" })}><option value="off">なし</option><option value="on">あり</option></select></label>
+              <div className="control-field">
+                <span className="control-label">PK戦</span>
+                <SegmentedControl
+                  ariaLabel="PK戦"
+                  options={[
+                    { value: "off", label: "なし" },
+                    { value: "on", label: "あり" }
+                  ]}
+                  value={match.pkMode}
+                  onChange={(pkMode) => setMatch((current) => ({ ...current, pkMode: pkMode as "off" | "on" }))}
+                />
+              </div>
             </div>
             {match.pkMode === "on" ? (
               <div className="pk-grid">
