@@ -1239,20 +1239,15 @@ function countGoalsByPeriod(goals: MatchRow["goals"], period: string) {
 
 function buildScorerSummary(names: string[]) {
   const fullText = names.join(", ");
-  if (names.length <= 4 && fullText.length <= 42) {
+  if (names.length < 5) {
     return { text: fullText, isTruncated: false };
   }
 
   const visibleText = names.slice(0, 4).join(", ");
-  const suffix = names.length > 4 ? ` 他${names.length - 4}人` : "";
   return {
-    text: truncateText(`${visibleText}${suffix}`, 42),
+    text: `${visibleText} 他${names.length - 4}人`,
     isTruncated: true
   };
-}
-
-function truncateText(value: string, maxLength: number) {
-  return value.length > maxLength ? `${value.slice(0, maxLength)}...` : value;
 }
 
 function joinTournamentAndTitle(entry: { tournament: string; title: string }) {
