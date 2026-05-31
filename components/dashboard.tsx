@@ -170,6 +170,16 @@ export function Dashboard({ initialData, initialMatch, initialView = "scoring" }
   const detailMatch = detailMatchId ? matches.find((entry) => entry.id === detailMatchId) || null : null;
 
   useEffect(() => {
+    if (!goalPlayer) {
+      return;
+    }
+    const stillVisible = filteredPlayers.some((player) => player.id === goalPlayer);
+    if (!stillVisible) {
+      setGoalPlayer("");
+    }
+  }, [goalPlayer, filteredPlayers]);
+
+  useEffect(() => {
     let cancelled = false;
     async function initLiff() {
       const liffId = process.env.NEXT_PUBLIC_LIFF_ID;
@@ -415,7 +425,7 @@ export function Dashboard({ initialData, initialMatch, initialView = "scoring" }
         ...current.events,
         {
           side,
-          player: side === "home" ? scorerInputToStoredValue(goalPlayer, players, playerNameCounts) : "",
+          player: side === "home" ? playerIdToStoredValue(goalPlayer, players, playerNameCounts) : "",
           period: current.periodMode === "halves" ? current.currentPeriod : "試合中",
           time: formatClock(timerSeconds)
         }
@@ -727,16 +737,7 @@ export function Dashboard({ initialData, initialMatch, initialView = "scoring" }
               <div className="score-separator"><p className="period-indicator">{match.periodMode === "halves" ? match.currentPeriod : "試合中"}</p><span>vs</span></div>
               <div className="team-panel"><p className="team-label">相手チーム</p><p className="score">{match.awayScore}</p><button className="score-btn away" type="button" onClick={() => addGoal("away")}>失点を追加</button></div>
             </div>
-            <label>
-              得点選手
-              <input
-                list="goal-player-options"
-                value={goalPlayer}
-                placeholder="未選択"
-                onChange={(event) => setGoalPlayer(event.target.value)}
-              />
-              <PlayerOptions id="goal-player-options" players={filteredPlayers} counts={playerNameCounts} />
-            </label>
+            <label>得点選手<select value={goalPlayer} onChange={(event) => setGoalPlayer(event.target.value)}><option value="">未選択</option>{filteredPlayers.map((player) => <option key={player.id} value={player.id}>{formatPlayerDisplay(player, playerNameCounts)}</option>)}</select></label>
             <div className="timer-block">
               <div className="timer-display">{formatClock(timerSeconds)}</div>
               <div className="timer-actions">
@@ -757,15 +758,14 @@ export function Dashboard({ initialData, initialMatch, initialView = "scoring" }
                         <strong>{event.time} {event.period} {event.side === "home" ? "自チーム得点" : "相手チーム得点"}</strong>
                       </div>
                       {event.side === "home" ? (
-                        <>
-                          <input
-                            list={`event-player-options-${index}`}
-                            value={resolveGoalPlayerName(event.player, players, match.tags, playerNameCounts)}
-                            placeholder="未選択"
-                            onChange={(e) => updateEventPlayer(index, e.target.value)}
-                          />
-                          <PlayerOptions id={`event-player-options-${index}`} players={filteredPlayers} counts={playerNameCounts} />
-                        </>
+                        <GoalEventPlayerEditor
+                          value={event.player}
+                          players={filteredPlayers}
+                          allPlayers={players}
+                          counts={playerNameCounts}
+                          matchTags={match.tags}
+                          onChange={(player) => updateEventPlayer(index, player)}
+                        />
                       ) : (
                         <div className="muted">得点選手なし</div>
                       )}
@@ -1035,13 +1035,43 @@ function RequiredLabel({ children }: { children: ReactNode }) {
   );
 }
 
-function PlayerOptions({ id, players, counts }: { id: string; players: Player[]; counts: Record<string, number> }) {
+function GoalEventPlayerEditor({
+  value,
+  players,
+  allPlayers,
+  counts,
+  matchTags,
+  onChange
+}: {
+  value: string;
+  players: Player[];
+  allPlayers: Player[];
+  counts: Record<string, number>;
+  matchTags: string[];
+  onChange: (player: string) => void;
+}) {
+  const resolvedPlayerId = resolveStoredPlayerId(value, allPlayers, matchTags);
+  const selectedPlayer = resolvedPlayerId ? allPlayers.find((player) => player.id === resolvedPlayerId) : null;
+  const options = selectedPlayer && !players.some((player) => player.id === selectedPlayer.id) ? [...players, selectedPlayer] : players;
+  const showsManualInput = !resolvedPlayerId;
+
   return (
-    <datalist id={id}>
-      {players.map((player) => (
-        <option key={player.id} value={formatPlayerDisplay(player, counts)} />
-      ))}
-    </datalist>
+    <div className="goal-player-editor">
+      <select
+        value={resolvedPlayerId}
+        onChange={(event) => onChange(playerIdToStoredValue(event.target.value, allPlayers, counts))}
+      >
+        <option value="">候補外・手入力</option>
+        {options.map((player) => (
+          <option key={player.id} value={player.id}>
+            {formatPlayerDisplay(player, counts)}
+          </option>
+        ))}
+      </select>
+      {showsManualInput ? (
+        <input value={value} placeholder="候補外の得点者を入力" onChange={(event) => onChange(event.target.value)} />
+      ) : null}
+    </div>
   );
 }
 
@@ -1281,19 +1311,6 @@ function playerIdToStoredValue(playerId: string, players: Player[], counts: Reco
     return "";
   }
   return formatPlayerDisplay(player, counts);
-}
-
-function scorerInputToStoredValue(value: string, players: Player[], counts: Record<string, number>) {
-  const trimmed = value.trim();
-  if (!trimmed) {
-    return "";
-  }
-  const playerById = playerIdToStoredValue(trimmed, players, counts);
-  if (playerById) {
-    return playerById;
-  }
-  const playerByDisplay = players.find((player) => formatPlayerDisplay(player, counts) === trimmed);
-  return playerByDisplay ? formatPlayerDisplay(playerByDisplay, counts) : trimmed;
 }
 
 function resolveGoalPlayerName(
