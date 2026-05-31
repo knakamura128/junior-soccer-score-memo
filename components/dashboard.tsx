@@ -1152,17 +1152,17 @@ function GoalEventPlayerEditor({
 }
 
 function ScorerSummary({ names, onDetail }: { names: string[]; onDetail: () => void }) {
-  const summary = buildScorerSummary(names);
-
   if (names.length === 0) {
     return <span>なし</span>;
   }
+
+  const summary = buildScorerSummary(names);
 
   return (
     <div className="scorer-summary">
       <span
         className={`scorer-summary-text ${summary.isTruncated ? "is-truncated" : ""}`}
-        title={summary.isTruncated ? names.join(", ") : undefined}
+        title={summary.isTruncated ? summary.fullText : undefined}
       >
         {summary.text}
       </span>
@@ -1241,16 +1241,39 @@ function countGoalsByPeriod(goals: MatchRow["goals"], period: string) {
 }
 
 function buildScorerSummary(names: string[]) {
-  const fullText = names.join(", ");
-  if (names.length < 5) {
-    return { text: fullText, isTruncated: false };
+  const scorers = countScorers(names);
+  const fullText = scorers.map(formatScorerCount).join(", ");
+
+  if (scorers.length < 5) {
+    return { text: fullText, fullText, isTruncated: false };
   }
 
-  const visibleText = names.slice(0, 4).join(", ");
   return {
-    text: `${visibleText} 他${names.length - 4}人`,
+    text: `得点者${scorers.length}人`,
+    fullText,
     isTruncated: true
   };
+}
+
+function countScorers(names: string[]) {
+  const scorers: Array<{ name: string; goals: number }> = [];
+  const indexes = new Map<string, number>();
+
+  names.forEach((name) => {
+    const index = indexes.get(name);
+    if (index === undefined) {
+      indexes.set(name, scorers.length);
+      scorers.push({ name, goals: 1 });
+      return;
+    }
+    scorers[index].goals += 1;
+  });
+
+  return scorers;
+}
+
+function formatScorerCount(scorer: { name: string; goals: number }) {
+  return scorer.goals > 1 ? `${scorer.name}×${scorer.goals}` : scorer.name;
 }
 
 function joinTournamentAndTitle(entry: { tournament: string; title: string }) {
