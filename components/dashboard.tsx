@@ -718,8 +718,38 @@ export function Dashboard({ initialData, initialMatch, initialView = "scoring" }
               <label><RequiredLabel>相手チーム</RequiredLabel><input value={match.opponent} onChange={(event) => setMatch({ ...match, opponent: event.target.value })} /></label>
               <label><RequiredLabel>年代タグ</RequiredLabel><TagSelector value={match.tags} onChange={(tags) => setMatch({ ...match, tags })} /></label>
               <label>日付<input type="date" value={match.matchDate} onChange={(event) => setMatch({ ...match, matchDate: event.target.value })} /></label>
-              <label>前後半<select value={match.periodMode} onChange={(event) => setMatch({ ...match, periodMode: event.target.value as "halves" | "single" })}><option value="halves">前後半あり</option><option value="single">前後半なし</option></select></label>
-              {match.periodMode === "halves" ? <label>現在の区分<select value={match.currentPeriod} onChange={(event) => setMatch({ ...match, currentPeriod: event.target.value })}><option value="前半">前半</option><option value="後半">後半</option></select></label> : null}
+              <label>
+                前後半
+                <SegmentedControl
+                  ariaLabel="前後半"
+                  options={[
+                    { value: "halves", label: "前後半あり" },
+                    { value: "single", label: "前後半なし" }
+                  ]}
+                  value={match.periodMode}
+                  onChange={(periodMode) =>
+                    setMatch((current) => ({
+                      ...current,
+                      periodMode: periodMode as "halves" | "single",
+                      currentPeriod: periodMode === "halves" ? (current.currentPeriod === "後半" ? "後半" : "前半") : "試合中"
+                    }))
+                  }
+                />
+              </label>
+              {match.periodMode === "halves" ? (
+                <label>
+                  現在の区分
+                  <SegmentedControl
+                    ariaLabel="現在の区分"
+                    options={[
+                      { value: "前半", label: "前半" },
+                      { value: "後半", label: "後半" }
+                    ]}
+                    value={match.currentPeriod === "後半" ? "後半" : "前半"}
+                    onChange={(currentPeriod) => setMatch((current) => ({ ...current, currentPeriod }))}
+                  />
+                </label>
+              ) : null}
               <label>PK戦<select value={match.pkMode} onChange={(event) => setMatch({ ...match, pkMode: event.target.value as "off" | "on" })}><option value="off">なし</option><option value="on">あり</option></select></label>
             </div>
             {match.pkMode === "on" ? (
@@ -1019,6 +1049,34 @@ function TagSelector({
           />
           <span>{option}</span>
         </label>
+      ))}
+    </div>
+  );
+}
+
+function SegmentedControl({
+  ariaLabel,
+  options,
+  value,
+  onChange
+}: {
+  ariaLabel: string;
+  options: Array<{ value: string; label: string }>;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <div className="segmented-control" role="group" aria-label={ariaLabel}>
+      {options.map((option) => (
+        <button
+          key={option.value}
+          className={`segmented-option ${value === option.value ? "is-active" : ""}`}
+          type="button"
+          aria-pressed={value === option.value}
+          onClick={() => onChange(option.value)}
+        >
+          {option.label}
+        </button>
       ))}
     </div>
   );
