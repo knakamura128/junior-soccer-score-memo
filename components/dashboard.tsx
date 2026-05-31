@@ -1160,7 +1160,10 @@ function ScorerSummary({ names, onDetail }: { names: string[]; onDetail: () => v
 
   return (
     <div className="scorer-summary">
-      <span className="scorer-summary-text" title={summary.isTruncated ? names.join(", ") : undefined}>
+      <span
+        className={`scorer-summary-text ${summary.isTruncated ? "is-truncated" : ""}`}
+        title={summary.isTruncated ? names.join(", ") : undefined}
+      >
         {summary.text}
       </span>
       {summary.isTruncated ? (

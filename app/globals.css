@@ -485,6 +485,9 @@ input[type="month"] { min-width: 0; }
 .scorer-summary-text {
   display: block;
   max-width: 100%;
+  white-space: normal;
+}
+.scorer-summary-text.is-truncated {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
