@@ -46,6 +46,7 @@ type DashboardProps = {
   initialData: {
     players: Player[];
     matches: MatchRow[];
+    dataLoadError?: string;
   };
   initialMatch?: MatchPayload;
   initialView?: "scoring" | "results";
@@ -83,7 +84,7 @@ export function Dashboard({ initialData, initialMatch, initialView = "scoring" }
   const [compactResultsView, setCompactResultsView] = useState(true);
   const [auth, setAuth] = useState<AuthState>({ status: "loading", idToken: "", accessToken: "", displayName: "" });
   const isLoggedIn = Boolean(auth.idToken || auth.accessToken);
-  const [feedback, setFeedback] = useState<string>("");
+  const [feedback, setFeedback] = useState<string>(initialData.dataLoadError || "");
   const [detailMatchId, setDetailMatchId] = useState<string | null>(null);
 
   const timerSeconds = Math.min(

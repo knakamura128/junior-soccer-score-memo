@@ -4,29 +4,42 @@ import { serializeMatchDate, type MatchPayload } from "@/lib/match-format";
 import { ensureAnnualPlayerPromotion, normalizeExistingPlayers } from "@/lib/player-promotion";
 
 export async function getScoreInitialData() {
-  await normalizeExistingPlayers();
-  await ensureAnnualPlayerPromotion();
-  const [players, matches] = await Promise.all([
-    prisma.player.findMany({ orderBy: [{ createdAt: "asc" }] }),
-    prisma.match.findMany({
-      include: {
-        goals: { orderBy: { createdAt: "asc" } },
-        createdBy: true,
-        updatedBy: true
-      },
-      orderBy: [{ matchDate: "desc" }, { createdAt: "desc" }]
-    })
-  ]);
+  try {
+    await normalizeExistingPlayers();
+    await ensureAnnualPlayerPromotion();
+    const [players, matches] = await Promise.all([
+      prisma.player.findMany({ orderBy: [{ createdAt: "asc" }] }),
+      prisma.match.findMany({
+        include: {
+          goals: { orderBy: { createdAt: "asc" } },
+          createdBy: true,
+          updatedBy: true
+        },
+        orderBy: [{ matchDate: "desc" }, { createdAt: "desc" }]
+      })
+    ]);
 
-  return {
-    players,
-    matches: matches.map((match) => ({
-      ...match,
-      matchDate: serializeMatchDate(match.matchDate),
-      createdAt: match.createdAt.toISOString(),
-      updatedAt: match.updatedAt.toISOString()
-    }))
-  };
+    return {
+      players,
+      matches: matches.map((match) => ({
+        ...match,
+        matchDate: serializeMatchDate(match.matchDate),
+        createdAt: match.createdAt.toISOString(),
+        updatedAt: match.updatedAt.toISOString()
+      }))
+    };
+  } catch (error) {
+    if (process.env.NODE_ENV !== "development") {
+      throw error;
+    }
+
+    console.warn("Failed to load score data from database. Falling back to empty local score data.");
+    return {
+      players: [],
+      matches: [],
+      dataLoadError: "ローカル環境からDBに接続できないため、空データで表示しています。保存や更新にはDB接続が必要です。"
+    };
+  }
 }
 
 export function buildPrefill(params: Record<string, string | string[] | undefined>): MatchPayload | undefined {
