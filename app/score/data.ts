@@ -29,15 +29,11 @@ export async function getScoreInitialData() {
       }))
     };
   } catch (error) {
-    if (process.env.NODE_ENV !== "development") {
-      throw error;
-    }
-
-    console.warn("Failed to load score data from database. Falling back to empty local score data.");
+    console.warn("Failed to load score data from database. Falling back to empty score data.");
     return {
       players: [],
       matches: [],
-      dataLoadError: "ローカル環境からDBに接続できないため、空データで表示しています。保存や更新にはDB接続が必要です。"
+      dataLoadError: "DBに接続できないため、空データで表示しています。保存や更新にはDB接続が必要です。"
     };
   }
 }
