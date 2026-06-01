@@ -27,12 +27,16 @@ const createSchema = z.object({
 });
 
 export async function GET() {
-  const schedules = await prisma.scheduleEntry.findMany({
-    include: scheduleEntryInclude,
-    orderBy: [{ eventDate: "asc" }, { startTime: "asc" }, { createdAt: "asc" }]
-  });
+  try {
+    const schedules = await prisma.scheduleEntry.findMany({
+      include: scheduleEntryInclude,
+      orderBy: [{ eventDate: "asc" }, { startTime: "asc" }, { createdAt: "asc" }]
+    });
 
-  return NextResponse.json(schedules.map(serializeScheduleEntry));
+    return NextResponse.json(schedules.map(serializeScheduleEntry));
+  } catch {
+    return NextResponse.json([]);
+  }
 }
 
 export async function POST(request: Request) {

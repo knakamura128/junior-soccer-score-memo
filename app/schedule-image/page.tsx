@@ -78,37 +78,42 @@ async function getScheduleRows(month: string, tag: string) {
   const monthStart = new Date(`${month}-01T00:00:00+09:00`);
   const nextMonth = new Date(monthStart);
   nextMonth.setUTCMonth(nextMonth.getUTCMonth() + 1);
-  const rows = await prisma.scheduleEntry.findMany({
-    where: {
-      eventDate: {
-        gte: monthStart,
-        lt: nextMonth
+  try {
+    const rows = await prisma.scheduleEntry.findMany({
+      where: {
+        eventDate: {
+          gte: monthStart,
+          lt: nextMonth
+        },
+        ...(tag !== "すべて" ? { tags: { has: tag } } : {})
       },
-      ...(tag !== "すべて" ? { tags: { has: tag } } : {})
-    },
-    orderBy: [{ eventDate: "asc" }, { startTime: "asc" }, { createdAt: "asc" }]
-  });
-
-  return rows
-    .map((entry) => ({
-      id: entry.id,
-      eventDate: serializeScheduleDate(entry.eventDate),
-      tags: entry.tags,
-      startTime: entry.startTime,
-      endTime: entry.endTime,
-      location: entry.location,
-      content: entry.content,
-      note: entry.note
-    }))
-    .sort((left, right) => {
-      const dateCompare = left.eventDate.localeCompare(right.eventDate);
-      if (dateCompare !== 0) return dateCompare;
-      const timeCompare = compareStartTime(left.startTime, right.startTime);
-      if (timeCompare !== 0) return timeCompare;
-      const tagCompare = primaryTagRank(left.tags) - primaryTagRank(right.tags);
-      if (tagCompare !== 0) return tagCompare;
-      return left.content.localeCompare(right.content, "ja");
+      orderBy: [{ eventDate: "asc" }, { startTime: "asc" }, { createdAt: "asc" }]
     });
+
+    return rows
+      .map((entry) => ({
+        id: entry.id,
+        eventDate: serializeScheduleDate(entry.eventDate),
+        tags: entry.tags,
+        startTime: entry.startTime,
+        endTime: entry.endTime,
+        location: entry.location,
+        content: entry.content,
+        note: entry.note
+      }))
+      .sort((left, right) => {
+        const dateCompare = left.eventDate.localeCompare(right.eventDate);
+        if (dateCompare !== 0) return dateCompare;
+        const timeCompare = compareStartTime(left.startTime, right.startTime);
+        if (timeCompare !== 0) return timeCompare;
+        const tagCompare = primaryTagRank(left.tags) - primaryTagRank(right.tags);
+        if (tagCompare !== 0) return tagCompare;
+        return left.content.localeCompare(right.content, "ja");
+      });
+  } catch {
+    console.warn("Failed to load schedule image data from database. Falling back to empty schedule data.");
+    return [];
+  }
 }
 
 function getCurrentTokyoMonth() {

@@ -95,6 +95,7 @@ type ScheduleRow = {
 type ScheduleDashboardProps = {
   initialData: {
     schedules: ScheduleRow[];
+    dataLoadError?: string;
   };
   audience?: AttendanceAudienceMode;
 };
@@ -114,7 +115,7 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
   const [selectedMonth, setSelectedMonth] = useState(getCurrentTokyoMonth());
   const [filterTag, setFilterTag] = useState("すべて");
   const [auth, setAuth] = useState<AuthState>({ status: "loading", idToken: "", accessToken: "", displayName: "", isInClient: false });
-  const [feedback, setFeedback] = useState("");
+  const [feedback, setFeedback] = useState(initialData.dataLoadError || "");
   const [modalEntryId, setModalEntryId] = useState<string | null>(null);
   const [modalTab, setModalTab] = useState<ModalTab>("attendance-input");
   const [attendanceNote, setAttendanceNote] = useState("");
