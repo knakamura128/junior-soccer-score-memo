@@ -234,9 +234,6 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
   });
   const compactView = scheduleViewMode !== "actions";
   const imageViewHref = buildScheduleImageHref(selectedMonth, filterTag, audience);
-  const openScheduleImageView = () => {
-    window.open(imageViewHref, "_blank", "noopener,noreferrer");
-  };
 
   const modalEntry = schedules.find((entry) => entry.id === modalEntryId) || null;
   const currentAttendance =
@@ -972,24 +969,10 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
                       key={entry.id}
                       className={[
                         entry.isMatch ? "schedule-is-match" : "",
-                        isDateGroupStart ? "schedule-date-group-start" : "schedule-date-group-continue",
-                        compactView ? "schedule-row-open-image" : ""
+                        isDateGroupStart ? "schedule-date-group-start" : "schedule-date-group-continue"
                       ]
                         .filter(Boolean)
                         .join(" ")}
-                      role={compactView ? "link" : undefined}
-                      tabIndex={compactView ? 0 : undefined}
-                      onClick={compactView ? openScheduleImageView : undefined}
-                      onKeyDown={
-                        compactView
-                          ? (event) => {
-                              if (event.key === "Enter" || event.key === " ") {
-                                event.preventDefault();
-                                openScheduleImageView();
-                              }
-                            }
-                          : undefined
-                      }
                     >
                       <td className={editedFields.has("eventDate") ? "edited-cell" : ""}>{renderScheduleDate(entry.eventDate)}</td>
                       <td className={editedFields.has("tags") ? "edited-cell" : ""}>

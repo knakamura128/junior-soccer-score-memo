@@ -643,13 +643,6 @@ input[type="month"] { min-width: 0; }
 .schedule-actions { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
 .score-link-inline { color: var(--green-dark); }
 .schedule-is-match { background: rgba(27,107,69,.045); }
-.schedule-row-open-image {
-  cursor: zoom-in;
-}
-.schedule-row-open-image:hover td,
-.schedule-row-open-image:focus-visible td {
-  background: rgba(35, 87, 58, 0.08);
-}
 .schedule-image-page {
   min-height: 100vh;
   padding: 8px;
