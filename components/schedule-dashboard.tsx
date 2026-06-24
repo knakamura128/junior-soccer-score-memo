@@ -14,6 +14,7 @@ import {
   type AttendanceStatus,
   type SchedulePayload
 } from "@/lib/schedule-format";
+import { ModuleNavigation } from "@/components/module-navigation";
 const SCHEDULE_ROW_TAG_ORDER = ["キッズ", "1年", "2年", "3年", "4年", "5年", "6年"] as const;
 const SCHEDULE_BADGE_ORDER = ["低学年", "中学年", "高学年", "キッズ", "1年", "2年", "3年", "4年", "5年", "6年"] as const;
 const CARPOOL_CHOICES = ["配車希望", "現地集合", "自家用車同乗可"] as const;
@@ -109,8 +110,6 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
   const audienceLabel = isCoachPage ? "コーチ" : "保護者";
   const pageTitle = isCoachPage ? "FC KUMANO コーチ出欠表" : "FC KUMANO 保護者出欠表";
   const authMeta = isCoachPage ? "コーチ用の出欠入力者として記録されます" : "出欠入力と修正者として記録されます";
-  const alternateHref = isCoachPage ? "/" : "/coaches";
-  const alternateLabel = isCoachPage ? "保護者用へ" : "コーチ用へ";
   const viewStorageKey = `${SCHEDULE_VIEW_STORAGE_KEY_PREFIX}:${audience}`;
   const [schedules, setSchedules] = useState(initialData.schedules);
   const [selectedMonth, setSelectedMonth] = useState(getCurrentTokyoMonth());
@@ -854,15 +853,11 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
             <Link href="/guide" className="ghost link-chip">
               使い方ガイド
             </Link>
-            <Link href={alternateHref} className={`ghost link-chip ${isCoachPage ? "coach-link-chip" : ""}`}>
-              {alternateLabel}
-            </Link>
-            <Link href="/score" className="ghost link-chip">
-              スコア管理へ
-            </Link>
           </div>
         </aside>
       </header>
+
+      <ModuleNavigation current={isCoachPage ? "schedule-coach" : "schedule-parent"} />
 
       <FeedbackNotice message={feedback} />
 

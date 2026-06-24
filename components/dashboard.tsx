@@ -11,6 +11,7 @@ import {
   getCurrentTokyoMonth,
   type MatchPayload
 } from "@/lib/match-format";
+import { ModuleNavigation } from "@/components/module-navigation";
 import { createEmptyMatch } from "@/lib/score-draft";
 
 type Player = {
@@ -692,15 +693,11 @@ export function Dashboard({ initialData, initialMatch, initialView = "scoring" }
             <Link href="/guide" className="ghost link-chip">
               使い方ガイド
             </Link>
-            <Link href="/" className="ghost link-chip">
-              スケジュール管理へ
-            </Link>
-            <Link href="/coaches" className="ghost link-chip coach-link-chip">
-              コーチ出欠表へ
-            </Link>
           </div>
         </aside>
       </header>
+
+      <ModuleNavigation current={activeTab === "scoring" ? "score-scoring" : "score-results"} />
 
       <FeedbackToast message={feedback} onClose={() => setFeedback("")} />
 
