@@ -15,6 +15,13 @@ import {
   type SchedulePayload
 } from "@/lib/schedule-format";
 import { ModuleNavigation } from "@/components/module-navigation";
+import {
+  completePendingLineLoginHandoff,
+  fetchLiffSession,
+  hasPendingLineLoginHandoff,
+  loginWithLineRedirect,
+  type LiffClientSession
+} from "@/lib/line-liff-client";
 const SCHEDULE_ROW_TAG_ORDER = ["キッズ", "1年", "2年", "3年", "4年", "5年", "6年"] as const;
 const SCHEDULE_BADGE_ORDER = ["低学年", "中学年", "高学年", "キッズ", "1年", "2年", "3年", "4年", "5年", "6年"] as const;
 const CARPOOL_CHOICES = ["配車希望", "現地集合", "自家用車同乗可"] as const;
@@ -26,16 +33,7 @@ const SCHEDULE_VIEW_STORAGE_KEY_PREFIX = "schedule-dashboard-view";
 
 type AttendanceAudienceMode = keyof typeof ATTENDANCE_AUDIENCES;
 
-type AuthState = {
-  status: "loading" | "ready" | "error";
-  idToken: string;
-  accessToken: string;
-  displayName: string;
-  isInClient: boolean;
-  pictureUrl?: string;
-  lineUserId?: string;
-  error?: string;
-};
+type AuthState = LiffClientSession;
 
 type UserLite = {
   id: string;
@@ -141,7 +139,8 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
     let cancelled = false;
     async function initLiff() {
       try {
-        const session = await fetchLiffSession();
+        const handoffSession = await completePendingLineLoginHandoff();
+        const session = handoffSession || (await fetchLiffSession());
         if (!cancelled) {
           setAuth(session);
         }
@@ -161,6 +160,31 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
     void initLiff();
     return () => {
       cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    async function completeHandoff() {
+      if (!hasPendingLineLoginHandoff()) {
+        return;
+      }
+      const session = await completePendingLineLoginHandoff();
+      if (session) {
+        setAuth(session);
+        setFeedback("LINEログインが完了しました。");
+      }
+    }
+
+    const handleFocus = () => {
+      void completeHandoff();
+    };
+    window.addEventListener("focus", handleFocus);
+    document.addEventListener("visibilitychange", handleFocus);
+    const intervalId = window.setInterval(handleFocus, 2500);
+    return () => {
+      window.removeEventListener("focus", handleFocus);
+      document.removeEventListener("visibilitychange", handleFocus);
+      window.clearInterval(intervalId);
     };
   }, []);
 
@@ -284,21 +308,19 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
 
   async function loginWithLine() {
     try {
-      const liffId = process.env.NEXT_PUBLIC_LIFF_ID;
-      if (!liffId) {
-        throw new Error("NEXT_PUBLIC_LIFF_ID が未設定です。");
+      const result = await loginWithLineRedirect();
+      if (result === "already-logged-in") {
+        setAuth(await fetchLiffSession());
+        return;
       }
-      const { default: liff } = await import("@line/liff");
-      await liff.init({ liffId });
-      if (liff.isLoggedIn()) {
-        const idToken = liff.getIDToken() || "";
-        if (idToken) {
-          window.location.reload();
-          return;
-        }
-        liff.logout();
+      if (hasPendingLineLoginHandoff()) {
+        setAuth((current) => ({
+          ...current,
+          status: "ready",
+          displayName: "LINE認証待ち",
+          error: "LINEアプリまたはSafariで認証後、ホーム画面のFC KUMANOアプリに戻るとログインが完了します。"
+        }));
       }
-      liff.login({ redirectUri: window.location.href });
     } catch (error) {
       setAuth({
         status: "error",
@@ -1470,37 +1492,6 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
       ) : null}
     </div>
   );
-}
-
-async function fetchLiffSession(): Promise<AuthState> {
-  const liffId = process.env.NEXT_PUBLIC_LIFF_ID;
-  if (!liffId) {
-    return { status: "error", idToken: "", accessToken: "", displayName: "", isInClient: false, error: "NEXT_PUBLIC_LIFF_ID が未設定です。" };
-  }
-
-  const { default: liff } = await import("@line/liff");
-  await liff.init({ liffId });
-  const isInClient = liff.isInClient();
-
-  if (!liff.isLoggedIn()) {
-    return { status: "ready", idToken: "", accessToken: "", displayName: "未ログイン", isInClient };
-  }
-
-  const [profile, idToken, accessToken] = await Promise.all([
-    liff.getProfile(),
-    Promise.resolve(liff.getIDToken() || ""),
-    Promise.resolve(liff.getAccessToken() || "")
-  ]);
-
-  return {
-    status: "ready",
-    idToken,
-    accessToken,
-    displayName: profile.displayName,
-    isInClient,
-    pictureUrl: profile.pictureUrl,
-    lineUserId: profile.userId
-  };
 }
 
 function buildLiffErrorMessage(error: unknown, fallback: string) {

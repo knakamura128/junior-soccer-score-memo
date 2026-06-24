@@ -13,6 +13,13 @@ import {
 } from "@/lib/match-format";
 import { ModuleNavigation } from "@/components/module-navigation";
 import { createEmptyMatch } from "@/lib/score-draft";
+import {
+  completePendingLineLoginHandoff,
+  fetchLiffSession,
+  hasPendingLineLoginHandoff,
+  loginWithLineRedirect,
+  type LiffClientSession
+} from "@/lib/line-liff-client";
 
 type Player = {
   id: string;
@@ -53,15 +60,7 @@ type DashboardProps = {
   initialView?: "scoring" | "results";
 };
 
-type AuthState = {
-  status: "loading" | "ready" | "error";
-  idToken: string;
-  accessToken: string;
-  displayName: string;
-  pictureUrl?: string;
-  lineUserId?: string;
-  error?: string;
-};
+type AuthState = LiffClientSession;
 
 const DRAFT_STORAGE_KEY = "score-mini-app-next-draft";
 const MAX_TIMER_SECONDS = 60 * 60;
@@ -83,7 +82,7 @@ export function Dashboard({ initialData, initialMatch, initialView = "scoring" }
   const [filterMonth, setFilterMonth] = useState(() => getCurrentTokyoMonth());
   const [sortValue, setSortValue] = useState("date-desc");
   const [compactResultsView, setCompactResultsView] = useState(true);
-  const [auth, setAuth] = useState<AuthState>({ status: "loading", idToken: "", accessToken: "", displayName: "" });
+  const [auth, setAuth] = useState<AuthState>({ status: "loading", idToken: "", accessToken: "", displayName: "", isInClient: false });
   const isLoggedIn = Boolean(auth.idToken || auth.accessToken);
   const [feedback, setFeedback] = useState<string>(initialData.dataLoadError || "");
   const [detailMatchId, setDetailMatchId] = useState<string | null>(null);
@@ -184,32 +183,11 @@ export function Dashboard({ initialData, initialMatch, initialView = "scoring" }
   useEffect(() => {
     let cancelled = false;
     async function initLiff() {
-      const liffId = process.env.NEXT_PUBLIC_LIFF_ID;
-      if (!liffId) {
-        setAuth({ status: "error", idToken: "", accessToken: "", displayName: "", error: "NEXT_PUBLIC_LIFF_ID が未設定です。" });
-        return;
-      }
       try {
-        const { default: liff } = await import("@line/liff");
-        await liff.init({ liffId });
-        if (!liff.isLoggedIn()) {
-          setAuth({ status: "ready", idToken: "", accessToken: "", displayName: "未ログイン" });
-          return;
-        }
-        const [profile, idToken, accessToken] = await Promise.all([
-          liff.getProfile(),
-          Promise.resolve(liff.getIDToken() || ""),
-          Promise.resolve(liff.getAccessToken() || "")
-        ]);
+        const handoffSession = await completePendingLineLoginHandoff();
+        const session = handoffSession || (await fetchLiffSession());
         if (!cancelled) {
-          setAuth({
-            status: "ready",
-            idToken,
-            accessToken,
-            displayName: profile.displayName,
-            pictureUrl: profile.pictureUrl,
-            lineUserId: profile.userId
-          });
+          setAuth(session);
         }
       } catch (error) {
         if (!cancelled) {
@@ -218,6 +196,7 @@ export function Dashboard({ initialData, initialMatch, initialView = "scoring" }
             idToken: "",
             accessToken: "",
             displayName: "",
+            isInClient: false,
             error: buildDashboardLiffErrorMessage(error, "LIFF 初期化に失敗しました。")
           });
         }
@@ -226,6 +205,31 @@ export function Dashboard({ initialData, initialMatch, initialView = "scoring" }
     void initLiff();
     return () => {
       cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    async function completeHandoff() {
+      if (!hasPendingLineLoginHandoff()) {
+        return;
+      }
+      const session = await completePendingLineLoginHandoff();
+      if (session) {
+        setAuth(session);
+        setFeedback("LINEログインが完了しました。");
+      }
+    }
+
+    const handleFocus = () => {
+      void completeHandoff();
+    };
+    window.addEventListener("focus", handleFocus);
+    document.addEventListener("visibilitychange", handleFocus);
+    const intervalId = window.setInterval(handleFocus, 2500);
+    return () => {
+      window.removeEventListener("focus", handleFocus);
+      document.removeEventListener("visibilitychange", handleFocus);
+      window.clearInterval(intervalId);
     };
   }, []);
 
@@ -601,14 +605,18 @@ export function Dashboard({ initialData, initialMatch, initialView = "scoring" }
 
   async function loginWithLine() {
     try {
-      const liffId = process.env.NEXT_PUBLIC_LIFF_ID;
-      if (!liffId) {
-        throw new Error("NEXT_PUBLIC_LIFF_ID が未設定です。");
+      const result = await loginWithLineRedirect();
+      if (result === "already-logged-in") {
+        setAuth(await fetchLiffSession());
+        return;
       }
-      const { default: liff } = await import("@line/liff");
-      await liff.init({ liffId });
-      if (!liff.isLoggedIn()) {
-        liff.login({ redirectUri: window.location.href });
+      if (hasPendingLineLoginHandoff()) {
+        setAuth((current) => ({
+          ...current,
+          status: "ready",
+          displayName: "LINE認証待ち",
+          error: "LINEアプリまたはSafariで認証後、ホーム画面のFC KUMANOアプリに戻るとログインが完了します。"
+        }));
       }
     } catch (error) {
       setAuth({
@@ -616,6 +624,7 @@ export function Dashboard({ initialData, initialMatch, initialView = "scoring" }
         idToken: "",
         accessToken: "",
         displayName: "",
+        isInClient: auth.isInClient,
         error: buildDashboardLiffErrorMessage(error, "LINEログインに失敗しました。")
       });
     }
@@ -639,6 +648,7 @@ export function Dashboard({ initialData, initialMatch, initialView = "scoring" }
         idToken: "",
         accessToken: "",
         displayName: "",
+        isInClient: auth.isInClient,
         error: buildDashboardLiffErrorMessage(error, "LINEログアウトに失敗しました。")
       });
     }

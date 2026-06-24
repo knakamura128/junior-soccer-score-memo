@@ -143,3 +143,20 @@ model PlayerPromotionRun {
   year      Int      @unique
   appliedAt DateTime @default(now())
 }
+
+model LineLoginHandoff {
+  id          String    @id
+  returnTo    String
+  idToken     String?
+  accessToken String?
+  lineUserId  String?
+  displayName String?
+  pictureUrl  String?
+  completedAt DateTime?
+  consumedAt  DateTime?
+  expiresAt   DateTime
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([expiresAt])
+}
