@@ -6,7 +6,13 @@ export const ATTENDANCE_STATUSES = ["参加", "欠席", "未定"] as const;
 const SCHEDULE_TAG_FILTER_GROUPS: Record<string, string[]> = {
   "低学年": ["1年", "2年", "低学年"],
   "中学年": ["3年", "4年", "中学年"],
-  "高学年": ["5年", "6年", "高学年"]
+  "高学年": ["5年", "6年", "高学年"],
+  "1年": ["1年", "低学年"],
+  "2年": ["2年", "低学年"],
+  "3年": ["3年", "中学年"],
+  "4年": ["4年", "中学年"],
+  "5年": ["5年", "高学年"],
+  "6年": ["6年", "高学年"]
 };
 
 export type AttendanceStatus = (typeof ATTENDANCE_STATUSES)[number];
