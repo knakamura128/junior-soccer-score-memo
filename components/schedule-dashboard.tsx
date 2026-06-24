@@ -16,6 +16,7 @@ import {
 } from "@/lib/schedule-format";
 import { ModuleNavigation } from "@/components/module-navigation";
 import {
+  clearStoredLineSession,
   completePendingLineLoginHandoff,
   fetchLiffSession,
   hasPendingLineLoginHandoff,
@@ -368,6 +369,7 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
 
   async function logoutFromLine() {
     try {
+      clearStoredLineSession();
       const liffId = process.env.NEXT_PUBLIC_LIFF_ID;
       if (!liffId) {
         throw new Error("NEXT_PUBLIC_LIFF_ID が未設定です。");

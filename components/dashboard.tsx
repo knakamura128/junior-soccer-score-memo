@@ -14,6 +14,7 @@ import {
 import { ModuleNavigation } from "@/components/module-navigation";
 import { createEmptyMatch } from "@/lib/score-draft";
 import {
+  clearStoredLineSession,
   completePendingLineLoginHandoff,
   fetchLiffSession,
   hasPendingLineLoginHandoff,
@@ -632,6 +633,7 @@ export function Dashboard({ initialData, initialMatch, initialView = "scoring" }
 
   async function logoutFromLine() {
     try {
+      clearStoredLineSession();
       const liffId = process.env.NEXT_PUBLIC_LIFF_ID;
       if (!liffId) {
         throw new Error("NEXT_PUBLIC_LIFF_ID が未設定です。");

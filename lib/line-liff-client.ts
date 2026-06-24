@@ -17,6 +17,17 @@ type StoredHandoff = {
   createdAt: number;
 };
 
+type StoredLineSession = {
+  idToken: string;
+  accessToken: string;
+  displayName: string;
+  isInClient: boolean;
+  pictureUrl?: string;
+  lineUserId?: string;
+  savedAt: number;
+  expiresAt: number;
+};
+
 type HandoffPollResponse =
   | { status: "pending" | "missing" | "expired" | "consumed" }
   | {
@@ -31,6 +42,8 @@ type HandoffPollResponse =
 export const LINE_LOGIN_HANDOFF_STORAGE_KEY = "score-manager-line-login-handoff";
 
 const HANDOFF_TTL_MS = 10 * 60 * 1000;
+const LINE_SESSION_STORAGE_KEY = "score-manager-line-session";
+const LINE_SESSION_TTL_MS = 10 * 60 * 60 * 1000;
 
 export function isIosStandalone() {
   if (typeof window === "undefined") {
@@ -42,7 +55,12 @@ export function isIosStandalone() {
   return isStandalone && /iPad|iPhone|iPod/.test(window.navigator.userAgent);
 }
 
-export async function fetchLiffSession(): Promise<LiffClientSession> {
+export async function fetchLiffSession(options: { preferStored?: boolean } = {}): Promise<LiffClientSession> {
+  const storedSession = options.preferStored === false ? null : readStoredLineSession();
+  if (storedSession) {
+    return storedSession;
+  }
+
   const liffId = process.env.NEXT_PUBLIC_LIFF_ID;
   if (!liffId) {
     return { status: "error", idToken: "", accessToken: "", displayName: "", isInClient: false, error: "NEXT_PUBLIC_LIFF_ID が未設定です。" };
@@ -62,7 +80,7 @@ export async function fetchLiffSession(): Promise<LiffClientSession> {
     Promise.resolve(liff.getAccessToken() || "")
   ]);
 
-  return {
+  return persistLineSession({
     status: "ready",
     idToken,
     accessToken,
@@ -70,10 +88,12 @@ export async function fetchLiffSession(): Promise<LiffClientSession> {
     isInClient,
     pictureUrl: profile.pictureUrl,
     lineUserId: profile.userId
-  };
+  });
 }
 
 export async function loginWithLineRedirect() {
+  clearStoredLineSession();
+
   const liffId = process.env.NEXT_PUBLIC_LIFF_ID;
   if (!liffId) {
     throw new Error("NEXT_PUBLIC_LIFF_ID が未設定です。");
@@ -83,6 +103,7 @@ export async function loginWithLineRedirect() {
   await liff.init({ liffId });
 
   if (liff.isLoggedIn()) {
+    await fetchLiffSession({ preferStored: false });
     return "already-logged-in" as const;
   }
 
@@ -123,7 +144,7 @@ export async function completePendingLineLoginHandoff(): Promise<LiffClientSessi
 
   window.localStorage.removeItem(LINE_LOGIN_HANDOFF_STORAGE_KEY);
 
-  return {
+  return persistLineSession({
     status: "ready",
     idToken: payload.idToken,
     accessToken: payload.accessToken,
@@ -131,15 +152,19 @@ export async function completePendingLineLoginHandoff(): Promise<LiffClientSessi
     isInClient: false,
     pictureUrl: payload.pictureUrl,
     lineUserId: payload.lineUserId
-  };
+  });
 }
 
 export function hasPendingLineLoginHandoff() {
   return readStoredHandoff() !== null;
 }
 
+export function clearStoredLineSession() {
+  window.localStorage.removeItem(LINE_SESSION_STORAGE_KEY);
+}
+
 export async function completeLineLoginHandoffFromCallback(handoffId: string, returnTo: string) {
-  const session = await fetchLiffSession();
+  const session = await fetchLiffSession({ preferStored: false });
   if (!session.idToken && !session.accessToken) {
     const liffId = process.env.NEXT_PUBLIC_LIFF_ID;
     if (!liffId) {
@@ -167,7 +192,57 @@ export async function completeLineLoginHandoffFromCallback(handoffId: string, re
     throw new Error(detail || "LINEログインの引き渡しに失敗しました。");
   }
 
+  return persistLineSession(session);
+}
+
+function persistLineSession(session: LiffClientSession): LiffClientSession {
+  if (!session.idToken && !session.accessToken) {
+    clearStoredLineSession();
+    return session;
+  }
+
+  const storedSession: StoredLineSession = {
+    idToken: session.idToken,
+    accessToken: session.accessToken,
+    displayName: session.displayName,
+    isInClient: session.isInClient,
+    pictureUrl: session.pictureUrl,
+    lineUserId: session.lineUserId,
+    savedAt: Date.now(),
+    expiresAt: Date.now() + LINE_SESSION_TTL_MS
+  };
+
+  window.localStorage.setItem(LINE_SESSION_STORAGE_KEY, JSON.stringify(storedSession));
   return session;
+}
+
+function readStoredLineSession(): LiffClientSession | null {
+  try {
+    const raw = window.localStorage.getItem(LINE_SESSION_STORAGE_KEY);
+    if (!raw) {
+      return null;
+    }
+
+    const storedSession = JSON.parse(raw) as StoredLineSession;
+    const hasToken = Boolean(storedSession.idToken || storedSession.accessToken);
+    if (!hasToken || !storedSession.displayName || !storedSession.expiresAt || storedSession.expiresAt < Date.now()) {
+      clearStoredLineSession();
+      return null;
+    }
+
+    return {
+      status: "ready",
+      idToken: storedSession.idToken || "",
+      accessToken: storedSession.accessToken || "",
+      displayName: storedSession.displayName,
+      isInClient: storedSession.isInClient,
+      pictureUrl: storedSession.pictureUrl,
+      lineUserId: storedSession.lineUserId
+    };
+  } catch {
+    clearStoredLineSession();
+    return null;
+  }
 }
 
 function readStoredHandoff(): StoredHandoff | null {
