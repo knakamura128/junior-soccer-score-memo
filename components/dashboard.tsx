@@ -653,11 +653,10 @@ export function Dashboard({ initialData, initialMatch, initialView = "scoring" }
             <img src="/fc-kumano-logo.png" alt="FC KUMANO logo" className="brand-logo" />
             <div>
               <h1>FC KUMANO スコア管理</h1>
-              <p className="hero-copy">Vercel + DB + LINEログイン前提の保存/更新対応版です。</p>
             </div>
           </div>
         </div>
-        <aside className={`auth-box ${isLoggedIn ? "auth-box-logged-in" : "auth-box-logged-out"}`}>
+        <aside className={`auth-box score-auth-box ${isLoggedIn ? "auth-box-logged-in" : "auth-box-logged-out"}`}>
           <div className={`auth-status-pill ${isLoggedIn ? "is-success" : auth.status === "loading" ? "is-pending" : "is-warning"}`}>
             {auth.status === "loading" ? "LINE認証を確認中" : isLoggedIn ? "LINEログイン済み" : "LINE未ログイン"}
           </div>
@@ -680,16 +679,16 @@ export function Dashboard({ initialData, initialMatch, initialView = "scoring" }
               {auth.error || "未ログインです。スコア保存、試合修正、結果削除、選手登録は LINE ログイン後に利用できます。"}
             </p>
           ) : null}
-          {!isLoggedIn ? (
-            <button className="primary auth-login-button" type="button" onClick={() => void loginWithLine()} style={{ marginTop: 12 }}>
-              LINEでログイン
-            </button>
-          ) : (
-            <button className="ghost link-chip" type="button" onClick={() => void logoutFromLine()} style={{ marginTop: 12 }}>
-              LINEログアウト
-            </button>
-          )}
-          <div style={{ marginTop: 12, display: "flex", flexWrap: "wrap", gap: 10 }}>
+          <div className="score-auth-actions">
+            {!isLoggedIn ? (
+              <button className="primary auth-login-button" type="button" onClick={() => void loginWithLine()}>
+                LINEでログイン
+              </button>
+            ) : (
+              <button className="ghost link-chip" type="button" onClick={() => void logoutFromLine()}>
+                LINEログアウト
+              </button>
+            )}
             <Link href="/guide" className="ghost link-chip">
               使い方ガイド
             </Link>
