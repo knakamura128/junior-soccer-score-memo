@@ -3,6 +3,11 @@ import { parseCsv } from "@/lib/csv";
 
 export const SCHEDULE_TAG_OPTIONS = CATEGORY_OPTIONS;
 export const ATTENDANCE_STATUSES = ["参加", "欠席", "未定"] as const;
+const SCHEDULE_TAG_FILTER_GROUPS: Record<string, string[]> = {
+  "低学年": ["1年", "2年", "低学年"],
+  "中学年": ["3年", "4年", "中学年"],
+  "高学年": ["5年", "6年", "高学年"]
+};
 
 export type AttendanceStatus = (typeof ATTENDANCE_STATUSES)[number];
 
@@ -138,6 +143,18 @@ export function normalizeScheduleTags(value: string) {
   }
 
   return [...tags];
+}
+
+export function getScheduleTagFilterCandidates(tag: string) {
+  if (!tag || tag === "すべて") {
+    return [];
+  }
+  return SCHEDULE_TAG_FILTER_GROUPS[tag] || [tag];
+}
+
+export function matchesScheduleTagFilter(tags: string[], tag: string) {
+  const candidates = getScheduleTagFilterCandidates(tag);
+  return candidates.length === 0 ? true : candidates.some((candidate) => tags.includes(candidate));
 }
 
 export function parseScheduleCsv(text: string) {

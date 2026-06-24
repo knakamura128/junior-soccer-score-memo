@@ -1,13 +1,14 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { buildScheduleIcs } from "@/lib/schedule-ics";
-import { serializeScheduleDate } from "@/lib/schedule-format";
+import { getScheduleTagFilterCandidates, serializeScheduleDate } from "@/lib/schedule-format";
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const month = searchParams.get("month") || "";
     const tag = searchParams.get("tag") || "";
+    const tagCandidates = getScheduleTagFilterCandidates(tag);
 
     if (!/^\d{4}-\d{2}$/.test(month)) {
       return new NextResponse("month は YYYY-MM 形式で指定してください。", { status: 400 });
@@ -23,7 +24,7 @@ export async function GET(request: Request) {
           gte: monthStart,
           lt: nextMonth
         },
-        ...(tag ? { tags: { has: tag } } : {})
+        ...(tagCandidates.length > 0 ? { tags: { hasSome: tagCandidates } } : {})
       },
       orderBy: [{ eventDate: "asc" }, { startTime: "asc" }, { createdAt: "asc" }]
     });

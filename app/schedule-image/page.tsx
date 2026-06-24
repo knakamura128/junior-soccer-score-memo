@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { serializeScheduleDate } from "@/lib/schedule-format";
+import { getScheduleTagFilterCandidates, serializeScheduleDate } from "@/lib/schedule-format";
 
 export const dynamic = "force-dynamic";
 
@@ -78,6 +78,7 @@ async function getScheduleRows(month: string, tag: string) {
   const monthStart = new Date(`${month}-01T00:00:00+09:00`);
   const nextMonth = new Date(monthStart);
   nextMonth.setUTCMonth(nextMonth.getUTCMonth() + 1);
+  const tagCandidates = getScheduleTagFilterCandidates(tag);
   try {
     const rows = await prisma.scheduleEntry.findMany({
       where: {
@@ -85,7 +86,7 @@ async function getScheduleRows(month: string, tag: string) {
           gte: monthStart,
           lt: nextMonth
         },
-        ...(tag !== "すべて" ? { tags: { has: tag } } : {})
+        ...(tagCandidates.length > 0 ? { tags: { hasSome: tagCandidates } } : {})
       },
       orderBy: [{ eventDate: "asc" }, { startTime: "asc" }, { createdAt: "asc" }]
     });

@@ -8,6 +8,7 @@ import {
   formatTimeRange,
   getCurrentTokyoMonth,
   inferIsMatch,
+  matchesScheduleTagFilter,
   parseScheduleCsv,
   SCHEDULE_TAG_OPTIONS,
   type AttendanceStatus,
@@ -208,7 +209,7 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
     () =>
       schedules
         .filter((entry) => entry.eventDate.startsWith(selectedMonth))
-        .filter((entry) => (filterTag === "すべて" ? true : entry.tags.includes(filterTag)))
+        .filter((entry) => matchesScheduleTagFilter(entry.tags, filterTag))
         .sort((left, right) => {
           const dateCompare = left.eventDate.localeCompare(right.eventDate);
           if (dateCompare !== 0) return dateCompare;
@@ -229,7 +230,7 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
   ).sort((left, right) => scheduleRowTagRank(left) - scheduleRowTagRank(right));
   const bulkAttendanceTargets = visibleSchedules.filter((entry) => {
     const matchesDate = bulkAttendanceDates.length === 0 ? true : bulkAttendanceDates.includes(entry.eventDate);
-    const matchesTag = bulkAttendanceTags.length === 0 ? true : bulkAttendanceTags.some((tag) => entry.tags.includes(tag));
+    const matchesTag = bulkAttendanceTags.length === 0 ? true : bulkAttendanceTags.some((tag) => matchesScheduleTagFilter(entry.tags, tag));
     return matchesDate && matchesTag;
   });
   const compactView = scheduleViewMode !== "actions";
