@@ -135,8 +135,8 @@ function formatMonthTitle(month: string) {
 
 function renderDate(value: string) {
   const date = new Date(`${value}T00:00:00+09:00`);
-  const day = new Intl.DateTimeFormat("ja-JP", { day: "numeric" }).format(date);
-  const weekday = new Intl.DateTimeFormat("ja-JP", { weekday: "short" }).format(date);
+  const day = new Intl.DateTimeFormat("ja-JP", { timeZone: "Asia/Tokyo", day: "numeric" }).format(date);
+  const weekday = new Intl.DateTimeFormat("ja-JP", { timeZone: "Asia/Tokyo", weekday: "short" }).format(date);
   return `${day} (${weekday})`;
 }
 

@@ -891,7 +891,7 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
             <h2>{isCoachPage ? "コーチ出欠スケジュール" : "月間スケジュール"}</h2>
             <span>
               {isCoachPage ? `コーチ出欠対象 ${visibleSchedules.length}件` : `当番調整あり ${totalDutyPending}件`} / 最新更新{" "}
-              {latestUpdated ? new Date(latestUpdated).toLocaleDateString("ja-JP") : "-"}
+              {latestUpdated ? new Date(latestUpdated).toLocaleDateString("ja-JP", { timeZone: "Asia/Tokyo" }) : "-"}
             </span>
           </div>
           <div className="action-row">
@@ -1636,13 +1636,14 @@ function shouldHideCarpool(location: string) {
 }
 
 function formatDateCell(value: string) {
-  return new Intl.DateTimeFormat("ja-JP", { month: "numeric", day: "numeric", weekday: "short" }).format(
+  return new Intl.DateTimeFormat("ja-JP", { timeZone: "Asia/Tokyo", month: "numeric", day: "numeric", weekday: "short" }).format(
     new Date(`${value}T00:00:00+09:00`)
   );
 }
 
 function formatDateTimeCell(value: string) {
   return new Intl.DateTimeFormat("ja-JP", {
+    timeZone: "Asia/Tokyo",
     month: "numeric",
     day: "numeric",
     hour: "2-digit",
@@ -1706,8 +1707,8 @@ function normalizeScheduleClock(value: string) {
 
 function renderScheduleDate(value: string) {
   const date = new Date(`${value}T00:00:00+09:00`);
-  const monthDay = new Intl.DateTimeFormat("ja-JP", { month: "numeric", day: "numeric" }).format(date);
-  const weekday = new Intl.DateTimeFormat("ja-JP", { weekday: "short" }).format(date);
+  const monthDay = new Intl.DateTimeFormat("ja-JP", { timeZone: "Asia/Tokyo", month: "numeric", day: "numeric" }).format(date);
+  const weekday = new Intl.DateTimeFormat("ja-JP", { timeZone: "Asia/Tokyo", weekday: "short" }).format(date);
 
   return (
     <span className="schedule-date">
