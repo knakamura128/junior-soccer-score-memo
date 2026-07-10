@@ -67,6 +67,10 @@ export function getCurrentTokyoMonth() {
   return getCurrentTokyoDate().slice(0, 7);
 }
 
+export function isPastTokyoDate(date: string, today = getCurrentTokyoDate()) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(date) && date < today;
+}
+
 export function formatTimeRange(startTime: string, endTime: string) {
   if ((startTime === "-" || !startTime) && (endTime === "-" || !endTime)) {
     return "-";

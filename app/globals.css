@@ -774,6 +774,18 @@ input[type="month"] { min-width: 0; }
 .schedule-actions { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
 .score-link-inline { color: var(--green-dark); }
 .schedule-is-match { background: rgba(27,107,69,.045); }
+.schedule-results-table tr.schedule-is-past td,
+.schedule-results-table tr.schedule-is-past td.edited-cell,
+.schedule-results-table tr.schedule-is-past.schedule-date-group-start td:first-child,
+.schedule-results-table.is-image tr.schedule-is-past td,
+.schedule-results-table.is-image tr.schedule-is-past.schedule-date-group-start td:first-child {
+  background: #e1e3de;
+  color: #4d564f;
+}
+.schedule-results-table tr.schedule-is-past .muted,
+.schedule-results-table tr.schedule-is-past td.edited-cell .muted {
+  color: #667069;
+}
 .schedule-image-page {
   min-height: 100vh;
   padding: 8px;

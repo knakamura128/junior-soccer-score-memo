@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { getScheduleTagFilterCandidates, serializeScheduleDate } from "@/lib/schedule-format";
+import { getCurrentTokyoDate, getScheduleTagFilterCandidates, isPastTokyoDate, serializeScheduleDate } from "@/lib/schedule-format";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +17,7 @@ export default async function ScheduleImagePage({ searchParams }: ScheduleImageP
   const tag = typeof params.tag === "string" ? params.tag : "すべて";
   const audience = typeof params.audience === "string" && params.audience === "coach" ? "coach" : "parent";
   const rows = await getScheduleRows(month, tag);
+  const today = getCurrentTokyoDate();
 
   return (
     <main className="schedule-image-page">
@@ -53,8 +54,17 @@ export default async function ScheduleImagePage({ searchParams }: ScheduleImageP
               rows.map((entry, index) => {
                 const previous = rows[index - 1];
                 const isDateGroupStart = !previous || previous.eventDate !== entry.eventDate;
+                const isPastDate = isPastTokyoDate(entry.eventDate, today);
                 return (
-                  <tr key={entry.id} className={isDateGroupStart ? "schedule-date-group-start" : "schedule-date-group-continue"}>
+                  <tr
+                    key={entry.id}
+                    className={[
+                      isPastDate ? "schedule-is-past" : "",
+                      isDateGroupStart ? "schedule-date-group-start" : "schedule-date-group-continue"
+                    ]
+                      .filter(Boolean)
+                      .join(" ")}
+                  >
                     <td>{renderDate(entry.eventDate)}</td>
                     <td>{sortTags(entry.tags).join("・")}</td>
                     <td>{formatRange(entry.startTime, entry.endTime)}</td>

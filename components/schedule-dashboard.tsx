@@ -6,8 +6,10 @@ import {
   createEmptySchedule,
   extractOpponentFromContent,
   formatTimeRange,
+  getCurrentTokyoDate,
   getCurrentTokyoMonth,
   inferIsMatch,
+  isPastTokyoDate,
   matchesScheduleTagFilter,
   parseScheduleCsv,
   SCHEDULE_TAG_OPTIONS,
@@ -259,6 +261,7 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
   });
   const compactView = scheduleViewMode !== "actions";
   const imageViewHref = buildScheduleImageHref(selectedMonth, filterTag, audience);
+  const today = getCurrentTokyoDate();
 
   const modalEntry = schedules.find((entry) => entry.id === modalEntryId) || null;
   const currentAttendance =
@@ -983,12 +986,14 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
                   const assignedName = entry.dutyAssignment?.assignedUser?.displayName || entry.dutyLabel || "未定";
                   const previousEntry = visibleSchedules[index - 1];
                   const isDateGroupStart = !previousEntry || previousEntry.eventDate !== entry.eventDate;
+                  const isPastDate = isPastTokyoDate(entry.eventDate, today);
                   const editedFields = new Set(entry.editedFields || []);
                   return (
                     <tr
                       key={entry.id}
                       className={[
                         entry.isMatch ? "schedule-is-match" : "",
+                        isPastDate ? "schedule-is-past" : "",
                         isDateGroupStart ? "schedule-date-group-start" : "schedule-date-group-continue"
                       ]
                         .filter(Boolean)
