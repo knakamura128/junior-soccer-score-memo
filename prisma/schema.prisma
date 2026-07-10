@@ -92,7 +92,7 @@ model ScheduleEntry {
   createdBy      User           @relation("ScheduleCreatedBy", fields: [createdById], references: [id])
   updatedBy      User           @relation("ScheduleUpdatedBy", fields: [updatedById], references: [id])
   attendances    Attendance[]
-  dutyAssignment DutyAssignment?
+  dutyAssignments DutyAssignment[]
   carpoolPreferences CarpoolPreference[]
 }
 
@@ -113,7 +113,8 @@ model Attendance {
 
 model DutyAssignment {
   id              String        @id @default(cuid())
-  scheduleEntryId String        @unique
+  scheduleEntryId String
+  gradeTag        String        @default("全体")
   assignedUserId  String?
   decidedById     String?
   note            String?
@@ -123,6 +124,8 @@ model DutyAssignment {
   scheduleEntry   ScheduleEntry @relation(fields: [scheduleEntryId], references: [id], onDelete: Cascade)
   assignedUser    User?         @relation("DutyAssignedTo", fields: [assignedUserId], references: [id], onDelete: SetNull)
   decidedBy       User?         @relation("DutyDecidedBy", fields: [decidedById], references: [id], onDelete: SetNull)
+
+  @@unique([scheduleEntryId, gradeTag])
 }
 
 model CarpoolPreference {

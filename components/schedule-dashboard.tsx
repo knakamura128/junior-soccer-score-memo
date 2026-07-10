@@ -57,6 +57,7 @@ type AttendanceRow = {
 
 type DutyAssignmentRow = {
   id: string;
+  gradeTag: string;
   assignedUserId: string | null;
   decidedById: string | null;
   note: string | null;
@@ -91,7 +92,7 @@ type ScheduleRow = {
   createdBy: UserLite | null;
   updatedBy: UserLite | null;
   attendances: AttendanceRow[];
-  dutyAssignment: DutyAssignmentRow | null;
+  dutyAssignments: DutyAssignmentRow[];
   carpoolPreferences: CarpoolPreferenceRow[];
 };
 
@@ -121,8 +122,7 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
   const [modalTab, setModalTab] = useState<ModalTab>("attendance-input");
   const [attendanceNote, setAttendanceNote] = useState("");
   const [attendanceStatus, setAttendanceStatus] = useState<AttendanceStatus>("参加");
-  const [dutyUserId, setDutyUserId] = useState("");
-  const [dutyNote, setDutyNote] = useState("");
+  const [dutyDraft, setDutyDraft] = useState<Record<string, { assignedUserId: string; note: string }>>({});
   const [carpoolChoice, setCarpoolChoice] = useState<(typeof CARPOOL_CHOICES)[number] | "">("");
   const [editorOpen, setEditorOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -271,6 +271,7 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
   const participatingUsers = modalEntry && !isCoachPage
     ? filterAttendancesByAudience(modalEntry.attendances, "parent").filter((attendance) => attendance.status === "参加")
     : [];
+  const modalDutyTargets = modalEntry ? getDutyTargetTags(modalEntry) : [];
   const currentCarpoolPreference =
     modalEntry && auth.lineUserId
       ? modalEntry.carpoolPreferences.find((preference) => preference.user.lineUserId === auth.lineUserId) || null
@@ -282,8 +283,20 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
     }
     setAttendanceNote(currentAttendance?.note || "");
     setAttendanceStatus((currentAttendance?.status as AttendanceStatus | undefined) || "参加");
-    setDutyUserId(modalEntry.dutyAssignment?.assignedUserId || "");
-    setDutyNote(modalEntry.dutyAssignment?.note || "");
+    setDutyDraft(
+      Object.fromEntries(
+        getDutyTargetTags(modalEntry).map((gradeTag) => {
+          const assignment = findDutyAssignment(modalEntry.dutyAssignments, gradeTag);
+          return [
+            gradeTag,
+            {
+              assignedUserId: assignment?.assignedUserId || "",
+              note: assignment?.note || ""
+            }
+          ];
+        })
+      )
+    );
     setCarpoolChoice((currentCarpoolPreference?.choice as (typeof CARPOOL_CHOICES)[number] | undefined) || "");
   }, [currentAttendance, currentCarpoolPreference, modalEntry]);
 
@@ -424,6 +437,17 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
 
   function toggleBulkAttendanceTag(tag: string) {
     setBulkAttendanceTags((current) => (current.includes(tag) ? current.filter((item) => item !== tag) : [...current, tag]));
+  }
+
+  function updateDutyDraft(gradeTag: string, patch: Partial<{ assignedUserId: string; note: string }>) {
+    setDutyDraft((current) => ({
+      ...current,
+      [gradeTag]: {
+        assignedUserId: current[gradeTag]?.assignedUserId || "",
+        note: current[gradeTag]?.note || "",
+        ...patch
+      }
+    }));
   }
 
   function openNewEditor() {
@@ -602,10 +626,11 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...authPayload,
-          duty: {
-            assignedUserId: dutyUserId || null,
-            note: dutyNote
-          }
+          dutyAssignments: getDutyTargetTags(modalEntry).map((gradeTag) => ({
+            gradeTag,
+            assignedUserId: dutyDraft[gradeTag]?.assignedUserId || null,
+            note: dutyDraft[gradeTag]?.note || ""
+          }))
         })
       });
       if (!response.ok) {
@@ -802,7 +827,7 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
     }
   }
 
-  const totalDutyPending = schedules.filter((entry) => !entry.dutyAssignment?.assignedUser).length;
+  const totalDutyPending = schedules.filter((entry) => getDutySummary(entry).pending > 0).length;
   const latestUpdated = schedules
     .map((entry) => entry.updatedAt)
     .sort((left, right) => right.localeCompare(left))[0];
@@ -983,7 +1008,7 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
               ) : (
                 visibleSchedules.map((entry, index) => {
                   const counts = summarizeAttendance(filterAttendancesByAudience(entry.attendances, audience));
-                  const assignedName = entry.dutyAssignment?.assignedUser?.displayName || entry.dutyLabel || "未定";
+                  const dutySummary = getDutySummary(entry);
                   const previousEntry = visibleSchedules[index - 1];
                   const isDateGroupStart = !previousEntry || previousEntry.eventDate !== entry.eventDate;
                   const isPastDate = isPastTokyoDate(entry.eventDate, today);
@@ -1019,7 +1044,12 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
                       </td>
                       {!isCoachPage ? (
                         <td className={editedFields.has("dutyLabel") ? "edited-cell" : ""}>
-                          <div>{assignedName}</div>
+                          <button className="text-button duty-detail-button" type="button" onClick={() => openModal(entry.id, "duty")}>
+                            詳細
+                          </button>
+                          <div className="muted duty-summary">
+                            {dutySummary.assigned}/{dutySummary.total} 決定
+                          </div>
                         </td>
                       ) : null}
                       <td>
@@ -1237,34 +1267,65 @@ export function ScheduleDashboard({ initialData, audience = "parent" }: Schedule
 
             {!isCoachPage && modalTab === "duty" ? (
               <div className="modal-section">
-                <label>
-                  参加者から当番を選択
-                  <select value={dutyUserId} onChange={(event) => setDutyUserId(event.target.value)}>
-                    <option value="">未設定</option>
-                    {participatingUsers.map((attendance) => (
-                      <option key={attendance.userId} value={attendance.userId}>
-                        {attendance.user.displayName}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  メモ
-                  <input value={dutyNote} onChange={(event) => setDutyNote(event.target.value)} placeholder="集合時間や役割メモ" />
-                </label>
-                <div className="muted duty-meta">
-                  {modalEntry.dutyAssignment?.decidedBy ? (
-                    <>
-                      決定者: {modalEntry.dutyAssignment.decidedBy.displayName} / 決定日時:{" "}
-                      {modalEntry.dutyAssignment.decidedAt ? formatDateTimeCell(modalEntry.dutyAssignment.decidedAt) : "-"}
-                    </>
-                  ) : (
-                    "まだ当番は確定していません。"
-                  )}
+                <div className="table-wrap duty-table-wrap">
+                  <table className="results-table modal-results-table duty-results-table">
+                    <thead>
+                      <tr>
+                        <th>学年</th>
+                        <th>当番担当者</th>
+                        <th>メモ</th>
+                        <th>決定</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {modalDutyTargets.map((gradeTag) => {
+                        const assignment = findDutyAssignment(modalEntry.dutyAssignments, gradeTag);
+                        const draft = dutyDraft[gradeTag] || { assignedUserId: "", note: "" };
+                        return (
+                          <tr key={gradeTag}>
+                            <td>
+                              <span className={`badge ${tagClassName(gradeTag)}`}>{gradeTag}</span>
+                            </td>
+                            <td>
+                              <select
+                                value={draft.assignedUserId}
+                                onChange={(event) => updateDutyDraft(gradeTag, { assignedUserId: event.target.value })}
+                              >
+                                <option value="">未設定</option>
+                                {participatingUsers.map((attendance) => (
+                                  <option key={attendance.userId} value={attendance.userId}>
+                                    {attendance.user.displayName}
+                                  </option>
+                                ))}
+                              </select>
+                            </td>
+                            <td>
+                              <input
+                                value={draft.note}
+                                onChange={(event) => updateDutyDraft(gradeTag, { note: event.target.value })}
+                                placeholder="集合時間や役割メモ"
+                              />
+                            </td>
+                            <td className="duty-meta-cell">
+                              {assignment?.decidedBy ? (
+                                <>
+                                  <div>{assignment.decidedBy.displayName}</div>
+                                  <div className="muted">{assignment.decidedAt ? formatDateTimeCell(assignment.decidedAt) : "-"}</div>
+                                </>
+                              ) : (
+                                <span className="muted">未決定</span>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
                 </div>
+                {participatingUsers.length === 0 ? <p className="muted duty-meta">参加者が入力されると、当番担当者の候補に表示されます。</p> : null}
                 <div className="stack-actions">
                   <button className="primary" type="button" onClick={() => void saveDuty()}>
-                    当番を保存
+                    学年別の当番を保存
                   </button>
                 </div>
               </div>
@@ -1567,6 +1628,29 @@ function summarizeAttendance(attendances: AttendanceRow[]) {
 
 function filterAttendancesByAudience(attendances: AttendanceRow[], audience: AttendanceAudienceMode) {
   return attendances.filter((attendance) => attendance.audience === ATTENDANCE_AUDIENCES[audience]);
+}
+
+function getDutyTargetTags(entry: Pick<ScheduleRow, "tags">) {
+  const gradeTags = sortTagsForDisplay(
+    Array.from(new Set(entry.tags.filter((tag) => /^(キッズ|低学年|中学年|高学年|[1-6]年)$/.test(tag))))
+  );
+
+  return gradeTags.length > 0 ? gradeTags : ["全体"];
+}
+
+function findDutyAssignment(assignments: DutyAssignmentRow[], gradeTag: string) {
+  return assignments.find((assignment) => assignment.gradeTag === gradeTag) || null;
+}
+
+function getDutySummary(entry: Pick<ScheduleRow, "tags" | "dutyAssignments">) {
+  const targets = getDutyTargetTags(entry);
+  const assigned = targets.filter((gradeTag) => findDutyAssignment(entry.dutyAssignments, gradeTag)?.assignedUser).length;
+
+  return {
+    assigned,
+    total: targets.length,
+    pending: targets.length - assigned
+  };
 }
 
 function FeedbackNotice({ message, compact = false }: { message: string; compact?: boolean }) {

@@ -8,11 +8,12 @@ export const scheduleEntryInclude = Prisma.validator<Prisma.ScheduleEntryInclude
     include: { user: true },
     orderBy: [{ updatedAt: "desc" }]
   },
-  dutyAssignment: {
+  dutyAssignments: {
     include: {
       assignedUser: true,
       decidedBy: true
-    }
+    },
+    orderBy: [{ gradeTag: "asc" }]
   },
   carpoolPreferences: {
     include: { user: true },
@@ -34,14 +35,12 @@ export function serializeScheduleEntry(entry: ScheduleEntryWithRelations) {
     editedFields: shouldHighlightEditedFields(entry.updatedAt) ? entry.editedFields : [],
     createdAt: entry.createdAt.toISOString(),
     updatedAt: entry.updatedAt.toISOString(),
-    dutyAssignment: entry.dutyAssignment
-      ? {
-          ...entry.dutyAssignment,
-          decidedAt: entry.dutyAssignment.decidedAt?.toISOString() || null,
-          createdAt: entry.dutyAssignment.createdAt.toISOString(),
-          updatedAt: entry.dutyAssignment.updatedAt.toISOString()
-        }
-      : null,
+    dutyAssignments: entry.dutyAssignments.map((assignment) => ({
+      ...assignment,
+      decidedAt: assignment.decidedAt?.toISOString() || null,
+      createdAt: assignment.createdAt.toISOString(),
+      updatedAt: assignment.updatedAt.toISOString()
+    })),
     attendances: entry.attendances.map((attendance) => ({
       ...attendance,
       createdAt: attendance.createdAt.toISOString(),

@@ -892,6 +892,38 @@ input[type="month"] { min-width: 0; }
 .status-toggle.is-active { background: var(--green-dark); color: #fff; border-color: var(--green-dark); }
 .schedule-summary-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .modal-results-table { min-width: 0; }
+.duty-detail-button {
+  min-height: 34px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  background: rgba(17,72,47,.1);
+  color: var(--green-dark);
+  font-weight: 800;
+}
+.duty-summary {
+  margin-top: 4px;
+  font-size: .78rem;
+  white-space: nowrap;
+}
+.duty-table-wrap {
+  margin-top: 0;
+}
+.duty-results-table {
+  min-width: 720px;
+}
+.duty-results-table th:first-child,
+.duty-results-table td:first-child {
+  width: 112px;
+}
+.duty-results-table select,
+.duty-results-table input {
+  min-height: 42px;
+  padding: 10px 12px;
+}
+.duty-meta-cell {
+  min-width: 150px;
+  font-size: .86rem;
+}
 .duty-meta { margin-top: -4px; }
 .schedule-form-grid { margin-top: 12px; }
 .checkbox-row { display: flex; align-items: center; gap: 10px; margin-top: 14px; }
