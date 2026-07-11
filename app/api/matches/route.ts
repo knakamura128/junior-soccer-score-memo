@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { verifyLineSession } from "@/lib/line-auth";
 import { calculateOutcome, serializeMatchDate } from "@/lib/match-format";
+import { buildApiErrorResponse } from "@/lib/api-error";
 import { z } from "zod";
 
 const goalSchema = z.object({
@@ -35,74 +36,82 @@ const matchSchema = z.object({
 });
 
 export async function GET() {
-  const matches = await prisma.match.findMany({
-    include: {
-      goals: { orderBy: { createdAt: "asc" } },
-      createdBy: true,
-      updatedBy: true
-    },
-    orderBy: [{ matchDate: "desc" }, { createdAt: "desc" }]
-  });
+  try {
+    const matches = await prisma.match.findMany({
+      include: {
+        goals: { orderBy: { createdAt: "asc" } },
+        createdBy: true,
+        updatedBy: true
+      },
+      orderBy: [{ matchDate: "desc" }, { createdAt: "desc" }]
+    });
 
-  return NextResponse.json(
-    matches.map((match) => ({
-      ...match,
-      matchDate: serializeMatchDate(match.matchDate)
-    }))
-  );
+    return NextResponse.json(
+      matches.map((match) => ({
+        ...match,
+        matchDate: serializeMatchDate(match.matchDate)
+      }))
+    );
+  } catch (error) {
+    return buildApiErrorResponse(error, "試合結果の読み込みに失敗しました。");
+  }
 }
 
 export async function POST(request: Request) {
-  const parsed = matchSchema.parse(await request.json());
-  const profile = await verifyLineSession({ idToken: parsed.idToken, accessToken: parsed.accessToken });
+  try {
+    const parsed = matchSchema.parse(await request.json());
+    const profile = await verifyLineSession({ idToken: parsed.idToken, accessToken: parsed.accessToken });
 
-  const user = await prisma.user.upsert({
-    where: { lineUserId: profile.lineUserId },
-    update: { displayName: profile.displayName, pictureUrl: profile.pictureUrl },
-    create: {
-      lineUserId: profile.lineUserId,
-      displayName: profile.displayName,
-      pictureUrl: profile.pictureUrl
-    }
-  });
-
-  const outcome = calculateOutcome(parsed.match);
-
-  const saved = await prisma.match.create({
-    data: {
-      tournament: parsed.match.tournament || "未設定",
-      title: parsed.match.title || "無題の試合",
-      opponent: parsed.match.opponent,
-      tags: parsed.match.tags,
-      matchDate: new Date(`${parsed.match.matchDate}T00:00:00+09:00`),
-      periodMode: parsed.match.periodMode,
-      pkMode: parsed.match.pkMode,
-      homePkScore: parsed.match.homePkScore,
-      awayPkScore: parsed.match.awayPkScore,
-      homeScore: parsed.match.homeScore,
-      awayScore: parsed.match.awayScore,
-      duration: parsed.match.duration,
-      outcome,
-      createdById: user.id,
-      updatedById: user.id,
-      goals: {
-        create: parsed.match.events.map((event) => ({
-          side: event.side,
-          player: event.player || null,
-          period: event.period,
-          time: event.time
-        }))
+    const user = await prisma.user.upsert({
+      where: { lineUserId: profile.lineUserId },
+      update: { displayName: profile.displayName, pictureUrl: profile.pictureUrl },
+      create: {
+        lineUserId: profile.lineUserId,
+        displayName: profile.displayName,
+        pictureUrl: profile.pictureUrl
       }
-    },
-    include: {
-      goals: true,
-      createdBy: true,
-      updatedBy: true
-    }
-  });
+    });
 
-  return NextResponse.json({
-    ...saved,
-    matchDate: serializeMatchDate(saved.matchDate)
-  });
+    const outcome = calculateOutcome(parsed.match);
+
+    const saved = await prisma.match.create({
+      data: {
+        tournament: parsed.match.tournament || "未設定",
+        title: parsed.match.title || "無題の試合",
+        opponent: parsed.match.opponent,
+        tags: parsed.match.tags,
+        matchDate: new Date(`${parsed.match.matchDate}T00:00:00+09:00`),
+        periodMode: parsed.match.periodMode,
+        pkMode: parsed.match.pkMode,
+        homePkScore: parsed.match.homePkScore,
+        awayPkScore: parsed.match.awayPkScore,
+        homeScore: parsed.match.homeScore,
+        awayScore: parsed.match.awayScore,
+        duration: parsed.match.duration,
+        outcome,
+        createdById: user.id,
+        updatedById: user.id,
+        goals: {
+          create: parsed.match.events.map((event) => ({
+            side: event.side,
+            player: event.player || null,
+            period: event.period,
+            time: event.time
+          }))
+        }
+      },
+      include: {
+        goals: true,
+        createdBy: true,
+        updatedBy: true
+      }
+    });
+
+    return NextResponse.json({
+      ...saved,
+      matchDate: serializeMatchDate(saved.matchDate)
+    });
+  } catch (error) {
+    return buildApiErrorResponse(error, "試合結果の保存に失敗しました。");
+  }
 }

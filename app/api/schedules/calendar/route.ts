@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { buildApiErrorResponse } from "@/lib/api-error";
 import { buildScheduleIcs } from "@/lib/schedule-ics";
 import { getScheduleTagFilterCandidates, serializeScheduleDate } from "@/lib/schedule-format";
 
@@ -52,8 +53,7 @@ export async function GET(request: Request) {
       }
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "カレンダーファイルの作成に失敗しました。";
-    return new NextResponse(message, { status: 500 });
+    return buildApiErrorResponse(error, "カレンダーファイルの作成に失敗しました。");
   }
 }
 

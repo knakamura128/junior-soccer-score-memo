@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { verifyLineSession } from "@/lib/line-auth";
 import { normalizePlayerTags } from "@/lib/player-promotion";
+import { buildApiErrorResponse } from "@/lib/api-error";
 import { z } from "zod";
 
 const deleteSchema = z.object({
@@ -40,8 +41,7 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
 
     return NextResponse.json(player);
   } catch (error) {
-    const message = formatPlayerErrorMessage(error, "選手更新に失敗しました。");
-    return new NextResponse(message, { status: 400 });
+    return buildPlayerErrorResponse(error, "選手更新に失敗しました。");
   }
 }
 
@@ -57,14 +57,13 @@ export async function DELETE(request: Request, context: { params: Promise<{ id: 
 
     return NextResponse.json({ ok: true });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "選手削除に失敗しました。";
-    return new NextResponse(message, { status: 400 });
+    return buildApiErrorResponse(error, "選手削除に失敗しました。");
   }
 }
 
-function formatPlayerErrorMessage(error: unknown, fallback: string) {
+function buildPlayerErrorResponse(error: unknown, fallback: string) {
   if (error instanceof z.ZodError) {
-    return error.issues[0]?.message || fallback;
+    return new NextResponse(error.issues[0]?.message || fallback, { status: 400 });
   }
-  return error instanceof Error ? error.message : fallback;
+  return buildApiErrorResponse(error, fallback);
 }

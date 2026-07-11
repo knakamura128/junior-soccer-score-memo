@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { verifyLineSession } from "@/lib/line-auth";
 import { calculateOutcome, serializeMatchDate } from "@/lib/match-format";
+import { buildApiErrorResponse } from "@/lib/api-error";
 import { z } from "zod";
 
 const bodySchema = z.object({
@@ -41,60 +42,64 @@ const deleteSchema = z.object({
 });
 
 export async function PUT(request: Request, context: { params: Promise<{ id: string }> }) {
-  const { id } = await context.params;
-  const parsed = bodySchema.parse(await request.json());
-  const profile = await verifyLineSession({ idToken: parsed.idToken, accessToken: parsed.accessToken });
+  try {
+    const { id } = await context.params;
+    const parsed = bodySchema.parse(await request.json());
+    const profile = await verifyLineSession({ idToken: parsed.idToken, accessToken: parsed.accessToken });
 
-  const user = await prisma.user.upsert({
-    where: { lineUserId: profile.lineUserId },
-    update: { displayName: profile.displayName, pictureUrl: profile.pictureUrl },
-    create: {
-      lineUserId: profile.lineUserId,
-      displayName: profile.displayName,
-      pictureUrl: profile.pictureUrl
-    }
-  });
-
-  const outcome = calculateOutcome(parsed.match);
-
-  const updated = await prisma.match.update({
-    where: { id },
-    data: {
-      tournament: parsed.match.tournament || "未設定",
-      title: parsed.match.title || "無題の試合",
-      opponent: parsed.match.opponent,
-      tags: parsed.match.tags,
-      matchDate: new Date(`${parsed.match.matchDate}T00:00:00+09:00`),
-      periodMode: parsed.match.periodMode,
-      pkMode: parsed.match.pkMode,
-      homePkScore: parsed.match.homePkScore,
-      awayPkScore: parsed.match.awayPkScore,
-      homeScore: parsed.match.homeScore,
-      awayScore: parsed.match.awayScore,
-      duration: parsed.match.duration,
-      outcome,
-      updatedById: user.id,
-      goals: {
-        deleteMany: {},
-        create: parsed.match.events.map((event) => ({
-          side: event.side,
-          player: event.player || null,
-          period: event.period,
-          time: event.time
-        }))
+    const user = await prisma.user.upsert({
+      where: { lineUserId: profile.lineUserId },
+      update: { displayName: profile.displayName, pictureUrl: profile.pictureUrl },
+      create: {
+        lineUserId: profile.lineUserId,
+        displayName: profile.displayName,
+        pictureUrl: profile.pictureUrl
       }
-    },
-    include: {
-      goals: true,
-      createdBy: true,
-      updatedBy: true
-    }
-  });
+    });
 
-  return NextResponse.json({
-    ...updated,
-    matchDate: serializeMatchDate(updated.matchDate)
-  });
+    const outcome = calculateOutcome(parsed.match);
+
+    const updated = await prisma.match.update({
+      where: { id },
+      data: {
+        tournament: parsed.match.tournament || "未設定",
+        title: parsed.match.title || "無題の試合",
+        opponent: parsed.match.opponent,
+        tags: parsed.match.tags,
+        matchDate: new Date(`${parsed.match.matchDate}T00:00:00+09:00`),
+        periodMode: parsed.match.periodMode,
+        pkMode: parsed.match.pkMode,
+        homePkScore: parsed.match.homePkScore,
+        awayPkScore: parsed.match.awayPkScore,
+        homeScore: parsed.match.homeScore,
+        awayScore: parsed.match.awayScore,
+        duration: parsed.match.duration,
+        outcome,
+        updatedById: user.id,
+        goals: {
+          deleteMany: {},
+          create: parsed.match.events.map((event) => ({
+            side: event.side,
+            player: event.player || null,
+            period: event.period,
+            time: event.time
+          }))
+        }
+      },
+      include: {
+        goals: true,
+        createdBy: true,
+        updatedBy: true
+      }
+    });
+
+    return NextResponse.json({
+      ...updated,
+      matchDate: serializeMatchDate(updated.matchDate)
+    });
+  } catch (error) {
+    return buildApiErrorResponse(error, "試合結果の更新に失敗しました。");
+  }
 }
 
 export async function DELETE(request: Request, context: { params: Promise<{ id: string }> }) {
@@ -109,7 +114,6 @@ export async function DELETE(request: Request, context: { params: Promise<{ id: 
 
     return NextResponse.json({ ok: true });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "試合結果削除に失敗しました。";
-    return new NextResponse(message, { status: 400 });
+    return buildApiErrorResponse(error, "試合結果削除に失敗しました。");
   }
 }

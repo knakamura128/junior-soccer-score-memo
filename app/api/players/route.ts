@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { verifyLineSession } from "@/lib/line-auth";
 import { ensureAnnualPlayerPromotion, normalizeExistingPlayers, normalizePlayerTags } from "@/lib/player-promotion";
+import { buildApiErrorResponse } from "@/lib/api-error";
 import { z } from "zod";
 
 const playerSchema = z.object({
@@ -17,12 +18,16 @@ const playerSchema = z.object({
 });
 
 export async function GET() {
-  await normalizeExistingPlayers();
-  await ensureAnnualPlayerPromotion();
-  const players = await prisma.player.findMany({
-    orderBy: [{ createdAt: "asc" }]
-  });
-  return NextResponse.json(players);
+  try {
+    await normalizeExistingPlayers();
+    await ensureAnnualPlayerPromotion();
+    const players = await prisma.player.findMany({
+      orderBy: [{ createdAt: "asc" }]
+    });
+    return NextResponse.json(players);
+  } catch (error) {
+    return buildApiErrorResponse(error, "選手一覧の読み込みに失敗しました。");
+  }
 }
 
 export async function POST(request: Request) {
@@ -40,14 +45,13 @@ export async function POST(request: Request) {
 
     return NextResponse.json(player);
   } catch (error) {
-    const message = formatPlayerErrorMessage(error, "選手保存に失敗しました。");
-    return new NextResponse(message, { status: 400 });
+    return buildPlayerErrorResponse(error, "選手保存に失敗しました。");
   }
 }
 
-function formatPlayerErrorMessage(error: unknown, fallback: string) {
+function buildPlayerErrorResponse(error: unknown, fallback: string) {
   if (error instanceof z.ZodError) {
-    return error.issues[0]?.message || fallback;
+    return new NextResponse(error.issues[0]?.message || fallback, { status: 400 });
   }
-  return error instanceof Error ? error.message : fallback;
+  return buildApiErrorResponse(error, fallback);
 }
