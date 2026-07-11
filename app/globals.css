@@ -893,12 +893,14 @@ input[type="month"] { min-width: 0; }
 .schedule-summary-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .modal-results-table { min-width: 0; }
 .duty-detail-button {
-  min-height: 34px;
-  padding: 7px 12px;
-  border-radius: 999px;
+  min-height: 28px;
+  padding: 4px 9px;
+  border-radius: 5px;
   background: rgba(17,72,47,.1);
   color: var(--green-dark);
   font-weight: 800;
+  font-size: .78rem;
+  line-height: 1.2;
 }
 .duty-summary {
   margin-top: 4px;
