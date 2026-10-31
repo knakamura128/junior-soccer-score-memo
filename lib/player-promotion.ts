@@ -1,5 +1,6 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { isOwnGoalName } from "@/lib/own-goal";
 
 const GRADE_TAGS = ["1年", "2年", "3年", "4年", "5年", "6年"] as const;
 const GROUP_TAGS = ["低学年", "中学年", "高学年"] as const;
@@ -25,6 +26,7 @@ export async function ensureAnnualPlayerPromotion(now = new Date()) {
       const players = await tx.player.findMany();
 
       for (const player of players) {
+        if (isOwnGoalName(player.name)) continue;
         const normalizedTags = normalizePlayerTags(player.name, player.tags);
         const promotion = promoteNormalizedTags(normalizedTags);
 
@@ -68,6 +70,7 @@ export async function normalizeExistingPlayers() {
 }
 
 export function normalizePlayerTags(name: string, tags: string[]) {
+  if (isOwnGoalName(name)) return sortPlayerTags(tags);
   if (tags.includes("キッズ")) {
     const preserved = tags.filter((tag) => tag !== "キッズ" && !GRADE_TAGS.includes(tag as (typeof GRADE_TAGS)[number]) && !GROUP_TAGS.includes(tag as (typeof GROUP_TAGS)[number]));
     return sortPlayerTags(["キッズ", ...preserved]);

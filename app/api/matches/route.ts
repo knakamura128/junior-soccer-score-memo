@@ -4,10 +4,11 @@ import { verifyLineSession } from "@/lib/line-auth";
 import { calculateOutcome, serializeMatchDate } from "@/lib/match-format";
 import { buildApiErrorResponse } from "@/lib/api-error";
 import { z } from "zod";
+import { normalizeOwnGoalName } from "@/lib/own-goal";
 
 const goalSchema = z.object({
   side: z.enum(["home", "away"]),
-  player: z.string(),
+  player: z.string().transform(normalizeOwnGoalName),
   period: z.string(),
   time: z.string()
 });

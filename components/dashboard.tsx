@@ -13,6 +13,7 @@ import {
 } from "@/lib/match-format";
 import { ModuleNavigation } from "@/components/module-navigation";
 import { createEmptyMatch } from "@/lib/score-draft";
+import { isOwnGoalName, normalizeOwnGoalName, OWN_GOAL_NAME } from "@/lib/own-goal";
 import {
   clearStoredLineSession,
   completePendingLineLoginHandoff,
@@ -256,6 +257,7 @@ export function Dashboard({ initialData, initialMatch, initialView = "scoring" }
         entry.goals
           .filter((goal) => goal.side === "home" && goal.player)
           .map((goal) => resolveGoalPlayerName(goal.player as string, players, entry.tags, playerNameCounts))
+          .filter((name) => !isOwnGoalName(name))
       )
       .reduce((map, name) => map.set(name, (map.get(name) || 0) + 1), new Map<string, number>())
   ).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "ja"));
@@ -296,7 +298,7 @@ export function Dashboard({ initialData, initialMatch, initialView = "scoring" }
   async function savePlayer() {
     const normalizedPlayer = {
       number: playerForm.number.trim(),
-      name: playerForm.name.trim(),
+      name: normalizeOwnGoalName(playerForm.name.trim()),
       tags: playerForm.tags
     };
 
@@ -1399,6 +1401,7 @@ function getMonthOptions(selectedMonth: string) {
 }
 
 function getPlayerIdentityKey(player: { name: string; tags: string[] }) {
+  if (isOwnGoalName(player.name)) return OWN_GOAL_NAME;
   return `${player.name}::${getPrimaryPlayerTag(player.tags)}`;
 }
 
@@ -1408,6 +1411,7 @@ function getPrimaryPlayerTag(tags: string[]) {
 }
 
 function formatPlayerDisplay(player: Player, counts: Record<string, number>) {
+  if (isOwnGoalName(player.name)) return OWN_GOAL_NAME;
   const base = player.number && player.number !== "-" ? `${player.number} ${player.name}` : player.name;
   if ((counts[player.name] || 0) < 2) {
     return base;
@@ -1416,6 +1420,7 @@ function formatPlayerDisplay(player: Player, counts: Record<string, number>) {
 }
 
 function normalizeStoredPlayerName(value: string) {
+  if (isOwnGoalName(value)) return OWN_GOAL_NAME;
   return String(value || "")
     .replace(/^\S+\s+/, "")
     .replace(/\s*\([^)]*\)\s*$/, "")
@@ -1467,6 +1472,7 @@ function resolveGoalPlayerName(
   if (!storedValue) {
     return "";
   }
+  if (isOwnGoalName(storedValue)) return OWN_GOAL_NAME;
   const playerId = resolveStoredPlayerId(storedValue, players, matchTags);
   if (!playerId) {
     return storedValue;

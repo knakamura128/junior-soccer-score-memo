@@ -1,3 +1,5 @@
+import { normalizeOwnGoalName } from "@/lib/own-goal";
+
 export const CATEGORY_OPTIONS = ["キッズ", "低学年", "中学年", "高学年", "1年", "2年", "3年", "4年", "5年", "6年"] as const;
 
 export function serializeMatchDate(date: Date) {
@@ -112,9 +114,9 @@ export function expandScorers(value: string): string[] {
       const cleaned = item.replace(/^[①②③④⑤]/u, "");
       const match = cleaned.match(/^(.*?)[×xX](\d+)$/);
       if (!match) {
-        return [cleaned];
+        return [normalizeOwnGoalName(cleaned)];
       }
-      return Array.from({ length: Number(match[2]) }, () => match[1].trim());
+      return Array.from({ length: Number(match[2]) }, () => normalizeOwnGoalName(match[1].trim()));
     });
 }
 

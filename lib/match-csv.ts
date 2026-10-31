@@ -1,4 +1,5 @@
 import { escapeCsvCell, parseCsv } from "@/lib/csv";
+import { normalizeOwnGoalName } from "@/lib/own-goal";
 import {
   expandScorers,
   getCurrentTokyoDate,
@@ -33,7 +34,7 @@ export function buildMatchesCsv(matches: MatchLike[]) {
       entry.opponent,
       formatScore(entry),
       outcomeToMark(entry.outcome),
-      entry.goals.filter((goal) => goal.side === "home" && goal.player).map((goal) => goal.player).join("、")
+      entry.goals.filter((goal) => goal.side === "home" && goal.player).map((goal) => normalizeOwnGoalName(goal.player!)).join("、")
     ])
   ];
   return rows.map((row) => row.map((cell) => escapeCsvCell(String(cell ?? ""))).join(",")).join("\n");

@@ -4,13 +4,14 @@ import { verifyLineSession } from "@/lib/line-auth";
 import { ensureAnnualPlayerPromotion, normalizeExistingPlayers, normalizePlayerTags } from "@/lib/player-promotion";
 import { buildApiErrorResponse } from "@/lib/api-error";
 import { z } from "zod";
+import { normalizeOwnGoalName } from "@/lib/own-goal";
 
 const playerSchema = z.object({
   idToken: z.string().optional(),
   accessToken: z.string().optional(),
   player: z.object({
     number: z.string().optional().default(""),
-    name: z.string().trim().min(1, "選手名は必須です。"),
+    name: z.string().trim().min(1, "選手名は必須です。").transform(normalizeOwnGoalName),
     tags: z.array(z.string()).min(1, "タグを1つ以上選択してください。")
   })
 }).refine((value) => value.idToken || value.accessToken, {
