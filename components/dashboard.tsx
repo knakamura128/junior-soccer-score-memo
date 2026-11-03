@@ -64,6 +64,13 @@ type DashboardProps = {
 
 type AuthState = LiffClientSession;
 
+type ScoreDraft = {
+  match: MatchPayload;
+  timerBaseSeconds: number;
+  timerStartedAt: number | null;
+  editingId: string | null;
+};
+
 const DRAFT_STORAGE_KEY = "score-mini-app-next-draft";
 const MAX_TIMER_SECONDS = 60 * 60;
 
@@ -74,6 +81,7 @@ export function Dashboard({ initialData, initialMatch, initialView = "scoring" }
   const [matches, setMatches] = useState(initialData.matches);
   const [match, setMatch] = useState<MatchPayload>(() => initialMatch || createEmptyMatch());
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [draftReady, setDraftReady] = useState(false);
   const [timerBaseSeconds, setTimerBaseSeconds] = useState(0);
   const [timerStartedAt, setTimerStartedAt] = useState<number | null>(null);
   const [timerNow, setTimerNow] = useState(() => Date.now());
@@ -95,9 +103,10 @@ export function Dashboard({ initialData, initialMatch, initialView = "scoring" }
   );
 
   useEffect(() => {
-    const raw = window.localStorage.getItem(DRAFT_STORAGE_KEY);
-    if (!raw) return;
+    if (activeTab !== "scoring") return;
     try {
+      const raw = window.localStorage.getItem(DRAFT_STORAGE_KEY);
+      if (!raw) return;
       const draft = JSON.parse(raw) as {
         match: MatchPayload;
         timerSeconds?: number;
@@ -112,20 +121,15 @@ export function Dashboard({ initialData, initialMatch, initialView = "scoring" }
       setEditingId(draft.editingId);
     } catch {
       window.localStorage.removeItem(DRAFT_STORAGE_KEY);
+    } finally {
+      setDraftReady(true);
     }
-  }, []);
+  }, [activeTab]);
 
   useEffect(() => {
-    window.localStorage.setItem(
-      DRAFT_STORAGE_KEY,
-      JSON.stringify({
-        match,
-        timerBaseSeconds,
-        timerStartedAt,
-        editingId
-      })
-    );
-  }, [match, timerBaseSeconds, timerStartedAt, editingId]);
+    if (activeTab !== "scoring" || !draftReady) return;
+    storeScoreDraft({ match, timerBaseSeconds, timerStartedAt, editingId });
+  }, [activeTab, draftReady, match, timerBaseSeconds, timerStartedAt, editingId]);
 
   useEffect(() => {
     if (!timerStartedAt) return;
@@ -147,8 +151,9 @@ export function Dashboard({ initialData, initialMatch, initialView = "scoring" }
   }, [timerStartedAt]);
 
   useEffect(() => {
+    if (activeTab !== "scoring" || !draftReady) return;
     setMatch((current) => ({ ...current, duration: formatClock(timerSeconds) }));
-  }, [timerSeconds]);
+  }, [activeTab, draftReady, timerSeconds]);
 
   useEffect(() => {
     if (!timerStartedAt) {
@@ -473,7 +478,7 @@ export function Dashboard({ initialData, initialMatch, initialView = "scoring" }
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...authPayload, match })
       });
-      if (!response.ok) throw new Error("保存に失敗しました。");
+      if (!response.ok) throw new Error((await response.text()).trim() || "保存に失敗しました。");
       const saved = (await response.json()) as MatchRow;
       setMatches((current) =>
         editingId ? current.map((entry) => (entry.id === editingId ? saved : entry)) : [saved, ...current]
@@ -541,20 +546,16 @@ export function Dashboard({ initialData, initialMatch, initialView = "scoring" }
   }
 
   function editMatch(entry: MatchRow) {
-    setEditingId(entry.id);
-    setTimerStartedAt(null);
-    setTimerBaseSeconds(parseClockToSeconds(entry.duration));
-    setTimerNow(Date.now());
-    setMatch({
+    const nextMatch: MatchPayload = {
       id: entry.id,
       tournament: entry.tournament,
       title: entry.title,
       opponent: entry.opponent,
       tags: entry.tags,
       matchDate: entry.matchDate,
-      periodMode: (entry.periodMode === "single" ? "single" : "halves"),
+      periodMode: entry.periodMode === "single" ? "single" : "halves",
       currentPeriod: entry.periodMode === "halves" ? "前半" : "試合中",
-      pkMode: (entry.pkMode === "on" ? "on" : "off"),
+      pkMode: entry.pkMode === "on" ? "on" : "off",
       homePkScore: entry.homePkScore,
       awayPkScore: entry.awayPkScore,
       homeScore: entry.homeScore,
@@ -566,7 +567,18 @@ export function Dashboard({ initialData, initialMatch, initialView = "scoring" }
         period: goal.period,
         time: goal.time
       }))
+    };
+    storeScoreDraft({
+      match: nextMatch,
+      timerBaseSeconds: parseClockToSeconds(entry.duration),
+      timerStartedAt: null,
+      editingId: entry.id
     });
+    setEditingId(entry.id);
+    setTimerStartedAt(null);
+    setTimerBaseSeconds(parseClockToSeconds(entry.duration));
+    setTimerNow(Date.now());
+    setMatch(nextMatch);
     router.push("/score");
   }
 
@@ -608,6 +620,9 @@ export function Dashboard({ initialData, initialMatch, initialView = "scoring" }
 
   async function loginWithLine() {
     try {
+      if (activeTab === "scoring" && draftReady) {
+        storeScoreDraft({ match, timerBaseSeconds, timerStartedAt, editingId });
+      }
       const result = await loginWithLineRedirect();
       if (result === "already-logged-in") {
         setAuth(await fetchLiffSession());
@@ -635,6 +650,9 @@ export function Dashboard({ initialData, initialMatch, initialView = "scoring" }
 
   async function logoutFromLine() {
     try {
+      if (activeTab === "scoring" && draftReady) {
+        storeScoreDraft({ match, timerBaseSeconds, timerStartedAt, editingId });
+      }
       clearStoredLineSession();
       const liffId = process.env.NEXT_PUBLIC_LIFF_ID;
       if (!liffId) {
@@ -685,17 +703,17 @@ export function Dashboard({ initialData, initialMatch, initialView = "scoring" }
           ) : (
             <div>
               <strong>{auth.status === "loading" ? "LINE認証を確認中" : auth.displayName || "LINE未ログイン"}</strong>
-              <div className={`auth-meta ${auth.error ? "error" : ""}`}>{auth.error || "保存前にログイン状態を確認します"}</div>
+              <div className={`auth-meta ${auth.error ? "error" : ""}`}>{auth.error || "スコア入力にはLINEログインが必要です"}</div>
             </div>
           )}
           {!isLoggedIn && auth.status !== "loading" ? (
             <p className="auth-warning">
-              {auth.error || "未ログインです。スコア保存、試合修正、結果削除、選手登録は LINE ログイン後に利用できます。"}
+              {auth.error || "未ログインです。スコア入力、試合修正、結果削除、選手登録は LINE ログイン後に利用できます。"}
             </p>
           ) : null}
           <div className="score-auth-actions">
             {!isLoggedIn ? (
-              <button className="primary auth-login-button" type="button" onClick={() => void loginWithLine()}>
+              <button className="primary auth-login-button" type="button" disabled={auth.status === "loading"} onClick={() => void loginWithLine()}>
                 LINEでログイン
               </button>
             ) : (
@@ -720,6 +738,16 @@ export function Dashboard({ initialData, initialMatch, initialView = "scoring" }
       </nav>
 
       <section className={`tab-panel ${activeTab === "scoring" ? "is-active" : ""}`}>
+        {!isLoggedIn || !draftReady ? (
+          <section className="card score-login-required" aria-labelledby="score-login-heading" aria-busy={auth.status === "loading" || !draftReady}>
+            <h2 id="score-login-heading">{auth.status === "loading" || !draftReady ? "スコア入力の準備中" : "スコア入力にはLINEログインが必要です"}</h2>
+            <p>{auth.status === "loading" || !draftReady ? "ログイン状態と保存済みの下書きを確認しています。" : "LINEでログインしてから試合情報やスコアを入力してください。入力途中の下書きはログイン後に引き継がれます。"}</p>
+            {auth.error ? <p className="error" role="alert">{auth.error}</p> : null}
+            {auth.status !== "loading" && draftReady ? (
+              <button className="primary auth-login-button" type="button" onClick={() => void loginWithLine()}>LINEでログインしてスコアを入力</button>
+            ) : null}
+          </section>
+        ) : (
         <div className="panel-grid">
           <section className="card">
             <div className="section-title"><h2>試合情報</h2><span>基本設定</span></div>
@@ -861,6 +889,7 @@ export function Dashboard({ initialData, initialMatch, initialView = "scoring" }
             </details>
           </section>
         </div>
+        )}
       </section>
 
       <section className={`tab-panel ${activeTab === "results" ? "is-active" : ""}`}>
@@ -1050,6 +1079,10 @@ export function Dashboard({ initialData, initialMatch, initialView = "scoring" }
     setTimerStartedAt(null);
     setTimerNow(now);
   }
+}
+
+function storeScoreDraft(draft: ScoreDraft) {
+  window.localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draft));
 }
 
 function TagSelector({

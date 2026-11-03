@@ -116,6 +116,24 @@ a {
   gap: 8px;
   margin-top: 10px;
 }
+.score-login-required {
+  display: grid;
+  gap: 14px;
+  justify-items: start;
+}
+.score-login-required h2,
+.score-login-required p {
+  margin: 0;
+}
+.score-login-required h2 {
+  font-size: 1.1rem;
+}
+.score-login-required p {
+  line-height: 1.6;
+}
+.score-login-required button {
+  min-height: 44px;
+}
 .score-auth-actions .auth-login-button,
 .score-auth-actions .link-chip {
   width: 100%;
