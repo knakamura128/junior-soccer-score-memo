@@ -732,11 +732,6 @@ export function Dashboard({ initialData, initialMatch, initialView = "scoring" }
 
       <FeedbackToast message={feedback} onClose={() => setFeedback("")} />
 
-      <nav className="tab-bar" aria-label="ページ切り替え">
-        <Link className={`tab ${activeTab === "scoring" ? "is-active" : ""}`} href="/score">スコア付け</Link>
-        <Link className={`tab ${activeTab === "results" ? "is-active" : ""}`} href="/score/results">試合結果一覧</Link>
-      </nav>
-
       <section className={`tab-panel ${activeTab === "scoring" ? "is-active" : ""}`}>
         {!isLoggedIn || !draftReady ? (
           <section className="card score-login-required" aria-labelledby="score-login-heading" aria-busy={auth.status === "loading" || !draftReady}>
